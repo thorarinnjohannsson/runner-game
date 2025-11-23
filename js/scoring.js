@@ -259,8 +259,8 @@ function showMilestone(milestone) {
     createScorePopup(canvas.width / 2, canvas.height / 2, 0, `${milestone.icon} ${milestone.title}`);
     
     // Play special sound
-    if (typeof playSound === 'function') {
-        playSound('gameOver'); // Reuse as celebration sound
+    if (typeof audioManager !== 'undefined') {
+        audioManager.playSound('gameOver'); // Reuse as celebration sound
     }
     
     // Create particle burst

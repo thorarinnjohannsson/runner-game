@@ -51,13 +51,17 @@ function drawStartScreen() {
     // Show name input & position it dynamically
     const nameInput = document.getElementById('playerNameInput');
     if (nameInput) {
-        if (nameInput.style.display !== 'block') {
-            nameInput.style.display = 'block';
-            if (!nameInput.value && localStorage.getItem('lastPlayerName')) {
-                nameInput.value = localStorage.getItem('lastPlayerName');
+        if (gameState === 'HIGHSCORE_MODAL') {
+            nameInput.style.display = 'none';
+        } else {
+            if (nameInput.style.display !== 'block') {
+                nameInput.style.display = 'block';
+                if (!nameInput.value && localStorage.getItem('lastPlayerName')) {
+                    nameInput.value = localStorage.getItem('lastPlayerName');
+                }
             }
+            nameInput.style.top = `${cardY + inputOffset}px`;
         }
-        nameInput.style.top = `${cardY + inputOffset}px`;
     }
     
     // Update ripples
@@ -75,6 +79,12 @@ function drawStartScreen() {
     ctx.lineWidth = 4;
     ctx.strokeText('RUNNER GAME', center, headerY);
     ctx.fillText('RUNNER GAME', center, headerY);
+    
+    // Audio Controls (Top Right)
+    drawAudioControls(canvas.width - 80, 20);
+    
+    // High Score Button (Top Left)
+    drawHighScoreButton(20, 20);
     
     // 2. Player Card
     // Card Background - Use a frame/box style instead of plain round rect
@@ -594,8 +604,59 @@ function processUIInteraction(x, y) {
         }
     }
     
+    // High Score Modal Interactions
+    if (gameState === 'HIGHSCORE_MODAL') {
+        // Check Close Button
+        if (window.closeModalButton) {
+            const btn = window.closeModalButton;
+            if (x >= btn.x && x <= btn.x + btn.width &&
+                y >= btn.y && y <= btn.y + btn.height) {
+                gameState = GAME_STATES.START_SCREEN;
+                triggerHaptic(10);
+                return;
+            }
+        }
+        // Click outside to close
+        gameState = GAME_STATES.START_SCREEN;
+        return;
+    }
+    
+    // Check Audio Controls (Available in Start Screen and Pause Menu)
+    if ((gameState === GAME_STATES.START_SCREEN) || (gameState === GAME_STATES.PAUSED && wasPausedByUser)) {
+        if (window.audioControls && typeof audioManager !== 'undefined') {
+            const ac = window.audioControls;
+            
+            // Check Music
+            if (x >= ac.music.x && x <= ac.music.x + ac.music.width &&
+                y >= ac.music.y && y <= ac.music.y + ac.music.height) {
+                audioManager.toggleMusic();
+                triggerHaptic(10);
+                return; // Stop propagation
+            }
+            
+            // Check Sound
+            if (x >= ac.sound.x && x <= ac.sound.x + ac.sound.width &&
+                y >= ac.sound.y && y <= ac.sound.y + ac.sound.height) {
+                audioManager.toggleSound();
+                triggerHaptic(10);
+                return; // Stop propagation
+            }
+        }
+    }
+    
     // Start screen interactions
     if (gameState === GAME_STATES.START_SCREEN) {
+        // Check High Score Button
+        if (window.highScoreButton) {
+            const btn = window.highScoreButton;
+            if (x >= btn.x && x <= btn.x + btn.width &&
+                y >= btn.y && y <= btn.y + btn.height) {
+                gameState = 'HIGHSCORE_MODAL';
+                triggerHaptic(10);
+                return;
+            }
+        }
+
         // Check character selection using stored hit areas
         characters.forEach((char) => {
             if (char.hitArea && 
@@ -639,6 +700,138 @@ function processUIInteraction(x, y) {
         // selectedCharacter = null; // Keep selection
         triggerHaptic(15);
     }
+}
+
+// Draw High Score Button
+function drawHighScoreButton(x, y) {
+    const width = 40;
+    const height = 40;
+    
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#DAA520';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 2;
+    ctx.fillText('🏆', x + width/2, y + 28);
+    ctx.shadowBlur = 0;
+    
+    // Hit area
+    window.highScoreButton = { x, y, width, height };
+    ctx.textAlign = 'left';
+}
+
+// Draw High Score Modal
+function drawHighScoreModal() {
+    // Overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    const width = Math.min(400, canvas.width - 40);
+    const height = 500;
+    const x = (canvas.width - width) / 2;
+    const y = (canvas.height - height) / 2;
+    
+    // Modal Box
+    ctx.fillStyle = '#2C3E50';
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, 15);
+    ctx.fill();
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Title
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('LEADERBOARD', canvas.width/2, y + 50);
+    
+    // Close Button (X)
+    ctx.fillStyle = '#FF4444';
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('✕', x + width - 30, y + 40);
+    window.closeModalButton = { x: x + width - 50, y: y + 10, width: 40, height: 40 };
+    
+    // List Content
+    const scores = getHighScores(); // Now uses our updated storage logic
+    ctx.fillStyle = 'white';
+    ctx.font = '18px Arial';
+    
+    if (scores.length === 0) {
+        ctx.fillText('No scores yet!', canvas.width/2, y + 150);
+    } else {
+        const startY = y + 100;
+        const lineHeight = 35;
+        
+        scores.forEach((entry, i) => {
+            if (i >= 10) return; // Show top 10
+            
+            const rank = i + 1;
+            const color = rank === 1 ? '#FFD700' : (rank === 2 ? '#C0C0C0' : (rank === 3 ? '#CD7F32' : 'white'));
+            
+            ctx.fillStyle = color;
+            ctx.textAlign = 'left';
+            ctx.fillText(`${rank}. ${entry.name}`, x + 40, startY + i * lineHeight);
+            
+            ctx.textAlign = 'right';
+            ctx.fillText(entry.score, x + width - 40, startY + i * lineHeight);
+        });
+    }
+    
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#AAA';
+    ctx.font = '14px Arial';
+    ctx.fillText('Global scores sync automatically', canvas.width/2, y + height - 20);
+    
+    ctx.textAlign = 'left';
+}
+
+// Draw Audio Controls (Music & Sound toggles)
+function drawAudioControls(x, y) {
+    if (typeof audioManager === 'undefined') return;
+    
+    const size = 30;
+    const gap = 10;
+    
+    // Music Toggle
+    ctx.fillStyle = audioManager.musicEnabled ? '#4CAF50' : '#F44336';
+    ctx.beginPath();
+    ctx.roundRect(x, y, size, size, 5);
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎵', x + size/2, y + 22);
+    
+    // Sound Toggle
+    ctx.fillStyle = audioManager.soundEnabled ? '#4CAF50' : '#F44336';
+    ctx.beginPath();
+    ctx.roundRect(x + size + gap, y, size, size, 5);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.fillStyle = 'white';
+    ctx.fillText('🔊', x + size + gap + size/2, y + 22);
+    
+    // Store hit areas
+    window.audioControls = {
+        music: { x: x, y: y, width: size, height: size },
+        sound: { x: x + size + gap, y: y, width: size, height: size }
+    };
+    
+    ctx.textAlign = 'left'; // Reset alignment
 }
 
 // Handle starting the game

@@ -104,7 +104,7 @@ class ParallaxBackground {
         }));
 
         // 4. BUSHES (Closer)
-        this.layers.push(new BackgroundLayer(0.6, (ctx, width, groundY) => {
+        this.layers.push(new BackgroundLayer(1.0, (ctx, width, groundY) => {
             drawBush(width * 0.15, groundY, 0.9);
             drawBush(width * 0.45, groundY, 1.1);
             drawBush(width * 0.85, groundY, 1.0);

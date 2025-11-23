@@ -62,6 +62,7 @@ let countdownInterval = null;
 let screenShake = 0;
 let shakeOffsetX = 0;
 let shakeOffsetY = 0;
+let groundScroll = 0; // Track ground texture scrolling
 
 // Selected character
 let selectedCharacter = null;
@@ -69,7 +70,7 @@ let selectedCharacter = null;
 // Character options (Pixel Art)
 const characters = [
     { id: 'cat', name: 'Ginger', color: '#E67E22' }, // Default
-    { id: 'frog', name: 'Hoppy', color: '#7CB342' },
+    { id: 'wolf', name: 'Wolfie', color: '#607D8B' },
     { id: 'penguin', name: 'Waddle', color: '#263238' },
     { id: 'dog', name: 'Barky', color: '#8D6E63' },
     { id: 'rabbit', name: 'Cotton', color: '#F5F5F5' }
@@ -77,67 +78,6 @@ const characters = [
 
 // Expose characters globally for UI
 window.characters = characters;
-
-// Simple sound system using Web Audio API
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let soundEnabled = true;
-
-// Play a sound effect
-function playSound(type, intensity = 1) {
-    if (!soundEnabled || !audioContext) return;
-    
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    const now = audioContext.currentTime;
-    
-    switch(type) {
-        case 'jump':
-            // Higher pitch for higher jumps
-            oscillator.frequency.setValueAtTime(200 + (intensity * 50), now);
-            oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-            gainNode.gain.setValueAtTime(0.1, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            oscillator.start(now);
-            oscillator.stop(now + 0.1);
-            break;
-            
-        case 'collision':
-            // Harsh collision sound
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(100, now);
-            oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.2);
-            gainNode.gain.setValueAtTime(0.15, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            oscillator.start(now);
-            oscillator.stop(now + 0.2);
-            break;
-            
-        case 'gameOver':
-            // Descending game over sound
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(400, now);
-            oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.5);
-            gainNode.gain.setValueAtTime(0.2, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            oscillator.start(now);
-            oscillator.stop(now + 0.5);
-            break;
-            
-        case 'score':
-            // Pleasant score sound
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(600, now);
-            gainNode.gain.setValueAtTime(0.08, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            oscillator.start(now);
-            oscillator.stop(now + 0.1);
-            break;
-    }
-}
 
 // Initialize game
 function init() {
@@ -185,6 +125,11 @@ function gameLoop() {
         ctx.translate(shakeOffsetX, shakeOffsetY);
     }
     
+    // Update background if playing
+    if (gameState === GAME_STATES.PLAYING) {
+        updateBackground();
+    }
+    
     // Draw background
     drawBackground();
     
@@ -192,6 +137,15 @@ function gameLoop() {
     switch (gameState) {
         case GAME_STATES.START_SCREEN:
             drawStartScreen();
+            // Check if modal active
+            if (gameState === 'HIGHSCORE_MODAL') {
+               drawHighScoreModal();
+            }
+            break;
+            
+        case 'HIGHSCORE_MODAL':
+            drawStartScreen(); // Draw bg
+            drawHighScoreModal();
             break;
             
         case GAME_STATES.COUNTDOWN:
@@ -229,61 +183,138 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// Update background position
+function updateBackground() {
+    if (!parallaxBg) {
+        initParallax();
+    }
+    
+    // Update parallax
+    parallaxBg.update(gameSpeed);
+    
+    // Move ground texture
+    groundScroll += gameSpeed;
+}
+
 // Draw background
 function drawBackground() {
     if (!parallaxBg) {
         initParallax();
     }
     
-    // Update parallax
-    // Use a smaller time step or gameSpeed for smooth movement
-    // Note: update() should ideally be in the update loop, but for simplicity we call it here
-    // scaled by gameSpeed (which is pixels per frame essentially)
-    parallaxBg.update(gameSpeed * 0.05); // Slow down the background movement relative to foreground
-    
     // Draw parallax layers
     parallaxBg.draw(ctx, canvas.width, GROUND_Y);
 
-    // Ground (Soil) - Drawn here to ensure it covers the bottom of parallax layers
-    ctx.fillStyle = '#8B4513'; // Brown soil
+    // --- SOIL BASE ---
+    ctx.fillStyle = '#694528'; // Richer brown from reference
     ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
     
-    // Ground Details (Speckles/Texture)
-    ctx.fillStyle = '#654321';
-    for (let i = 0; i < canvas.width; i += 20) {
-         for (let j = GROUND_Y + 15; j < canvas.height; j += 20) {
-             // Deterministic noise based on position to scroll with world? 
-             // For now static ground texture is fine as standard runner style
-             if (Math.random() > 0.6) {
-                 const size = Math.random() * 4 + 2;
-                 ctx.fillRect(i + Math.random() * 10, j + Math.random() * 10, size, size);
-             }
-         }
+    // --- SOIL TEXTURE (Grid-aligned squares) ---
+    const soilColors = {
+        light: '#916643',
+        dark: '#4D3222'
+    };
+    
+    const tileSize = 20; // Size of grid cells
+    const cols = Math.ceil(canvas.width / tileSize) + 1;
+    const rows = Math.ceil((canvas.height - GROUND_Y) / tileSize);
+    
+    for (let col = 0; col < cols; col++) {
+        // Calculate x position with scrolling
+        // We want the grid to move with groundScroll
+        let xOffset = (col * tileSize - (groundScroll % tileSize));
+        
+        // If we just use modulo, we get a jittery effect or sliding window
+        // Correct approach: 
+        // The world position is (col * tileSize).
+        // Screen position is world position - groundScroll.
+        // We need to iterate enough columns to cover the screen.
+        // Start from the first visible column index in world space.
+        
+        const worldCol = Math.floor(groundScroll / tileSize) + col;
+        const screenX = (worldCol * tileSize) - groundScroll;
+        
+        if (screenX < -tileSize || screenX > canvas.width) continue;
+
+        for (let row = 0; row < rows; row++) {
+            // Deterministic pseudo-random based on world grid position
+            const seed = worldCol * 1234 + row * 5678;
+            const rand = Math.sin(seed) * 10000 - Math.floor(Math.sin(seed) * 10000);
+            
+            const y = GROUND_Y + 30 + (row * tileSize); // Start below grass
+            if (y > canvas.height) break;
+            
+            // Draw scattered squares
+            if (rand > 0.85) {
+                // Light square
+                ctx.fillStyle = soilColors.light;
+                const size = 6 + (rand * 4); // 6-10px
+                ctx.fillRect(screenX + 4, y + 4, size, size);
+            } else if (rand < 0.15) {
+                // Dark square
+                ctx.fillStyle = soilColors.dark;
+                const size = 6 + (rand * 4);
+                ctx.fillRect(screenX + 8, y + 8, size, size);
+            }
+        }
     }
 
-    // Grass Top Layer
-    const grassHeight = 20;
-    ctx.fillStyle = '#66BB6A'; // Lighter green top
-    ctx.fillRect(0, GROUND_Y, canvas.width, grassHeight);
+    // --- GRASS LAYER (Scrolling) ---
+    const grassLight = '#6ABE30'; // Vibrant green
+    const grassDark = '#37946E'; // Shadow green
+    const grassBorder = '#4D3222'; // Dark brown separator
     
-    // Pixelated Grass Edge (Checkerboard pattern)
-    ctx.fillStyle = '#4CAF50'; // Mid green
-    const pixelSize = 5;
-    for (let i = 0; i < canvas.width; i += pixelSize) {
-        if (Math.floor(i / pixelSize) % 2 === 0) {
-            ctx.fillRect(i, GROUND_Y, pixelSize, grassHeight);
-        }
-        // Top jagged edge
-        if (Math.floor(i / pixelSize) % 2 !== 0) {
-            ctx.fillStyle = '#66BB6A';
-            ctx.fillRect(i, GROUND_Y - pixelSize, pixelSize, pixelSize);
-            ctx.fillStyle = '#4CAF50';
+    // Grass is a repeating pattern. Let's define a block size.
+    const blockWidth = 32; 
+    const grassTopHeight = 16;
+    
+    const totalBlocks = Math.ceil(canvas.width / blockWidth) + 1;
+    const startBlock = Math.floor(groundScroll / blockWidth);
+    
+    for (let i = 0; i < totalBlocks; i++) {
+        const blockIndex = startBlock + i;
+        const x = (blockIndex * blockWidth) - groundScroll;
+        
+        // 1. Top Solid Layer
+        ctx.fillStyle = grassLight;
+        ctx.fillRect(x, GROUND_Y, blockWidth, grassTopHeight);
+        
+        // 2. Decorative Edge (The "teeth" or "drips")
+        // Pattern: [Light 4px][Dark 4px][Light 4px][Dark 4px]...
+        const pixelSize = 4;
+        const subBlocks = blockWidth / pixelSize; // 8 sub-blocks
+        
+        for (let j = 0; j < subBlocks; j++) {
+            const subX = x + (j * pixelSize);
+            
+            // Deterministic pattern for this block
+            // Let's make it look like the reference: alternating depths
+            // 0, 2, 4, 6... are distinct from 1, 3, 5...
+            const isEven = j % 2 === 0;
+            
+            if (isEven) {
+                // Longer drip
+                ctx.fillStyle = grassLight;
+                ctx.fillRect(subX, GROUND_Y + grassTopHeight, pixelSize, pixelSize);
+                
+                // Shadow below it
+                ctx.fillStyle = grassDark;
+                ctx.fillRect(subX, GROUND_Y + grassTopHeight + pixelSize, pixelSize, pixelSize);
+                
+                // Dark border below shadow
+                ctx.fillStyle = grassBorder;
+                ctx.fillRect(subX, GROUND_Y + grassTopHeight + (pixelSize * 2), pixelSize, pixelSize);
+            } else {
+                // Shorter drip (just shadow)
+                ctx.fillStyle = grassDark;
+                ctx.fillRect(subX, GROUND_Y + grassTopHeight, pixelSize, pixelSize);
+                
+                // Dark border
+                ctx.fillStyle = grassBorder;
+                ctx.fillRect(subX, GROUND_Y + grassTopHeight + pixelSize, pixelSize, pixelSize);
+            }
         }
     }
-    
-    // Dark Green Grass Border/Shadow
-    ctx.fillStyle = '#2E7D32';
-    ctx.fillRect(0, GROUND_Y + grassHeight, canvas.width, 4);
 }
 
 // Draw Pixel Cloud
@@ -419,6 +450,11 @@ function startNewGame() {
     // Start countdown
     gameState = GAME_STATES.COUNTDOWN;
     startCountdown();
+    
+    // Start music if enabled
+    if (typeof audioManager !== 'undefined') {
+        audioManager.startMusic();
+    }
 }
 
 // Start countdown before game
@@ -693,6 +729,12 @@ function drawPauseOverlay() {
         ctx.fillText('Press P to resume', canvas.width / 2, boxY + 170);
         ctx.font = '14px Arial';
         ctx.fillText(isMobile ? 'or tap PAUSE button' : '', canvas.width / 2, boxY + 195);
+        
+        // Audio Controls in Pause Menu
+        if (typeof drawAudioControls === 'function') {
+            drawAudioControls(canvas.width / 2 - 35, boxY + 210);
+        }
+        
         ctx.textAlign = 'left';
     } else {
         // Life lost countdown
@@ -729,14 +771,17 @@ function onCollision() {
     screenShake = 15;
     
     // Play collision sound
-    playSound('collision');
+    if (typeof audioManager !== 'undefined') audioManager.playSound('collision');
     
     // Create particle explosion at collision point
     createParticleExplosion(player.x + player.width / 2, player.y + player.height / 2, '#FF4444');
     
     if (lives <= 0) {
         gameState = GAME_STATES.GAME_OVER;
-        playSound('gameOver');
+        if (typeof audioManager !== 'undefined') {
+            audioManager.playSound('gameOver');
+            audioManager.stopMusic();
+        }
         saveHighScore(player.name, score);
         return;
     }

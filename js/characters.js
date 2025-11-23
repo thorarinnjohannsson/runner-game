@@ -64,51 +64,62 @@ function drawCat(ctx, colors, p, animationFrame, isOnGround, legOffset) {
     ctx.fillRect(7 * p, 3.5 * p, 1.5 * p, 1);   // Right
 }
 
-// --- FROG ---
-function drawFrog(ctx, colors, p, animationFrame, isOnGround, legOffset) {
-    // Color Palette Override
+// --- WOLF (Replaces Frog) ---
+function drawWolf(ctx, colors, p, animationFrame, isOnGround, legOffset) {
+    // Wolf Palette
     const c = {
-        skin: '#7CB342', // Green
-        belly: '#AED581', // Light Green
-        dark: '#558B2F', // Dark Green
-        eye: '#263238', // Dark Grey
-        cheek: '#F48FB1' // Pinkish
+        fur: '#607D8B',      // Blue Grey
+        dark: '#455A64',     // Dark Blue Grey
+        light: '#90A4AE',    // Light Grey
+        nose: '#263238',     // Almost Black
+        eye: '#FFEB3B'       // Yellow Eyes
     };
 
-    // Legs (Hopping)
+    // Bushy Tail (Wagging)
+    const tailWag = Math.sin(animationFrame * 3) * 3;
     ctx.fillStyle = c.dark;
-    // Back leg
-    ctx.fillRect(1 * p + legOffset, 6 * p, 2 * p, 2 * p);
-    // Front leg
-    ctx.fillRect(6 * p - legOffset, 6 * p, 2 * p, 2 * p);
-
-    // Body (Rounder)
-    ctx.fillStyle = c.skin;
-    ctx.fillRect(1 * p, 2 * p, 7 * p, 5 * p); // Main block
-
-    // Belly
-    ctx.fillStyle = c.belly;
-    ctx.fillRect(2.5 * p, 4 * p, 4 * p, 2.5 * p);
-
-    // Eyes (Protruding)
-    ctx.fillStyle = c.skin;
-    ctx.fillRect(1 * p, 0, 2.5 * p, 2 * p); // Left Eye Mount
-    ctx.fillRect(5.5 * p, 0, 2.5 * p, 2 * p); // Right Eye Mount
-
-    ctx.fillStyle = colors.black;
-    ctx.fillRect(1.5 * p, 0.5 * p, 1 * p, 1 * p); // Left Pupil
-    ctx.fillRect(6 * p, 0.5 * p, 1 * p, 1 * p); // Right Pupil
-
-    // Wide Smile
-    ctx.fillStyle = colors.black;
-    ctx.fillRect(2 * p, 3.5 * p, 5 * p, 0.5 * p); // Mouth Line
-    ctx.fillRect(1.5 * p, 3 * p, 0.5 * p, 0.5 * p); // Left corner
-    ctx.fillRect(7 * p, 3 * p, 0.5 * p, 0.5 * p); // Right corner
-
-    // Cheeks
-    ctx.fillStyle = 'rgba(244, 143, 177, 0.6)';
-    ctx.fillRect(0.5 * p, 3.5 * p, 1.5 * p, 1 * p);
-    ctx.fillRect(7 * p, 3.5 * p, 1.5 * p, 1 * p);
+    ctx.fillRect(-3 * p, (4 * p) + tailWag, 3 * p, 2 * p); // Base
+    ctx.fillRect(-4 * p, (3 * p) + tailWag, 2 * p, 3 * p); // Fluff
+    
+    // Legs (Running)
+    ctx.fillStyle = c.dark;
+    ctx.fillRect(2 * p + legOffset, 7 * p, 2 * p, 2 * p); // Back
+    ctx.fillRect(6 * p - legOffset, 7 * p, 2 * p, 2 * p); // Front
+    
+    // Body
+    ctx.fillStyle = c.fur;
+    ctx.fillRect(1 * p, 4 * p, 7 * p, 3 * p);
+    
+    // Chest/Belly (Lighter)
+    ctx.fillStyle = c.light;
+    ctx.fillRect(2 * p, 5 * p, 3 * p, 2 * p);
+    
+    // Head
+    ctx.fillStyle = c.fur;
+    ctx.fillRect(1 * p, 1 * p, 7 * p, 4 * p);
+    
+    // Pointy Ears
+    ctx.fillStyle = c.fur;
+    ctx.fillRect(1.5 * p, -1 * p, 2 * p, 2 * p); // Left Base
+    ctx.fillRect(2 * p, -2.5 * p, 1 * p, 1.5 * p); // Left Tip
+    
+    ctx.fillRect(5.5 * p, -1 * p, 2 * p, 2 * p); // Right Base
+    ctx.fillRect(6 * p, -2.5 * p, 1 * p, 1.5 * p); // Right Tip
+    
+    // Snout (Protruding slightly)
+    ctx.fillStyle = c.light;
+    ctx.fillRect(3 * p, 3.5 * p, 3 * p, 1.5 * p);
+    ctx.fillStyle = c.nose;
+    ctx.fillRect(4 * p, 3.5 * p, 1 * p, 1 * p);
+    
+    // Intense Eyes
+    ctx.fillStyle = c.eye; // Yellow
+    ctx.fillRect(2 * p, 2 * p, 1.5 * p, 1 * p);
+    ctx.fillRect(5.5 * p, 2 * p, 1.5 * p, 1 * p);
+    
+    ctx.fillStyle = colors.black; // Pupil
+    ctx.fillRect(2.5 * p, 2.2 * p, 0.5 * p, 0.6 * p);
+    ctx.fillRect(6 * p, 2.2 * p, 0.5 * p, 0.6 * p);
 }
 
 // --- PENGUIN ---
@@ -265,7 +276,7 @@ function drawRabbit(ctx, colors, p, animationFrame, isOnGround, legOffset) {
 // Export functions for use in Player class
 window.CharacterDrawers = {
     cat: drawCat,
-    frog: drawFrog,
+    wolf: drawWolf,
     penguin: drawPenguin,
     dog: drawDog,
     rabbit: drawRabbit

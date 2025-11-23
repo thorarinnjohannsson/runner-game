@@ -52,8 +52,8 @@ class Player {
             this.lastClearType = 'ground'; // Reset clear type on new jump
             
             // Play jump sound
-            if (typeof playSound === 'function') {
-                playSound('jump', level);
+            if (typeof audioManager !== 'undefined') {
+                audioManager.playSound('jump', level);
             }
             
             // Create jump particles
@@ -81,8 +81,8 @@ class Player {
         this.wasAtPeakOnClear = atPeak; // Track if at peak
         
         // Play jump sound
-        if (typeof playSound === 'function') {
-            playSound('jump', level);
+        if (typeof audioManager !== 'undefined') {
+            audioManager.playSound('jump', level);
         }
         
         // Create jump particles
