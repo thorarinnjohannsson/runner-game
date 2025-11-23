@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <title>Runner Game</title>
+    <!-- Styles loaded dynamically by loader script to prevent caching -->
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="12" autocomplete="off">
+    </div>
+
+    <!-- Auto-loader: Forces fresh files every reload for testing -->
+    <script>
+        (function() {
+            // Generate a unique version number based on the current time
+            var v = Date.now(); 
+
+            // 1. Load CSS with version
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'styles.css?v=' + v;
+            document.head.appendChild(link);
+
+            // 2. List of scripts to load in order
+            var scripts = [
+                "js/mobile.js",
+                "js/background.js",
+                "js/scoring.js",
+                "js/player.js",
+                "js/obstacle.js",
+                "js/input.js",
+                "js/collision.js",
+                "js/difficulty.js",
+                "js/storage.js",
+                "js/ui.js",
+                "js/main.js"
+            ];
+
+            // 3. Load scripts sequentially to ensure correct order
+            function loadNext(index) {
+                if (index >= scripts.length) return;
+                
+                var script = document.createElement('script');
+                script.src = scripts[index] + '?v=' + v;
+                script.onload = function() { loadNext(index + 1); };
+                document.body.appendChild(script);
+            }
+            
+            // Start loading
+            loadNext(0);
+        })();
+    </script>
+</body>
+</html>

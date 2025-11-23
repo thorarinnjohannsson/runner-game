@@ -1,0 +1,368 @@
+// OBSTACLE MANAGEMENT
+
+// Obstacle class
+class Obstacle {
+    constructor(x, y, width, height, level, isFloating = false, isTerrain = false) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.level = level; // Height level (1-4)
+        this.isFloating = isFloating;
+        this.isTerrain = isTerrain;
+        this.passed = false; // Whether player has passed this obstacle
+        this.scored = false; // Whether we've awarded score for this obstacle
+        this.closeCall = false; // Whether player barely cleared it
+        
+        // Color setup
+        if (isTerrain) {
+            this.color = '#5D4037'; // Dark brown for terrain
+        } else if (isFloating) {
+            this.color = '#6A5ACD'; // SlateBlue for floating
+        } else {
+            this.color = this.getColorForLevel(level);
+        }
+        
+        this.landedOn = false; // Track if player landed on it
+    }
+    
+    // Get color based on level
+    getColorForLevel(level) {
+        const colors = ['#8B4513', '#A0522D', '#CD853F', '#DEB887'];
+        return colors[level - 1] || colors[0];
+    }
+    
+    // Update obstacle position
+    update(speed) {
+        this.x -= speed;
+    }
+    
+    // Draw obstacle
+    draw(ctx) {
+        if (this.isTerrain) {
+            // Terrain style (elevated ground)
+            // Soil body
+            ctx.fillStyle = '#8B4513'; // Brown soil
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // Extend visual to bottom of screen to look like solid ground
+            const bottomToFill = ctx.canvas.height - (this.y + this.height);
+            if (bottomToFill > 0) {
+                ctx.fillRect(this.x, this.y + this.height, this.width, bottomToFill);
+            }
+            
+            // Grass Top Layer
+            ctx.fillStyle = '#66BB6A';
+            ctx.fillRect(this.x, this.y, this.width, 10);
+            
+            // Pixelated Grass Edge (Checkerboard pattern)
+            ctx.fillStyle = '#4CAF50';
+            const pixelSize = 5;
+            for (let i = 0; i < this.width; i += pixelSize) {
+                if (Math.floor(i / pixelSize) % 2 === 0) {
+                    ctx.fillRect(this.x + i, this.y, pixelSize, 10);
+                }
+            }
+            
+            // Dark Green Grass Border
+            ctx.fillStyle = '#2E7D32';
+            ctx.fillRect(this.x, this.y + 10, this.width, 4);
+            
+            // Side Border (Left/Right edges)
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x, this.y + this.height + bottomToFill);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(this.x + this.width, this.y);
+            ctx.lineTo(this.x + this.width, this.y + this.height + bottomToFill);
+            ctx.stroke();
+            
+            return;
+        }
+        
+        if (this.isFloating) {
+            // Floating platform style (Wood/Log pixel style)
+            // Main block
+            ctx.fillStyle = '#8D6E63'; // Light brown wood
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // Wood grain / planks
+            ctx.fillStyle = '#5D4037';
+            for(let i=10; i<this.width; i+=30) {
+                ctx.fillRect(this.x + i, this.y, 2, this.height);
+            }
+            
+            // Top highlight
+            ctx.fillStyle = '#A1887F';
+            ctx.fillRect(this.x, this.y, this.width, 4);
+            
+            // Bottom shadow
+            ctx.fillStyle = '#4E342E';
+            ctx.fillRect(this.x, this.y + this.height - 4, this.width, 4);
+            
+            // Border
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+            return;
+        }
+
+        // PIXEL BLOCK OBSTACLE (Standard)
+        // Main Block Color
+        ctx.fillStyle = '#A0522D'; // Sienna brown
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        
+        const borderSize = 4;
+        
+        // Light Top/Left (Bevel)
+        ctx.fillStyle = '#CD853F'; // Lighter brown
+        ctx.fillRect(this.x, this.y, this.width, borderSize);
+        ctx.fillRect(this.x, this.y, borderSize, this.height);
+        
+        // Dark Bottom/Right (Bevel)
+        ctx.fillStyle = '#5D4037'; // Dark brown
+        ctx.fillRect(this.x + this.width - borderSize, this.y, borderSize, this.height);
+        ctx.fillRect(this.x, this.y + this.height - borderSize, this.width, borderSize);
+        
+        // Inner Face
+        ctx.fillStyle = '#8B4513'; // SaddleBrown
+        ctx.fillRect(this.x + borderSize, this.y + borderSize, this.width - 2*borderSize, this.height - 2*borderSize);
+        
+        // Pixel Noise/Texture inside
+        ctx.fillStyle = 'rgba(62, 39, 35, 0.3)'; // Semi-transparent dark spots
+        
+        // Simple deterministic noise pattern
+        const innerW = this.width - 2*borderSize;
+        const innerH = this.height - 2*borderSize;
+        const startX = this.x + borderSize;
+        const startY = this.y + borderSize;
+        
+        for(let i=0; i<innerW; i+=8) {
+             for(let j=0; j<innerH; j+=8) {
+                 // Create a checkerboard-like pattern or pseudo-random noise based on coords
+                 if (Math.sin(i * j + this.x) > 0) {
+                      ctx.fillRect(startX + i, startY + j, 4, 4);
+                 }
+             }
+        }
+        
+        // Outer Border
+        ctx.strokeStyle = '#3E2723'; // Very dark brown
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        
+        // Inner screws/bolts (corners)
+        ctx.fillStyle = '#3E2723';
+        ctx.fillRect(this.x + 6, this.y + 6, 4, 4);
+        ctx.fillRect(this.x + this.width - 10, this.y + 6, 4, 4);
+        ctx.fillRect(this.x + 6, this.y + this.height - 10, 4, 4);
+        ctx.fillRect(this.x + this.width - 10, this.y + this.height - 10, 4, 4);
+        
+        // Draw level indicator text
+        if (this.level > 1) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.font = 'bold 16px Arial'; 
+            ctx.textAlign = 'center';
+            ctx.fillText(`${this.level}x`, this.x + this.width / 2, this.y + this.height/2 + 6);
+            ctx.textAlign = 'left';
+        }
+    }
+    
+    // Get hitbox for collision detection
+    getHitbox() {
+        return {
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height
+        };
+    }
+    
+    // Check if obstacle is off screen
+    isOffScreen() {
+        return this.x + this.width < 0;
+    }
+}
+
+// Obstacle spawning
+let lastSpawnTime = 0;
+let spawnInterval = 2000; // milliseconds
+
+// Update all obstacles
+function updateObstacles() {
+    // Spawn new obstacles
+    const now = Date.now();
+    if (now - lastSpawnTime > spawnInterval) {
+        spawnObstacle();
+        lastSpawnTime = now;
+    }
+    
+    // Update existing obstacles
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].update(gameSpeed);
+        
+        // Check if player passed obstacle (for scoring)
+        if (!obstacles[i].scored && obstacles[i].x + obstacles[i].width < player.x) {
+            obstacles[i].passed = true;
+            obstacles[i].scored = true;
+            
+            // Check for close call (player barely cleared it - within 10 pixels)
+            const playerBottom = player.y + player.height;
+            const obstacleTop = obstacles[i].y;
+            const clearance = Math.abs(playerBottom - obstacleTop);
+            obstacles[i].closeCall = clearance < 15;
+            
+            // Determine clear type based on player state
+            let clearType = player.lastClearType;
+            const jumpsUsed = player.jumpsUsedForLastClear || player.jumpCount;
+            const wasAtPeak = player.wasAtPeakOnClear;
+            
+            // Calculate sophisticated score
+            const scoreResult = calculateObstacleScore(
+                obstacles[i],
+                clearType,
+                jumpsUsed,
+                wasAtPeak
+            );
+            
+            // Add to total score
+            score += scoreResult.total;
+            
+            // Create score popup
+            createScorePopup(
+                obstacles[i].x + obstacles[i].width / 2,
+                obstacles[i].y - 20,
+                scoreResult.total,
+                scoreResult.bonusText
+            );
+            
+            // Increment combo
+            if (!player.isOnGround) {
+                comboTracker.increment();
+            }
+            
+            // Play score sound
+            if (typeof playSound === 'function') {
+                playSound('score');
+            }
+            
+            // Create small particle effect for clearing obstacle
+            createParticleExplosion(obstacles[i].x, obstacles[i].y, '#44FF44');
+            
+            // Check for milestones
+            checkMilestones(score);
+        }
+        
+        // Remove off-screen obstacles
+        if (obstacles[i].isOffScreen()) {
+            obstacles.splice(i, 1);
+        }
+    }
+}
+
+// Spawn a new obstacle
+function spawnObstacle() {
+    const groundY = (typeof GROUND_Y !== 'undefined') ? GROUND_Y : (canvas.height - 50);
+
+    // Check for elevated terrain (elevated ground)
+    // terrainChance is from difficulty.js
+    const isTerrain = Math.random() < (typeof terrainChance !== 'undefined' ? terrainChance : 0);
+    
+    if (isTerrain) {
+        const width = Math.floor(Math.random() * 600) + 400; // 400-1000px wide
+        const height = Math.floor(Math.random() * 40) + 40; // 40-80px high
+        
+        const obstacle = new Obstacle(
+            canvas.width,
+            groundY - height,
+            width,
+            height,
+            1,
+            false,
+            true // isTerrain
+        );
+        obstacles.push(obstacle);
+        
+        // Delay next spawn to prevent overlapping obstacles spawning inside the hill
+        // We assume gameSpeed is available globally from difficulty.js
+        const speed = (typeof gameSpeed !== 'undefined') ? gameSpeed : 5;
+        const extraDelay = (width / speed) * 16.6;
+        lastSpawnTime += extraDelay;
+        return;
+    }
+
+    // Determine if we should spawn a floating platform
+    // floatingChance is from difficulty.js
+    const isFloating = Math.random() < (typeof floatingChance !== 'undefined' ? floatingChance : 0);
+    
+    if (isFloating) {
+        // Create floating platform
+        const width = Math.floor(Math.random() * 100) + 80; // 80-180px wide
+        const height = 20; // Fixed thickness
+        
+        // Calculate Y position to allow running under
+        // Platform should be high enough to run under (player height ~40px)
+        // But low enough to jump onto.
+        // Range: 80px to 130px above ground
+        const y = groundY - (Math.floor(Math.random() * 50) + 80);
+        
+        const obstacle = new Obstacle(
+            canvas.width,
+            y,
+            width,
+            height,
+            1, // Level irrelevant for floating
+            true // isFloating
+        );
+        obstacles.push(obstacle);
+        return;
+    }
+
+    const baseHeight = 30;
+    const level = getRandomObstacleLevel();
+    const height = baseHeight * level;
+    const width = 20 + (level * 5);
+    
+    const obstacle = new Obstacle(
+        canvas.width,
+        groundY - height,
+        width,
+        height,
+        level,
+        false
+    );
+    
+    obstacles.push(obstacle);
+}
+
+// Get random obstacle level based on difficulty
+function getRandomObstacleLevel() {
+    const rand = Math.random();
+    
+    // Use difficulty to determine probability of higher levels
+    if (rand > 1 - multiLevelChance) {
+        // Multi-level obstacle
+        const levels = [2, 2, 3, 3, 4]; // Weighted towards 2 and 3
+        return levels[Math.floor(Math.random() * levels.length)];
+    } else {
+        // Single level
+        return 1;
+    }
+}
+
+// Draw all obstacles
+function drawObstacles() {
+    obstacles.forEach(obstacle => obstacle.draw(ctx));
+}
+
+// Clear obstacles in a range (used after losing a life)
+function clearObstaclesInRange(minX, maxX) {
+    obstacles = obstacles.filter(obstacle => {
+        return obstacle.x < minX || obstacle.x > maxX;
+    });
+}
+

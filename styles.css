@@ -1,0 +1,118 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    inset: 0; /* Lock to edges */
+    margin: 0;
+    padding: 0;
+}
+
+#game-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    position: relative; /* For absolute positioning of input */
+}
+
+#playerNameInput {
+    position: absolute;
+    top: 150px; /* Aligned with new card layout */
+    left: 50%;
+    transform: translate(-50%, 0);
+    padding: 12px 20px;
+    font-size: 18px;
+    text-align: center;
+    border: 2px solid #eee;
+    border-radius: 25px;
+    width: 240px;
+    font-family: 'Arial', sans-serif;
+    outline: none;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    display: none; /* Hidden by default */
+    z-index: 10;
+    background: #f9f9f9;
+    transition: all 0.3s ease;
+}
+
+#playerNameInput:focus {
+    border-color: #4CAF50;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+    width: 260px;
+}
+
+@media (max-width: 850px) {
+    #playerNameInput {
+        top: 120px; /* Slightly higher on mobile */
+    }
+}
+
+#gameCanvas {
+    display: block;
+    border: 3px solid #333;
+    border-radius: 5px;
+    background: linear-gradient(to bottom, #87CEEB 0%, #E8F4F8 70%, #DEB887 70%, #D2B48C 100%);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+/* Hide default button focus outline on canvas */
+#gameCanvas:focus {
+    outline: none;
+}
+
+/* Mobile fullscreen */
+@media (max-width: 850px) {
+    body {
+        background: white;
+    }
+    
+    #game-container {
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #gameCanvas {
+        border: none;
+        border-radius: 0;
+        width: 100vw !important;
+        height: auto !important;
+        max-height: 100vh;
+    }
+}
+
+/* Prevent pull-to-refresh and overscroll on mobile */
+html {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+body {
+    overscroll-behavior: none;
+}
+
