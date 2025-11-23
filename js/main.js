@@ -66,14 +66,17 @@ let shakeOffsetY = 0;
 // Selected character
 let selectedCharacter = null;
 
-// Character options (different colors)
+// Character options (Pixel Art)
 const characters = [
-    { name: 'Red Runner', color: '#FF4444' },
-    { name: 'Blue Bolt', color: '#4444FF' },
-    { name: 'Green Go', color: '#44FF44' },
-    { name: 'Purple Pro', color: '#AA44FF' },
-    { name: 'Orange Dash', color: '#FF8844' }
+    { id: 'cat', name: 'Ginger', color: '#E67E22' }, // Default
+    { id: 'frog', name: 'Hoppy', color: '#7CB342' },
+    { id: 'penguin', name: 'Waddle', color: '#263238' },
+    { id: 'dog', name: 'Barky', color: '#8D6E63' },
+    { id: 'rabbit', name: 'Cotton', color: '#F5F5F5' }
 ];
+
+// Expose characters globally for UI
+window.characters = characters;
 
 // Simple sound system using Web Audio API
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -387,7 +390,8 @@ function startNewGame() {
         PLAYER_START_Y,
         30,
         40,
-        selectedCharacter.color
+        selectedCharacter.color,
+        selectedCharacter.id || 'cat'
     );
     
     // Save selected character

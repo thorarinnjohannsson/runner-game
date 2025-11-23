@@ -65,60 +65,62 @@ function drawStartScreen() {
     if (typeof drawRipples === 'function') drawRipples();
     
     // 1. Header
-    ctx.fillStyle = '#333';
-    ctx.font = `bold ${tight ? 28 : (mobile ? 36 : 40)}px Arial`;
+    // Use Pixel font look with shadow
+    ctx.fillStyle = 'white';
+    ctx.font = `bold ${tight ? 32 : (mobile ? 40 : 48)}px Arial`; // A pixel font would be better if loaded
     ctx.textAlign = 'center';
+    
+    // Text Shadow/Border
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 4;
+    ctx.strokeText('RUNNER GAME', center, headerY);
     ctx.fillText('RUNNER GAME', center, headerY);
     
     // 2. Player Card
-    // Card Background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.shadowColor = 'rgba(0,0,0,0.1)';
-    ctx.shadowBlur = 15;
+    // Card Background - Use a frame/box style instead of plain round rect
+    // Semi-transparent dark box
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.beginPath();
     ctx.roundRect(center - cardWidth/2, cardY, cardWidth, cardHeight, 15);
     ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 1;
+    
+    // Border for the card
+    ctx.strokeStyle = '#FFD700'; // Gold border
+    ctx.lineWidth = 4;
     ctx.stroke();
     
     // Character Selection Section
-    ctx.fillStyle = '#333';
-    ctx.font = `${tight ? 14 : 16}px Arial`;
-    ctx.fillText('Select Runner:', center, cardY + labelOffset);
+    ctx.fillStyle = '#FFD700';
+    ctx.font = `bold ${tight ? 14 : 16}px Arial`;
+    ctx.fillText('SELECT RUNNER', center, cardY + labelOffset - 30);
     
     // Draw Characters
-    drawCardCharacterSelection(center, cardY + charsOffset);
+    drawCardCharacterSelection(center, cardY + charsOffset - 10);
     
     // Selected Character Name
     if (selectedCharacter) {
-        ctx.fillStyle = '#444';
-        ctx.font = `bold ${tight ? 16 : 18}px Arial`;
-        ctx.fillText(selectedCharacter.name, center, cardY + nameOffset);
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${tight ? 18 : 22}px Arial`;
+        ctx.fillText(selectedCharacter.name.toUpperCase(), center, cardY + nameOffset);
     }
     
     // 3. Start Button (Pulsing)
     const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
     drawCardStartButton(center, buttonY, pulse);
-    
-    // 4. Instructions
-    // Draw only if enough space (hide on tight/compact screens to avoid clutter)
-    if (h > 500) {
-        drawInstructionIcons(center, h - 30);
-    }
-    
-    ctx.textAlign = 'left';
 }
 
 // Draw character selection in card
 function drawCardCharacterSelection(centerX, y) {
-    const charSize = 50;
-    const padding = 15;
-    const totalWidth = (charSize * characters.length) + (padding * (characters.length - 1));
+    // Ensure characters array is available
+    const charList = window.characters || (typeof characters !== 'undefined' ? characters : []);
+    if (!charList || charList.length === 0) return;
+
+    const charSize = 60; // Slightly larger
+    const padding = 20;
+    const totalWidth = (charSize * charList.length) + (padding * (charList.length - 1));
     const startX = centerX - (totalWidth / 2);
     
-    characters.forEach((char, index) => {
+    charList.forEach((char, index) => {
         const x = startX + (index * (charSize + padding));
         
         // Animation for selected
@@ -127,20 +129,66 @@ function drawCardCharacterSelection(centerX, y) {
              bounce = Math.abs(Math.sin(Date.now() * 0.005)) * 5;
         }
         
-        // Draw char
-        ctx.fillStyle = char.color;
-        ctx.fillRect(x, y - bounce, charSize, charSize);
-        
-        // Selection Box
+        // Selection Spotlight/Box
         if (selectedCharacter === char) {
+            // Glow
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+            ctx.fillRect(x - 5, y - 5 - bounce, charSize + 10, charSize + 10);
+            ctx.shadowBlur = 0;
+            
+            // Border
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 3;
-            ctx.strokeRect(x - 4, y - 4 - bounce, charSize + 8, charSize + 8);
+            ctx.strokeRect(x - 5, y - 5 - bounce, charSize + 10, charSize + 10);
         } else {
-            ctx.strokeStyle = '#eee';
+            // Unselected Border
+            ctx.strokeStyle = '#ddd';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, charSize, charSize);
         }
+        
+        // Draw Character Sprite (Preview)
+        // We create a dummy render function call to re-use the player drawing logic
+        // Scale factor for preview
+        const previewScale = 1.5;
+        const p = 4; // standard pixel size
+        
+        ctx.save();
+        // Center inside the box
+        ctx.translate(x + charSize/2, y + charSize/2 - bounce);
+        ctx.scale(previewScale, previewScale);
+        // Adjust offset to center the sprite drawing which is usually relative to top-left
+        ctx.translate(-15, -20); 
+        
+        const colors = {
+            fur: char.color,
+            // Generate variations if not provided (simple darkening/lightening)
+            furDark: adjustColor(char.color, -20),
+            furLight: adjustColor(char.color, 20),
+            white: '#FFFFFF',
+            black: '#2C3E50',
+            nose: char.id === 'penguin' ? '#FF9800' : '#E74C3C'
+        };
+        
+        // Select drawing function safely
+        let drawFunc = null;
+        if (window.CharacterDrawers) {
+            drawFunc = window.CharacterDrawers[char.id] || window.CharacterDrawers['cat'];
+        }
+        
+        // Fallback if drawFunc is still missing
+        if (typeof drawFunc === 'function') {
+            // Static pose
+            drawFunc(ctx, colors, p, 0, true, 0);
+        } else {
+            // Fallback rectangle if drawing logic fails
+            ctx.fillStyle = char.color;
+            ctx.fillRect(0, 0, 30, 40);
+        }
+        
+        ctx.restore();
         
         // Update Hit Area
         char.hitArea = {
@@ -152,29 +200,58 @@ function drawCardCharacterSelection(centerX, y) {
     });
 }
 
+// Helper to darken/lighten hex color
+function adjustColor(color, amount) {
+    let usePound = false;
+    if (color[0] == "#") {
+        color = color.slice(1);
+        usePound = true;
+    }
+    let num = parseInt(color, 16);
+    let r = (num >> 16) + amount;
+    if (r > 255) r = 255; else if (r < 0) r = 0;
+    let b = ((num >> 8) & 0x00FF) + amount;
+    if (b > 255) b = 255; else if (b < 0) b = 0;
+    let g = (num & 0x0000FF) + amount;
+    if (g > 255) g = 255; else if (g < 0) g = 0;
+    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6,'0');
+}
+
 // Draw pulsing start button
 function drawCardStartButton(centerX, y, scale = 1) {
     const width = 200 * scale;
     const height = 50 * scale;
     const x = centerX - width/2;
     
-    // Gradient
-    const gradient = ctx.createLinearGradient(x, y, x, y + height);
-    gradient.addColorStop(0, '#4CAF50');
-    gradient.addColorStop(1, '#45a049');
+    // Pixelated Button Style
+    // Main color
+    ctx.fillStyle = '#4CAF50'; 
+    ctx.fillRect(x, y, width, height);
     
-    ctx.fillStyle = gradient;
-    ctx.shadowColor = 'rgba(76, 175, 80, 0.4)';
-    ctx.shadowBlur = 15;
-    ctx.beginPath();
-    ctx.roundRect(x, y, width, height, 25);
-    ctx.fill();
-    ctx.shadowBlur = 0;
+    // Highlights/Shadows (3D effect)
+    const border = 4;
     
+    // Light Top/Left
+    ctx.fillStyle = '#81C784';
+    ctx.fillRect(x, y, width, border);
+    ctx.fillRect(x, y, border, height);
+    
+    // Dark Bottom/Right
+    ctx.fillStyle = '#2E7D32';
+    ctx.fillRect(x, y + height - border, width, border);
+    ctx.fillRect(x + width - border, y, border, height);
+    
+    // Text
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 20px Arial';
+    ctx.font = 'bold 20px Arial'; // Or use a pixel font if available
     ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
     ctx.fillText('START RUN', centerX, y + 33);
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     
     // Hit area
     window.startButton = {

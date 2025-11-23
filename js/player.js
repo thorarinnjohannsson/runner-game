@@ -134,7 +134,7 @@ class Player {
         }
     }
     
-    // Draw player on canvas (Pixel Art Cat)
+    // Draw player on canvas (Pixel Art)
     draw(ctx) {
         // Update animation frame
         if (this.isOnGround) {
@@ -158,7 +158,7 @@ class Player {
         
         ctx.translate(offsetX, offsetY);
         
-        // Cat Colors
+        // Cat Colors (Default)
         const colors = {
             fur: '#E67E22',      // Orange
             furDark: '#D35400',  // Dark Orange (Shadow)
@@ -168,74 +168,14 @@ class Player {
             nose: '#E74C3C'
         };
         
-        // --- PIXEL ART DRAWING ---
-        // Using small rectangles to simulate pixels
         const p = 4; // Pixel size
         
-        // 1. TAIL (Animated)
-        const tailWag = Math.sin(this.animationFrame * 3) * 4;
-        ctx.fillStyle = colors.fur;
-        // Tail base
-        ctx.fillRect(-2 * p, (4 * p) + tailWag, 2 * p, 2 * p);
-        // Tail tip
-        ctx.fillRect(-3 * p, (3 * p) + tailWag, 2 * p, 2 * p);
-        
-        // 2. BACK LEGS (Left)
-        // Simple leg animation
-        const runCycle = Math.sin(this.animationFrame * 4);
-        const legOffset = this.isOnGround ? runCycle * p : 0;
-        
-        ctx.fillStyle = colors.furDark;
-        ctx.fillRect(2 * p + legOffset, 7 * p, 2 * p, 2 * p);
-        
-        // 3. BODY
-        ctx.fillStyle = colors.fur;
-        ctx.fillRect(2 * p, 4 * p, 6 * p, 3 * p); // Main body
-        
-        // Belly (Lighter)
-        ctx.fillStyle = colors.furLight;
-        ctx.fillRect(3 * p, 5 * p, 4 * p, 2 * p);
-        
-        // 4. FRONT LEGS (Right)
-        ctx.fillStyle = colors.furDark;
-        ctx.fillRect(6 * p - legOffset, 7 * p, 2 * p, 2 * p);
-        
-        // 5. HEAD
-        ctx.fillStyle = colors.fur;
-        ctx.fillRect(0, 0, 9 * p, 5 * p); // Big head box
-        
-        // Ears
-        ctx.fillStyle = colors.fur;
-        ctx.fillRect(1 * p, -2 * p, 2 * p, 2 * p); // Left Ear base
-        ctx.fillRect(1 * p, -3 * p, 1 * p, 1 * p); // Left Ear tip
-        
-        ctx.fillRect(6 * p, -2 * p, 2 * p, 2 * p); // Right Ear base
-        ctx.fillRect(7 * p, -3 * p, 1 * p, 1 * p); // Right Ear tip
-        
-        // Ear Insides
-        ctx.fillStyle = colors.furDark;
-        ctx.fillRect(1.5 * p, -1.5 * p, 1 * p, 1 * p);
-        ctx.fillRect(6.5 * p, -1.5 * p, 1 * p, 1 * p);
-        
-        // 6. FACE DETAILS
-        // Eyes
-        ctx.fillStyle = colors.black;
-        ctx.fillRect(2 * p, 2 * p, 1 * p, 1 * p); // Left Eye
-        ctx.fillRect(6 * p, 2 * p, 1 * p, 1 * p); // Right Eye
-        
-        // Eye Shine
-        ctx.fillStyle = colors.white;
-        ctx.fillRect(2.2 * p, 2.2 * p, 0.4 * p, 0.4 * p);
-        ctx.fillRect(6.2 * p, 2.2 * p, 0.4 * p, 0.4 * p);
-        
-        // Nose
-        ctx.fillStyle = colors.nose;
-        ctx.fillRect(4.5 * p - 1, 3 * p, 2, 2);
-        
-        // Whiskers
-        ctx.fillStyle = colors.black;
-        ctx.fillRect(0.5 * p, 3.5 * p, 1.5 * p, 1); // Left
-        ctx.fillRect(7 * p, 3.5 * p, 1.5 * p, 1);   // Right
+        // Select drawing function based on type
+        const drawFunc = window.CharacterDrawers && window.CharacterDrawers[this.type] 
+            ? window.CharacterDrawers[this.type] 
+            : window.CharacterDrawers['cat']; // Fallback
+            
+        drawFunc(ctx, colors, p, this.animationFrame, this.isOnGround, this.legOffset);
         
         ctx.restore();
         
