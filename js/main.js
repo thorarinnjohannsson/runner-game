@@ -37,6 +37,7 @@ const GAME_STATES = {
     COUNTDOWN: 'COUNTDOWN',
     PLAYING: 'PLAYING',
     PAUSED: 'PAUSED',
+    LEVEL_TRANSITION: 'LEVEL_TRANSITION',
     GAME_OVER: 'GAME_OVER'
 };
 
@@ -64,6 +65,21 @@ let screenShake = 0;
 let shakeOffsetX = 0;
 let shakeOffsetY = 0;
 let groundScroll = 0; // Track ground texture scrolling
+
+// Level transition variables
+let levelTransitionCountdown = 0;
+let levelTransitionStartTime = 0;
+let showLevelIntro = false;
+let levelIntroStartTime = 0;
+
+// Milestone tracking
+let milestones = {
+    25: false,
+    50: false,
+    75: false,
+    90: false
+};
+let lastMilestoneShown = 0;
 
 // Selected character
 let selectedCharacter = null;
@@ -181,11 +197,32 @@ function gameLoop() {
         case GAME_STATES.PLAYING:
             updateGameplay();
             drawGameplay();
+            // Draw effects
+            if (typeof drawEffects !== 'undefined') {
+                drawEffects(ctx);
+            }
+            // Draw level intro overlay if active
+            if (showLevelIntro) {
+                drawLevelIntro();
+            }
             break;
             
         case GAME_STATES.PAUSED:
             drawGameplay();
             drawPauseOverlay();
+            break;
+            
+        case GAME_STATES.LEVEL_TRANSITION:
+            updateLevelTransition();
+            drawGameplay();
+            // Draw transition managed by transitionManager
+            if (typeof transitionManager !== 'undefined') {
+                transitionManager.draw(ctx);
+            }
+            // Draw effects on top
+            if (typeof drawEffects !== 'undefined') {
+                drawEffects(ctx);
+            }
             break;
             
         case GAME_STATES.GAME_OVER:
@@ -228,15 +265,31 @@ function drawBackground() {
     
     // Draw parallax layers
     parallaxBg.draw(ctx, canvas.width, GROUND_Y);
+    
+    // Draw theme-specific ground
+    drawGround();
+}
+
+// Draw theme-specific ground
+function drawGround() {
+    // Get theme colors
+    const theme = (typeof currentTheme !== 'undefined') ? currentTheme : {
+        groundBase: '#694528',
+        soilLight: '#916643',
+        soilDark: '#4D3222',
+        groundTop: '#6ABE30',
+        groundDark: '#37946E',
+        grassBorder: '#4D3222'
+    };
 
     // --- SOIL BASE ---
-    ctx.fillStyle = '#694528'; // Richer brown from reference
+    ctx.fillStyle = theme.groundBase;
     ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
     
     // --- SOIL TEXTURE (Grid-aligned squares) ---
     const soilColors = {
-        light: '#916643',
-        dark: '#4D3222'
+        light: theme.soilLight,
+        dark: theme.soilDark
     };
     
     const tileSize = 20; // Size of grid cells
@@ -276,9 +329,9 @@ function drawBackground() {
     }
 
     // --- GRASS LAYER (Scrolling) ---
-    const grassLight = '#6ABE30'; // Vibrant green
-    const grassDark = '#37946E'; // Shadow green
-    const grassBorder = '#4D3222'; // Dark brown separator
+    const grassLight = theme.groundTop;
+    const grassDark = theme.groundDark;
+    const grassBorder = theme.grassBorder;
     
     // Grass is a repeating pattern. Let's define a block size.
     const blockWidth = 32; 
@@ -421,6 +474,18 @@ function startNewGame() {
     pausedTime = 0;
     wasPausedByUser = false;
     
+    // Reset level system
+    if (typeof levelManager !== 'undefined') {
+        levelManager.reset();
+        levelManager.startLevel(1, 0, 0);
+        currentLevelStats.reset();
+    }
+    
+    // Apply first theme
+    if (typeof applyTheme !== 'undefined' && typeof getThemeForLevel !== 'undefined') {
+        applyTheme(getThemeForLevel(1));
+    }
+    
     // Reset scoring system
     resetScoring();
     screenShake = 0;
@@ -500,6 +565,14 @@ function updateGameplay() {
     const timeDelta = deltaTime - elapsedTime; // Time since last frame
     elapsedTime = deltaTime;
     
+    // Update level intro
+    if (showLevelIntro) {
+        const introDuration = 2000; // 2 seconds
+        if (Date.now() - levelIntroStartTime > introDuration) {
+            showLevelIntro = false;
+        }
+    }
+    
     // Update difficulty
     updateDifficulty(elapsedTime);
     
@@ -539,6 +612,14 @@ function updateGameplay() {
     
     // Update total score
     score = scoreStats.totalScore;
+    
+    // Check for level completion
+    if (typeof levelManager !== 'undefined' && levelManager.isLevelComplete(score)) {
+        triggerLevelTransition();
+    }
+    
+    // Check for milestones
+    checkProgressMilestones();
 }
 
 // Update collectables
@@ -637,15 +718,67 @@ function drawHUD() {
     ctx.fillStyle = '#333';
     ctx.font = `bold ${sizes.hudSize}px Arial`;
     
-    // Timer (top left)
+    // Level indicator (top left)
+    if (typeof levelManager !== 'undefined') {
+        const progress = levelManager.getLevelProgress(score);
+        const required = levelManager.getPointsRequired();
+        const progressPercent = levelManager.getProgressPercent(score);
+        
+        ctx.fillStyle = '#FFD700';
+        ctx.font = `bold ${isMobile ? 14 : 16}px Arial`;
+        ctx.fillText(`LEVEL ${levelManager.currentLevel}`, 10, isMobile ? 20 : 25);
+        
+        // Progress bar
+        const barWidth = isMobile ? 80 : 100;
+        const barHeight = 8;
+        const barX = 10;
+        const barY = isMobile ? 25 : 30;
+        
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Progress fill with glow effect when near completion
+        const fillWidth = (progress / required) * barWidth;
+        
+        // Add glow when over 75%
+        if (progressPercent >= 75) {
+            const pulse = 0.5 + Math.sin(Date.now() * 0.01) * 0.5;
+            ctx.shadowBlur = 10 * pulse;
+            ctx.shadowColor = progressPercent >= 90 ? '#FF4444' : '#FFD700';
+        }
+        
+        ctx.fillStyle = progressPercent >= 90 ? '#FF4444' : '#FFD700';
+        ctx.fillRect(barX, barY, fillWidth, barHeight);
+        ctx.shadowBlur = 0;
+        
+        // Border
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        // Progress text
+        ctx.fillStyle = '#666';
+        ctx.font = `${isMobile ? 10 : 12}px Arial`;
+        ctx.fillText(`${progress}/${required}`, barX + barWidth + 5, barY + barHeight);
+        
+        // Screen border effect when near completion
+        if (progressPercent >= 90) {
+            drawProgressBorder(progressPercent);
+        }
+    }
+    
+    // Timer (below level)
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${sizes.hudSize}px Arial`;
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = Math.floor(elapsedTime % 60);
     const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    ctx.fillText(`⏱ ${timeStr}`, 10, isMobile ? 25 : 30);
+    ctx.fillText(`⏱ ${timeStr}`, 10, isMobile ? 50 : 55);
     
-    // Pause button (top right of timer)
-    const pauseButtonX = isMobile ? 10 : 150;
-    const pauseButtonY = isMobile ? 35 : 10;
+    // Pause button (below timer)
+    const pauseButtonX = 10;
+    const pauseButtonY = isMobile ? 60 : 65;
     const pauseButtonWidth = isMobile ? 70 : 60;
     const pauseButtonHeight = isMobile ? 30 : 25;
     
@@ -1136,6 +1269,208 @@ function updateRipples() {
 // Draw ripples
 function drawRipples() {
     ripples.forEach(ripple => ripple.draw(ctx));
+}
+
+// Check progress milestones
+function checkProgressMilestones() {
+    if (typeof levelManager === 'undefined') return;
+    
+    const progress = levelManager.getProgressPercent(score);
+    
+    // Check each milestone
+    [25, 50, 75, 90].forEach(milestone => {
+        if (progress >= milestone && !milestones[milestone]) {
+            milestones[milestone] = true;
+            showMilestoneMessage(milestone);
+        }
+    });
+}
+
+// Show milestone message
+function showMilestoneMessage(milestone) {
+    let message = '';
+    let color = '#FFD700';
+    
+    switch(milestone) {
+        case 25:
+            message = 'QUARTER WAY!';
+            break;
+        case 50:
+            message = 'HALFWAY THERE!';
+            break;
+        case 75:
+            message = 'FINAL STRETCH!';
+            break;
+        case 90:
+            message = 'ALMOST THERE!';
+            color = '#FF4444';
+            break;
+    }
+    
+    // Create popup
+    createScorePopup(canvas.width / 2, canvas.height / 3, 0, message);
+    
+    // Create celebration particles
+    if (typeof addEffect !== 'undefined' && typeof createCelebrationBurst !== 'undefined') {
+        addEffect(createCelebrationBurst(canvas.width / 2, canvas.height / 3, 15));
+    }
+    
+    // Play sound
+    if (typeof audioManager !== 'undefined') {
+        audioManager.playSound('powerup');
+    }
+    
+    // Screen shake
+    screenShake = 10;
+}
+
+// Reset milestones for new level
+function resetMilestones() {
+    milestones = { 25: false, 50: false, 75: false, 90: false };
+    lastMilestoneShown = 0;
+}
+
+// Trigger level transition
+function triggerLevelTransition() {
+    // Save last level stats
+    if (typeof lastLevelStats !== 'undefined' && typeof currentLevelStats !== 'undefined') {
+        lastLevelStats.obstaclesCleared = scoreStats.obstaclesCleared;
+        lastLevelStats.timePoints = scoreStats.timePoints - (levelManager.levelStartScore > 0 ? 0 : scoreStats.timePoints);
+        lastLevelStats.obstaclePoints = scoreStats.obstaclePoints;
+        lastLevelStats.bonusPoints = scoreStats.bonusPoints;
+        lastLevelStats.startTime = levelManager.levelStartTime;
+        lastLevelStats.endTime = elapsedTime;
+    }
+    
+    gameState = GAME_STATES.LEVEL_TRANSITION;
+    
+    // Start transition manager
+    if (typeof transitionManager !== 'undefined') {
+        transitionManager.start();
+    }
+}
+
+// Update level transition
+function updateLevelTransition() {
+    // Update transition manager
+    if (typeof transitionManager !== 'undefined') {
+        transitionManager.update();
+        
+        // Check if transition is complete
+        if (!transitionManager.active) {
+            // Transition handles calling startNextLevel
+        }
+    }
+    
+    // Update effects
+    if (typeof updateEffects !== 'undefined') {
+        updateEffects();
+    }
+}
+
+// Start next level
+function startNextLevel() {
+    // Advance level
+    if (typeof levelManager !== 'undefined') {
+        levelManager.advanceLevel(score, elapsedTime);
+        
+        // Apply new theme
+        if (typeof applyTheme !== 'undefined') {
+            const newTheme = levelManager.getCurrentTheme();
+            applyTheme(newTheme);
+        }
+    }
+    
+    // Reset milestones
+    resetMilestones();
+    
+    // Reset level-specific stats (but keep cumulative score)
+    if (typeof currentLevelStats !== 'undefined') {
+        currentLevelStats.reset();
+    }
+    
+    // Clear all obstacles
+    obstacles = [];
+    collectables = [];
+    
+    // Clear effects
+    if (typeof clearEffects !== 'undefined') {
+        clearEffects();
+    }
+    
+    // Give difficulty a slight boost but reset spawn timing
+    if (typeof resetDifficultyForNewLevel !== 'undefined') {
+        resetDifficultyForNewLevel();
+    }
+    
+    // Reset player position
+    if (player) {
+        player.x = PLAYER_START_X;
+        player.y = PLAYER_START_Y;
+        player.velocityY = 0;
+        player.jumpCount = 0;
+    }
+    
+    // Return to playing state
+    gameState = GAME_STATES.PLAYING;
+    
+    // Show level intro
+    showLevelIntro = true;
+    levelIntroStartTime = Date.now();
+}
+
+// Draw progress border effect
+function drawProgressBorder(progress) {
+    const pulse = 0.5 + Math.sin(Date.now() * 0.015) * 0.5;
+    const intensity = (progress - 90) / 10; // 0 to 1 from 90% to 100%
+    
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 68, 68, ${intensity * pulse})`;
+    ctx.lineWidth = 4 + intensity * 4;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#FF4444';
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    ctx.restore();
+}
+
+// Draw level intro (brief overlay at start of level)
+function drawLevelIntro() {
+    const elapsed = Date.now() - levelIntroStartTime;
+    const duration = 2000;
+    const fadeStart = 1500;
+    
+    // Fade out effect
+    let alpha = 1.0;
+    if (elapsed > fadeStart) {
+        alpha = 1.0 - ((elapsed - fadeStart) / (duration - fadeStart));
+    }
+    
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Level number
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 4;
+    
+    const levelText = `LEVEL ${levelManager.currentLevel}`;
+    ctx.strokeText(levelText, canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillText(levelText, canvas.width / 2, canvas.height / 2 - 20);
+    
+    // Theme name
+    const theme = levelManager.getCurrentTheme();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 24px Arial';
+    ctx.strokeText(theme.name, canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText(theme.name, canvas.width / 2, canvas.height / 2 + 20);
+    
+    ctx.restore();
 }
 
 // Initialize game when page loads

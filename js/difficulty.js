@@ -11,7 +11,7 @@ let multiLevelChance = 0.15; // Start at 15% chance
 let floatingChance = 0.3; // Start at 30% chance
 let terrainChance = 0; // Chance of elevated terrain
 
-// Get difficulty multiplier based on time
+// Get difficulty multiplier based on time and level
 function getDifficultyMultiplier(timeElapsed) {
     // Progress from 0 to 1 over MAX_DIFFICULTY_TIME
     const progress = Math.min(timeElapsed / MAX_DIFFICULTY_TIME, 1);
@@ -19,11 +19,19 @@ function getDifficultyMultiplier(timeElapsed) {
     // Ease-in curve for smoother progression
     const easedProgress = progress * progress;
     
-    // Multiply from 1x to 2.5x
-    return 1 + easedProgress * 1.5;
+    // Base multiplier from 1x to 2.5x
+    let multiplier = 1 + easedProgress * 1.5;
+    
+    // Add level-based multiplier (10% per level)
+    if (typeof levelManager !== 'undefined') {
+        const levelBonus = 1 + (levelManager.currentLevel - 1) * 0.1;
+        multiplier *= levelBonus;
+    }
+    
+    return multiplier;
 }
 
-// Update difficulty based on elapsed time
+// Update difficulty based on elapsed time and current level
 function updateDifficulty(timeElapsed) {
     const mult = getDifficultyMultiplier(timeElapsed);
     const progress = Math.min(timeElapsed / MAX_DIFFICULTY_TIME, 1);
@@ -52,6 +60,21 @@ function resetDifficulty() {
     multiLevelChance = 0.15;
     floatingChance = 0.3;
     terrainChance = 0;
+    lastSpawnTime = Date.now();
+}
+
+// Reset difficulty for new level (slight boost but give player breathing room)
+function resetDifficultyForNewLevel() {
+    // Apply level multiplier but reset time-based scaling
+    const levelBonus = (typeof levelManager !== 'undefined') ? (1 + (levelManager.currentLevel - 1) * 0.1) : 1;
+    
+    gameSpeed = BASE_SPEED * levelBonus;
+    spawnInterval = BASE_INTERVAL / levelBonus;
+    multiLevelChance = 0.15;
+    floatingChance = 0.3;
+    terrainChance = 0;
+    
+    // Reset spawn timing
     lastSpawnTime = Date.now();
 }
 

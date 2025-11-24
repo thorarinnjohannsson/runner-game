@@ -57,86 +57,98 @@ function drawStartScreen() {
     const center = canvas.width / 2;
     const h = canvas.height;
     
+    // Layout Logic with better scaling for different heights
     const tight = h < 380;
     const compact = h <= 450;
-    const headerY = tight ? 30 : (compact ? 40 : 60);
+    const veryCompact = h <= 520; // New breakpoint for desktop landscape
+    
+    const headerY = tight ? 25 : (compact ? 32 : (veryCompact ? 38 : 60));
     
     const layoutWidth = Math.min(canvas.width - 40, mobile ? canvas.width - 20 : 540);
     const layoutX = center - layoutWidth / 2;
-    const topY = tight ? 65 : (compact ? 85 : 110);
-    const namePanelHeight = mobile ? 92 : 72;
-    const charPanelHeight = mobile ? 180 : 155;
-    const panelGap = mobile ? 22 : 16;
+    const panelCenterX = layoutX + layoutWidth / 2; // Center of the panel
+    
+    // Scale everything based on available height
+    const topY = tight ? 45 : (compact ? 55 : (veryCompact ? 65 : 110));
+    const namePanelHeight = tight ? 60 : (compact ? 65 : (veryCompact ? 68 : 72));
+    const charPanelHeight = tight ? 130 : (compact ? 145 : (veryCompact ? 160 : 185));
+    const panelGap = tight ? 10 : (compact ? 12 : (veryCompact ? 14 : 16));
     
     const namePanelY = topY;
     const charPanelY = namePanelY + namePanelHeight + panelGap;
-    const selectionLabelY = charPanelY - 0;
-    const characterNameY = charPanelY + charPanelHeight - (mobile ? 8 : 16);
-    const buttonY = charPanelY + charPanelHeight + (mobile ? 35 : 25);
+    const selectionLabelY = charPanelY + (tight ? 16 : (compact ? 18 : (veryCompact ? 20 : 22)));
+    const charRowTop = charPanelY + (tight ? 38 : (compact ? 42 : (veryCompact ? 46 : 52)));
+    const characterNameY = charPanelY + charPanelHeight - (tight ? 20 : (compact ? 22 : (veryCompact ? 24 : 28)));
+    const buttonY = charPanelY + charPanelHeight + (tight ? 15 : (compact ? 18 : (veryCompact ? 20 : 25)));
     
     drawSoftPanel(layoutX, namePanelY, layoutWidth, namePanelHeight, {
         fill: 'rgba(255, 255, 255, 0.92)',
         stroke: 'rgba(0, 0, 0, 0.12)',
-        radius: 18
+        radius: veryCompact ? 14 : 18
     });
     
     drawSoftPanel(layoutX, charPanelY, layoutWidth, charPanelHeight, {
         fill: 'rgba(0, 0, 0, 0.35)',
         stroke: 'rgba(255, 255, 255, 0.2)',
-        radius: 20
+        radius: veryCompact ? 16 : 20
     });
     
-    drawNameEntryUI(center, namePanelY + (mobile ? 28 : 24), layoutWidth);
+    drawNameEntryUI(panelCenterX, namePanelY + (tight ? 18 : (compact ? 20 : (veryCompact ? 22 : 24))), layoutWidth, {
+        compact: tight || compact || veryCompact
+    });
     
     if (typeof updateRipples === 'function') updateRipples();
     if (typeof drawRipples === 'function') drawRipples();
     
     ctx.fillStyle = 'white';
-    ctx.font = `24px "Press Start 2P"`;
+    ctx.font = `${tight ? 18 : (compact ? 20 : (veryCompact ? 22 : 24))}px "Press Start 2P"`;
     ctx.textAlign = 'center';
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = tight ? 3 : 4;
     ctx.strokeText('RUNNER GAME', center, headerY);
     ctx.fillText('RUNNER GAME', center, headerY);
     
     drawAudioControls(canvas.width - 80, 20);
     drawHighScoreButton(20, 20);
     
-    ctx.font = `bold ${tight ? 14 : 16}px "Press Start 2P"`;
+    ctx.font = `bold ${tight ? 12 : (compact ? 13 : (veryCompact ? 14 : 16))}px "Press Start 2P"`;
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 4;
-    ctx.strokeText('SELECT RUNNER', center, selectionLabelY);
+    ctx.lineWidth = tight ? 3 : 4;
+    ctx.textAlign = 'center';
+    ctx.strokeText('SELECT RUNNER', panelCenterX, selectionLabelY);
     ctx.fillStyle = '#FFD700';
-    ctx.fillText('SELECT RUNNER', center, selectionLabelY);
+    ctx.fillText('SELECT RUNNER', panelCenterX, selectionLabelY);
     
-    const charRowTop = charPanelY + (mobile ? 32 : 26);
-    drawCardCharacterSelection(center, charRowTop, {
-        availableWidth: layoutWidth - 80,
-        baseSize: mobile ? 64 : 56,
-        padding: mobile ? 20 : 16
+    drawCardCharacterSelection(panelCenterX, charRowTop, {
+        availableWidth: layoutWidth - 120,
+        baseSize: tight ? 36 : (compact ? 40 : (veryCompact ? 44 : 46)),
+        padding: tight ? 16 : (compact ? 18 : (veryCompact ? 20 : 24))
     });
     
     if (selectedCharacter) {
-        ctx.font = `bold ${tight ? 18 : 22}px Arial`;
+        ctx.font = `bold ${tight ? 14 : (compact ? 16 : (veryCompact ? 18 : 22))}px Arial`;
         ctx.strokeStyle = 'black';
-        ctx.lineWidth = 4;
-        ctx.strokeText(selectedCharacter.name.toUpperCase(), center, characterNameY);
+        ctx.lineWidth = tight ? 3 : 4;
+        ctx.textAlign = 'center';
+        ctx.strokeText(selectedCharacter.name.toUpperCase(), panelCenterX, characterNameY);
         ctx.fillStyle = 'white';
-        ctx.fillText(selectedCharacter.name.toUpperCase(), center, characterNameY);
+        ctx.fillText(selectedCharacter.name.toUpperCase(), panelCenterX, characterNameY);
     }
     
     const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
-    drawCardStartButton(center, buttonY, pulse);
+    drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
 }
 
 // Draw Name Entry UI (Text mode vs Edit mode)
-function drawNameEntryUI(centerX, y, panelWidth = 320) {
+function drawNameEntryUI(centerX, y, panelWidth = 320, options = {}) {
     const nameInput = document.getElementById('playerNameInput');
     const currentName = nameInput ? nameInput.value : (localStorage.getItem('lastPlayerName') || 'Player');
+    const isCompact = options.compact || false;
+    
     const boxWidth = Math.max(180, Math.min(panelWidth - 80, 280));
-    const boxHeight = 40;
+    const boxHeight = isCompact ? 32 : 40;
     const boxX = centerX - boxWidth / 2;
-    const diceSize = 36;
+    const diceSize = isCompact ? 30 : 36;
     const diceGap = 12;
     const panelRight = centerX + panelWidth / 2;
     const boxTop = y;
@@ -151,9 +163,9 @@ function drawNameEntryUI(centerX, y, panelWidth = 320) {
     }
     
     ctx.fillStyle = '#5C6672';
-    ctx.font = `10px "Press Start 2P"`;
-    ctx.textAlign = 'left';
-    ctx.fillText('PLAYER NAME', boxX, boxTop - 8);
+    ctx.font = `${isCompact ? 8 : 10}px "Press Start 2P"`;
+    ctx.textAlign = 'center';
+    ctx.fillText('PLAYER NAME', centerX, boxTop - (isCompact ? 6 : 8));
     
     if (isEditingName) {
         // Show Input
@@ -181,14 +193,14 @@ function drawNameEntryUI(centerX, y, panelWidth = 320) {
         
         // Draw Name Text
         ctx.fillStyle = '#111';
-        ctx.font = '16px "Press Start 2P"';
+        ctx.font = `${isCompact ? 13 : 16}px "Press Start 2P"`;
         ctx.textAlign = 'center';
-        ctx.fillText(currentName, centerX, boxTop + 28);
+        ctx.fillText(currentName, centerX, boxTop + (isCompact ? 22 : 28));
         
         // Draw Edit Icon (Pencil) - Right side of box
         const editX = boxX + boxWidth - 20;
         const editY = boxTop + boxHeight / 2;
-        ctx.font = '16px Arial';
+        ctx.font = `${isCompact ? 13 : 16}px Arial`;
         ctx.textAlign = 'right';
         ctx.fillText('✎', editX, editY + 5);
         
@@ -200,9 +212,9 @@ function drawNameEntryUI(centerX, y, panelWidth = 320) {
         ctx.strokeRect(diceX, diceY, diceSize, diceSize);
         
         ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
+        ctx.font = `${isCompact ? 16 : 20}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText('🎲', diceX + diceSize / 2, diceY + 26);
+        ctx.fillText('🎲', diceX + diceSize / 2, diceY + (isCompact ? 22 : 26));
         ctx.textAlign = 'left';
         
         // Define Hit Areas
@@ -328,9 +340,13 @@ function adjustColor(color, amount) {
 }
 
 // Draw pulsing start button
-function drawCardStartButton(centerX, y, scale = 1) {
-    const width = 200 * scale;
-    const height = 50 * scale;
+function drawCardStartButton(centerX, y, scale = 1, options = {}) {
+    const isCompact = options.compact || false;
+    const baseWidth = isCompact ? 160 : 200;
+    const baseHeight = isCompact ? 42 : 50;
+    
+    const width = baseWidth * scale;
+    const height = baseHeight * scale;
     const x = centerX - width/2;
     
     // Pixelated Button Style
@@ -339,7 +355,7 @@ function drawCardStartButton(centerX, y, scale = 1) {
     ctx.fillRect(x, y, width, height);
     
     // Highlights/Shadows (3D effect)
-    const border = 4;
+    const border = isCompact ? 3 : 4;
     
     // Light Top/Left
     ctx.fillStyle = '#81C784';
@@ -353,13 +369,13 @@ function drawCardStartButton(centerX, y, scale = 1) {
     
     // Text
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 20px Arial'; // Or use a pixel font if available
+    ctx.font = `bold ${isCompact ? 16 : 20}px Arial`;
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
-    ctx.fillText('START RUN', centerX, y + 33);
+    ctx.fillText('START RUN', centerX, y + (isCompact ? 28 : 33));
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     
@@ -1022,6 +1038,153 @@ function drawAudioControls(x, y) {
     };
     
     ctx.textAlign = 'left'; // Reset alignment
+}
+
+// Draw Level Transition Screen (NES-inspired)
+function drawLevelTransitionScreen() {
+    // Black background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Get elapsed time for animation
+    const elapsed = Date.now() - levelTransitionStartTime;
+    const showStats = elapsed > 500; // Delay stats slightly
+    const showCountdown = elapsed > 3000; // Countdown after 3 seconds
+    
+    // --- HEADER ---
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    
+    const headerText = `LEVEL ${levelManager.currentLevel} COMPLETE!`;
+    ctx.fillText(headerText, centerX, 80);
+    
+    // --- STATS PANEL ---
+    if (showStats) {
+        const panelWidth = 400;
+        const panelHeight = 220;
+        const panelX = centerX - panelWidth / 2;
+        const panelY = 120;
+        
+        // Panel background
+        ctx.fillStyle = '#1A1A2E';
+        ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+        
+        // Panel border
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+        
+        // Inner border for NES look
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(panelX + 8, panelY + 8, panelWidth - 16, panelHeight - 16);
+        
+        // Stats title
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('LEVEL STATS', centerX, panelY + 35);
+        
+        // Stats content
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        const leftX = panelX + 40;
+        const rightX = panelX + panelWidth - 40;
+        let lineY = panelY + 65;
+        const lineHeight = 28;
+        
+        // Time
+        const levelTime = Math.floor(lastLevelStats.duration);
+        const minutes = Math.floor(levelTime / 60);
+        const seconds = levelTime % 60;
+        ctx.fillStyle = '#AAAAAA';
+        ctx.fillText('Time:', leftX, lineY);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${minutes}:${seconds.toString().padStart(2, '0')}`, rightX, lineY);
+        
+        // Obstacles
+        lineY += lineHeight;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#AAAAAA';
+        ctx.fillText('Obstacles Cleared:', leftX, lineY);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${lastLevelStats.obstaclesCleared}`, rightX, lineY);
+        
+        // Points
+        lineY += lineHeight;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#AAAAAA';
+        ctx.fillText('Level Score:', leftX, lineY);
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${levelManager.getPointsRequired()} pts`, rightX, lineY);
+        
+        // Separator
+        ctx.strokeStyle = '#555555';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(leftX, lineY + 12);
+        ctx.lineTo(rightX, lineY + 12);
+        ctx.stroke();
+        
+        // Total score
+        lineY += lineHeight + 10;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('TOTAL:', leftX, lineY);
+        ctx.textAlign = 'right';
+        ctx.fillText(`${score} pts`, rightX, lineY);
+    }
+    
+    // --- NEXT LEVEL PREVIEW ---
+    if (showCountdown) {
+        const nextLevel = levelManager.currentLevel + 1;
+        const nextTheme = levelManager.getNextTheme();
+        
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('GET READY FOR', centerX, centerY + 80);
+        
+        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(`LEVEL ${nextLevel}`, centerX, centerY + 120);
+        
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = getThemeColor(nextTheme);
+        ctx.fillText(nextTheme.name, centerX, centerY + 150);
+        
+        // Countdown
+        ctx.font = 'bold 72px Arial';
+        ctx.fillStyle = '#FF4444';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        
+        if (levelTransitionCountdown > 0) {
+            ctx.strokeText(levelTransitionCountdown, centerX, centerY + 220);
+            ctx.fillText(levelTransitionCountdown, centerX, centerY + 220);
+        }
+    }
+    
+    ctx.textAlign = 'left';
+}
+
+// Get representative color for theme
+function getThemeColor(theme) {
+    if (theme.id === 'desert') return '#FFA726';
+    if (theme.id === 'night') return '#3F51B5';
+    if (theme.id === 'ice') return '#4FC3F7';
+    if (theme.id === 'volcano') return '#FF5722';
+    if (theme.id === 'sky') return '#81D4FA';
+    return '#6ABE30'; // grassland
 }
 
 // Handle starting the game

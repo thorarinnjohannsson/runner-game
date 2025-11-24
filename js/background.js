@@ -54,14 +54,21 @@ class ParallaxBackground {
         this.layers.push(new BackgroundLayer(0.1, (ctx, width, groundY) => {
             // Sky is drawn separately as static background usually, but clouds move
             // Random cloud placement - strictly deterministic for looping
+            const cloudColor = (typeof currentTheme !== 'undefined') ? currentTheme.cloudColor : '#FFFFFF';
+            const originalFillStyle = ctx.fillStyle;
+            // Temporarily set cloud colors for drawing
             drawCloud(width * 0.1, 80, 1.0);
             drawCloud(width * 0.4, 50, 0.8);
             drawCloud(width * 0.75, 90, 1.2);
+            ctx.fillStyle = originalFillStyle;
         }));
 
         // 2. MOUNTAINS (Far, Slow)
         this.layers.push(new BackgroundLayer(0.2, (ctx, width, groundY) => {
-            ctx.fillStyle = '#9EA7B8'; // Grey-blue mountains
+            const mountainColor = (typeof currentTheme !== 'undefined') ? currentTheme.mountainColor : '#9EA7B8';
+            const mountainSnow = (typeof currentTheme !== 'undefined') ? currentTheme.mountainSnow : '#FFFFFF';
+            
+            ctx.fillStyle = mountainColor;
             
             // Draw a few peaks
             ctx.beginPath();
@@ -74,7 +81,7 @@ class ParallaxBackground {
             ctx.fill();
             
             // Snow caps
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = mountainSnow;
             ctx.beginPath();
             ctx.moveTo(width * 0.2, groundY - 150);
             ctx.lineTo(width * 0.2 + 20, groundY - 120);
@@ -90,7 +97,9 @@ class ParallaxBackground {
 
         // 3. HILLS (Mid-distance)
         this.layers.push(new BackgroundLayer(0.4, (ctx, width, groundY) => {
-            ctx.fillStyle = '#689F38'; // Dim green
+            const hillColor = (typeof currentTheme !== 'undefined') ? currentTheme.hillColor : '#689F38';
+            
+            ctx.fillStyle = hillColor;
             ctx.beginPath();
             ctx.moveTo(0, groundY);
             
@@ -120,10 +129,13 @@ class ParallaxBackground {
     }
 
     draw(ctx, canvasWidth, groundY) {
-        // Sky Gradient (Static)
+        // Sky Gradient (Static) - use theme colors
+        const skyTop = (typeof currentTheme !== 'undefined') ? currentTheme.skyTop : '#5FB0E8';
+        const skyBottom = (typeof currentTheme !== 'undefined') ? currentTheme.skyBottom : '#87CEEB';
+        
         const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
-        skyGradient.addColorStop(0, '#5FB0E8'); 
-        skyGradient.addColorStop(1, '#87CEEB');
+        skyGradient.addColorStop(0, skyTop); 
+        skyGradient.addColorStop(1, skyBottom);
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, canvasWidth, groundY);
 

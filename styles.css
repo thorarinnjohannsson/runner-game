@@ -34,7 +34,7 @@ body {
 
 #playerNameInput {
     position: absolute;
-    /* Position will be controlled by JS slightly, but this is the base */
+    /* Position will be controlled by JS */
     top: 150px; 
     left: 50%;
     transform: translate(-50%, 0);
@@ -43,7 +43,9 @@ body {
     text-align: center;
     border: 3px solid #1f2933;
     border-radius: 12px;
-    width: 240px;
+    /* Width set by JS dynamically */
+    min-width: 180px;
+    max-width: 280px;
     font-family: 'Press Start 2P', cursive;
     outline: none;
     box-shadow: 0 12px 24px rgba(0,0,0,0.18);
@@ -57,7 +59,7 @@ body {
 #playerNameInput:focus {
     border-color: #4CAF50;
     box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
-    width: 240px;
+    /* Keep dynamic width */
 }
 
 @media (max-width: 850px) {

@@ -90,13 +90,15 @@ class Obstacle {
         this.scored = false; // Whether we've awarded score for this obstacle
         this.closeCall = false; // Whether player barely cleared it
         
-        // Color setup
+        // Color setup - use theme colors if available
+        const theme = (typeof currentTheme !== 'undefined') ? currentTheme : {};
+        
         if (isTerrain) {
-            this.color = '#5D4037'; // Dark brown for terrain
+            this.color = theme.groundBase || '#5D4037';
         } else if (isFloating) {
-            this.color = '#6A5ACD'; // SlateBlue for floating
+            this.color = theme.platformMain || '#6A5ACD';
         } else {
-            this.color = this.getColorForLevel(level);
+            this.color = theme.obstacleMain || this.getColorForLevel(level);
         }
         
         this.landedOn = false; // Track if player landed on it
@@ -115,10 +117,12 @@ class Obstacle {
     
     // Draw obstacle
     draw(ctx) {
+        const theme = (typeof currentTheme !== 'undefined') ? currentTheme : {};
+        
         if (this.isTerrain) {
             // Terrain style (elevated ground)
             // Soil body
-            ctx.fillStyle = '#8B4513'; // Brown soil
+            ctx.fillStyle = theme.groundBase || '#8B4513';
             ctx.fillRect(this.x, this.y, this.width, this.height);
             
             // Extend visual to bottom of screen to look like solid ground
@@ -128,11 +132,11 @@ class Obstacle {
             }
             
             // Grass Top Layer
-            ctx.fillStyle = '#66BB6A';
+            ctx.fillStyle = theme.groundTop || '#66BB6A';
             ctx.fillRect(this.x, this.y, this.width, 10);
             
             // Pixelated Grass Edge (Checkerboard pattern)
-            ctx.fillStyle = '#4CAF50';
+            ctx.fillStyle = theme.groundDark || '#4CAF50';
             const pixelSize = 5;
             for (let i = 0; i < this.width; i += pixelSize) {
                 if (Math.floor(i / pixelSize) % 2 === 0) {
@@ -141,7 +145,7 @@ class Obstacle {
             }
             
             // Dark Green Grass Border
-            ctx.fillStyle = '#2E7D32';
+            ctx.fillStyle = theme.grassBorder || '#2E7D32';
             ctx.fillRect(this.x, this.y + 10, this.width, 4);
             
             // Side Border (Left/Right edges)
@@ -163,21 +167,21 @@ class Obstacle {
         if (this.isFloating) {
             // Floating platform style (Wood/Log pixel style)
             // Main block
-            ctx.fillStyle = '#8D6E63'; // Light brown wood
+            ctx.fillStyle = theme.platformMain || '#8D6E63';
             ctx.fillRect(this.x, this.y, this.width, this.height);
             
             // Wood grain / planks
-            ctx.fillStyle = '#5D4037';
+            ctx.fillStyle = theme.platformDark || '#5D4037';
             for(let i=10; i<this.width; i+=30) {
                 ctx.fillRect(this.x + i, this.y, 2, this.height);
             }
             
             // Top highlight
-            ctx.fillStyle = '#A1887F';
+            ctx.fillStyle = theme.platformLight || '#A1887F';
             ctx.fillRect(this.x, this.y, this.width, 4);
             
             // Bottom shadow
-            ctx.fillStyle = '#4E342E';
+            ctx.fillStyle = theme.platformShadow || '#4E342E';
             ctx.fillRect(this.x, this.y + this.height - 4, this.width, 4);
             
             // Border
@@ -189,23 +193,23 @@ class Obstacle {
 
         // PIXEL BLOCK OBSTACLE (Standard)
         // Main Block Color
-        ctx.fillStyle = '#A0522D'; // Sienna brown
+        ctx.fillStyle = theme.obstacleMain || '#A0522D';
         ctx.fillRect(this.x, this.y, this.width, this.height);
         
         const borderSize = 4;
         
         // Light Top/Left (Bevel)
-        ctx.fillStyle = '#CD853F'; // Lighter brown
+        ctx.fillStyle = theme.obstacleLight || '#CD853F';
         ctx.fillRect(this.x, this.y, this.width, borderSize);
         ctx.fillRect(this.x, this.y, borderSize, this.height);
         
         // Dark Bottom/Right (Bevel)
-        ctx.fillStyle = '#5D4037'; // Dark brown
+        ctx.fillStyle = theme.obstacleDark || '#5D4037';
         ctx.fillRect(this.x + this.width - borderSize, this.y, borderSize, this.height);
         ctx.fillRect(this.x, this.y + this.height - borderSize, this.width, borderSize);
         
         // Inner Face
-        ctx.fillStyle = '#8B4513'; // SaddleBrown
+        ctx.fillStyle = theme.obstacleFace || '#8B4513';
         ctx.fillRect(this.x + borderSize, this.y + borderSize, this.width - 2*borderSize, this.height - 2*borderSize);
         
         // Pixel Noise/Texture inside
