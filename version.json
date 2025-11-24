@@ -1,6 +1,6 @@
 {
-  "hash": "8c11c6f",
-  "date": "2025-11-24 20:05:18 +0100",
-  "message": "Implement version information loading from version.json with fallback to timestamp display. Enhance user feedback by showing version hash and formatted date/time in the UI.",
-  "timestamp": 1764011119222
+  "hash": "9f70a0e",
+  "date": "2025-11-24 20:05:25 +0100",
+  "message": "Update version.json to reflect new version hash and timestamp. Enhance user feedback by displaying version information in the UI.",
+  "timestamp": 1764011125599
 }
