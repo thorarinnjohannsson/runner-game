@@ -214,7 +214,9 @@ function gameLoop() {
             
         case GAME_STATES.LEVEL_TRANSITION:
             updateLevelTransition();
-            drawGameplay();
+            // Don't draw gameplay (player/obstacles) to avoid ghosts/glitches
+            // drawGameplay(); 
+            
             // Draw transition managed by transitionManager
             if (typeof transitionManager !== 'undefined') {
                 transitionManager.draw(ctx);
@@ -720,9 +722,10 @@ function drawHUD() {
     
     // Level indicator (top left)
     if (typeof levelManager !== 'undefined') {
-        const progress = levelManager.getLevelProgress(score);
-        const required = levelManager.getPointsRequired();
-        const progressPercent = levelManager.getProgressPercent(score);
+        // Use cumulative scores for progress
+        const currentTotal = score;
+        const nextLevelTotal = levelManager.getCumulativePointsRequired();
+        const progressPercent = levelManager.getCumulativeProgressPercent(score);
         
         ctx.fillStyle = '#FFD700';
         ctx.font = `bold ${isMobile ? 14 : 16}px Arial`;
@@ -739,7 +742,7 @@ function drawHUD() {
         ctx.fillRect(barX, barY, barWidth, barHeight);
         
         // Progress fill with glow effect when near completion
-        const fillWidth = (progress / required) * barWidth;
+        const fillWidth = (progressPercent / 100) * barWidth;
         
         // Add glow when over 75%
         if (progressPercent >= 75) {
@@ -757,10 +760,10 @@ function drawHUD() {
         ctx.lineWidth = 2;
         ctx.strokeRect(barX, barY, barWidth, barHeight);
         
-        // Progress text
+        // Progress text - Show total score progress
         ctx.fillStyle = '#666';
         ctx.font = `${isMobile ? 10 : 12}px Arial`;
-        ctx.fillText(`${progress}/${required}`, barX + barWidth + 5, barY + barHeight);
+        ctx.fillText(`${currentTotal}/${nextLevelTotal}`, barX + barWidth + 5, barY + barHeight);
         
         // Screen border effect when near completion
         if (progressPercent >= 90) {
@@ -989,7 +992,9 @@ function onCollision() {
             audioManager.playSound('gameOver');
             audioManager.stopMusic();
         }
-        saveHighScore(player.name, score);
+        // Save highscore with level and time
+        const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
+        saveHighScore(player.name, score, currentLevel, elapsedTime);
         return;
     }
     
@@ -1275,7 +1280,7 @@ function drawRipples() {
 function checkProgressMilestones() {
     if (typeof levelManager === 'undefined') return;
     
-    const progress = levelManager.getProgressPercent(score);
+    const progress = levelManager.getCumulativeProgressPercent(score);
     
     // Check each milestone
     [25, 50, 75, 90].forEach(milestone => {
@@ -1370,15 +1375,11 @@ function updateLevelTransition() {
 
 // Start next level
 function startNextLevel() {
-    // Advance level
+    // Advance level data
     if (typeof levelManager !== 'undefined') {
         levelManager.advanceLevel(score, elapsedTime);
         
-        // Apply new theme
-        if (typeof applyTheme !== 'undefined') {
-            const newTheme = levelManager.getCurrentTheme();
-            applyTheme(newTheme);
-        }
+        // Note: Theme already applied in TransitionManager.updateAnticipation
     }
     
     // Reset milestones
@@ -1403,7 +1404,7 @@ function startNextLevel() {
         resetDifficultyForNewLevel();
     }
     
-    // Reset player position
+    // Reset player position to standard start
     if (player) {
         player.x = PLAYER_START_X;
         player.y = PLAYER_START_Y;

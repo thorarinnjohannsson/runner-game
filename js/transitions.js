@@ -39,10 +39,21 @@ class TransitionManager {
         this.totalStartTime = Date.now();
         this.characterX = player ? player.x : 100;
         this.characterY = player ? player.y : GROUND_Y - 40;
-        this.mountainX = canvas.width + 200;
+        
+        // Target ground position
+        this.targetGroundY = GROUND_Y - 40;
+        
+        // Mountain fixed on the right side (sticking out 200px)
+        this.mountainX = canvas.width - 200; 
+        
         this.caveAlpha = 0;
         this.statsRevealed = 0;
         this.currentStatIndex = 0;
+        
+        // Clear obstacles in front of player to ensure clear path
+        if (typeof obstacles !== 'undefined') {
+            obstacles = obstacles.filter(obs => obs.x < this.characterX);
+        }
         
         // Prepare stats for reveal
         this.prepareStats();
@@ -98,14 +109,20 @@ class TransitionManager {
     updateMountainApproach(elapsed) {
         const duration = 2500; // 2.5 seconds
         
-        // Character runs forward
-        this.characterX += 8;
+        // Character runs forward toward the cave
+        this.characterX += 6;
         
-        // Mountain approaches
-        this.mountainX -= 6;
+        // If character is in the air, guide them to ground smoothly
+        if (this.characterY < this.targetGroundY) {
+            // Ease down to ground
+            const descendSpeed = 4;
+            this.characterY = Math.min(this.characterY + descendSpeed, this.targetGroundY);
+        } else if (this.characterY > this.targetGroundY) {
+            this.characterY = this.targetGroundY;
+        }
         
-        // Particle trail
-        if (Math.random() < 0.3) {
+        // Particle trail when running on ground
+        if (this.characterY >= this.targetGroundY - 5 && Math.random() < 0.3) {
             addEffect(new DustParticle(this.characterX, this.characterY + 40));
         }
         
@@ -181,6 +198,15 @@ class TransitionManager {
         }
         
         if (elapsed > duration) {
+            // Apply new theme BEFORE exit phase starts
+            if (typeof applyTheme !== 'undefined' && typeof levelManager !== 'undefined') {
+                const newTheme = levelManager.getNextTheme(); // Use next theme
+                applyTheme(newTheme);
+            }
+            
+            // Reset character position to LEFT side (starts off-screen left)
+            this.characterX = -50;
+            
             this.nextPhase();
         }
     }
@@ -191,12 +217,15 @@ class TransitionManager {
         // Fade out cave
         this.caveAlpha = Math.max(0, 1 - elapsed / 1000);
         
-        // Character moves out
+        // Character moves out from left
         this.characterX += 6;
         
         // Flash effect at start
         if (elapsed < 300) {
-            addEffect(new ScreenFlash('#FFFFFF', 0.3));
+            // Only add flash once
+            if (elapsed < 50) {
+                addEffect(new ScreenFlash('#FFFFFF', 0.3));
+            }
         }
         
         if (elapsed > duration) {
@@ -257,18 +286,51 @@ class TransitionManager {
     }
     
     drawMountainApproach(ctx) {
-        // Draw mountain in distance
+        // Draw mountain - FULL HEIGHT from ground to top
         ctx.save();
-        ctx.fillStyle = '#8B7355';
+        
+        // Mountain silhouette
+        ctx.fillStyle = '#6D5C4D';
         ctx.beginPath();
         ctx.moveTo(this.mountainX, GROUND_Y);
-        ctx.lineTo(this.mountainX + 100, GROUND_Y - 200);
-        ctx.lineTo(this.mountainX + 200, GROUND_Y);
+        
+        // Left slope up
+        ctx.lineTo(this.mountainX + 80, GROUND_Y - 150);
+        ctx.lineTo(this.mountainX + 120, 0); // Peak reaches top of screen
+        
+        // Extend to right edge
+        ctx.lineTo(canvas.width, 0);
+        ctx.lineTo(canvas.width, GROUND_Y);
+        
+        ctx.closePath();
         ctx.fill();
         
-        // Cave entrance
-        ctx.fillStyle = '#2C1810';
-        ctx.fillRect(this.mountainX + 80, GROUND_Y - 60, 40, 60);
+        // Darker mountain layer for depth
+        ctx.fillStyle = '#5A4A3D';
+        ctx.beginPath();
+        ctx.moveTo(this.mountainX + 20, GROUND_Y);
+        ctx.lineTo(this.mountainX + 100, GROUND_Y - 120);
+        ctx.lineTo(this.mountainX + 120, 0);
+        ctx.lineTo(canvas.width, 0);
+        ctx.lineTo(canvas.width, GROUND_Y);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Cave entrance (centered at ground level)
+        const caveX = this.mountainX + 80;
+        const caveY = GROUND_Y - 70;
+        const caveWidth = 80;
+        const caveHeight = 70;
+        
+        // Cave opening (Blackness extends to right)
+        ctx.fillStyle = '#1A0F08';
+        ctx.beginPath();
+        ctx.arc(caveX + 30, caveY + 30, 30, Math.PI, 1.5 * Math.PI, false);
+        ctx.lineTo(canvas.width, caveY);
+        ctx.lineTo(canvas.width, caveY + caveHeight);
+        ctx.lineTo(caveX, caveY + caveHeight);
+        ctx.lineTo(caveX, caveY + 30);
+        ctx.fill();
         
         ctx.restore();
         
@@ -276,9 +338,28 @@ class TransitionManager {
         if (player) {
             ctx.save();
             ctx.translate(this.characterX, this.characterY);
-            player.drawSprite(ctx, true); // Running animation
+            // Draw player at 0,0 since we've translated
+            const tempX = player.x;
+            const tempY = player.y;
+            player.x = 0;
+            player.y = 0;
+            player.draw(ctx);
+            player.x = tempX;
+            player.y = tempY;
             ctx.restore();
         }
+        
+        // Draw FOREGROUND mountain part to mask entry
+        ctx.save();
+        ctx.fillStyle = '#5A4A3D';
+        ctx.beginPath();
+        // A rock formation covering the right side of the player as they enter
+        ctx.moveTo(this.mountainX + 110, GROUND_Y);
+        ctx.lineTo(this.mountainX + 110, caveY);
+        ctx.lineTo(canvas.width, caveY); // Top of cave entrance
+        ctx.lineTo(canvas.width, 0); // Mask everything right of entrance high up? No just entrance
+        // Actually just draw the "Arch" over the top/right
+        ctx.restore();
     }
     
     drawCaveEntry(ctx) {
@@ -291,7 +372,13 @@ class TransitionManager {
             ctx.save();
             ctx.globalAlpha = 1 - this.caveAlpha;
             ctx.translate(this.characterX, this.characterY);
-            player.drawSprite(ctx, true);
+            const tempX = player.x;
+            const tempY = player.y;
+            player.x = 0;
+            player.y = 0;
+            player.draw(ctx);
+            player.x = tempX;
+            player.y = tempY;
             ctx.restore();
         }
     }
@@ -391,13 +478,75 @@ class TransitionManager {
     }
     
     drawCaveExit(ctx) {
-        // Bright flash
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.caveAlpha * 0.5})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Draw new background first (handled by main loop, but we can ensure it)
+        // Draw Mountain on LEFT
+        ctx.save();
+        
+        // Mountain silhouette (flipped logic for left side)
+        ctx.fillStyle = '#6D5C4D';
+        ctx.beginPath();
+        // Peak at 120 from left
+        ctx.moveTo(0, 0); // Top left
+        ctx.lineTo(120, 0); // Peak
+        ctx.lineTo(200, GROUND_Y - 120); // Slope down
+        ctx.lineTo(250, GROUND_Y); // Base
+        ctx.lineTo(0, GROUND_Y); // Bottom left
+        ctx.closePath();
+        ctx.fill();
+        
+        // Darker layer
+        ctx.fillStyle = '#5A4A3D';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(80, 0);
+        ctx.lineTo(150, GROUND_Y - 100);
+        ctx.lineTo(180, GROUND_Y);
+        ctx.lineTo(0, GROUND_Y);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Cave entrance (Left side)
+        const caveWidth = 80;
+        const caveHeight = 70;
+        const caveY = GROUND_Y - 70;
+        
+        // Cave opening (Blackness extends from left)
+        ctx.fillStyle = '#1A0F08';
+        ctx.beginPath();
+        ctx.moveTo(0, caveY);
+        ctx.lineTo(caveWidth, caveY);
+        ctx.arc(caveWidth, caveY + 30, 30, 1.5 * Math.PI, 0.5 * Math.PI, true); // Right curve
+        ctx.lineTo(caveWidth, caveY + caveHeight);
+        ctx.lineTo(0, caveY + caveHeight);
+        ctx.fill();
+        
+        ctx.restore();
+        
+        // Draw character exiting
+        if (player) {
+            ctx.save();
+            ctx.translate(this.characterX, this.characterY);
+            const tempX = player.x;
+            const tempY = player.y;
+            player.x = 0;
+            player.y = 0;
+            player.draw(ctx);
+            player.x = tempX;
+            player.y = tempY;
+            ctx.restore();
+        }
+        
+        // Bright flash/fade overlay
+        if (this.caveAlpha > 0) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.caveAlpha * 0.5})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     }
     
     drawLevelIntro(ctx) {
-        const theme = levelManager.getCurrentTheme();
+        // We are transitioning TO the next level, so show next level info
+        const nextLevel = levelManager.currentLevel + 1;
+        const theme = levelManager.getNextTheme();
         
         // Theme colors flood
         ctx.fillStyle = theme.skyTop;
@@ -412,7 +561,7 @@ class TransitionManager {
         ctx.fillStyle = '#FFD700';
         ctx.font = 'bold 48px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`LEVEL ${levelManager.currentLevel}`, canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillText(`LEVEL ${nextLevel}`, canvas.width / 2, canvas.height / 2 - 10);
         
         ctx.fillStyle = 'white';
         ctx.font = 'bold 32px Arial';

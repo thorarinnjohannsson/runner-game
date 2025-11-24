@@ -1,7 +1,7 @@
 // DIFFICULTY SCALING
 
 // Difficulty constants
-const BASE_SPEED = 6.5; // Increased from 5
+const BASE_SPEED = 6.0; // Reduced from 6.5 for smoother start
 const BASE_INTERVAL = 1400; // Decreased from 1600
 const MAX_DIFFICULTY_TIME = 120; // Decreased from 150 (Scales faster)
 
@@ -19,16 +19,18 @@ function getDifficultyMultiplier(timeElapsed) {
     // Ease-in curve for smoother progression
     const easedProgress = progress * progress;
     
-    // Base multiplier from 1x to 2.5x
-    let multiplier = 1 + easedProgress * 1.5;
+    // Base multiplier from 1x to 2.0x (Reduced max speed scaling)
+    let multiplier = 1 + easedProgress * 1.0;
     
-    // Add level-based multiplier (10% per level)
+    // Add level-based multiplier (2% per level instead of 4%)
+    // This ensures levels don't get too fast too quickly
     if (typeof levelManager !== 'undefined') {
-        const levelBonus = 1 + (levelManager.currentLevel - 1) * 0.1;
+        const levelBonus = 1 + (levelManager.currentLevel - 1) * 0.02;
         multiplier *= levelBonus;
     }
     
-    return multiplier;
+    // Cap max speed multiplier to 2.5x total
+    return Math.min(multiplier, 2.5);
 }
 
 // Update difficulty based on elapsed time and current level
@@ -39,18 +41,21 @@ function updateDifficulty(timeElapsed) {
     // Update game speed
     gameSpeed = BASE_SPEED * mult;
     
-    // Update spawn interval (faster spawning)
-    spawnInterval = BASE_INTERVAL / mult;
+    // Update spawn interval (decreases as speed increases to maintain density)
+    // Made slightly more aggressive to increase density at lower speeds
+    spawnInterval = (BASE_INTERVAL * 0.9) / mult;
     
-    // Update multi-level obstacle chance (15% to 75%)
-    multiLevelChance = 0.15 + (mult - 1) * 0.4;
+    // Update multi-level obstacle chance (15% to 85%)
+    // Increased scaling to rely heavily on obstacle complexity
+    multiLevelChance = 0.15 + (mult - 1) * 0.8; 
     
-    // Update floating platform chance (30% to 60%)
-    floatingChance = 0.3 + progress * 0.3;
+    // Update floating platform chance (30% to 80%)
+    // Ramps up significantly
+    floatingChance = 0.3 + progress * 0.5;
     
-    // Update terrain chance (0% to 20%)
-    // Start introducing after 15% progress
-    terrainChance = Math.max(0, (progress - 0.15) * 0.25);
+    // Update terrain chance (0% to 30%)
+    // Start introducing after 10% progress
+    terrainChance = Math.max(0, (progress - 0.10) * 0.30);
 }
 
 // Reset difficulty (for new game)
@@ -66,11 +71,11 @@ function resetDifficulty() {
 // Reset difficulty for new level (slight boost but give player breathing room)
 function resetDifficultyForNewLevel() {
     // Apply level multiplier but reset time-based scaling
-    const levelBonus = (typeof levelManager !== 'undefined') ? (1 + (levelManager.currentLevel - 1) * 0.1) : 1;
+    const levelBonus = (typeof levelManager !== 'undefined') ? (1 + (levelManager.currentLevel - 1) * 0.02) : 1;
     
     gameSpeed = BASE_SPEED * levelBonus;
     spawnInterval = BASE_INTERVAL / levelBonus;
-    multiLevelChance = 0.15;
+    multiLevelChance = 0.15 + (levelManager.currentLevel * 0.05); // Initial complexity boost per level
     floatingChance = 0.3;
     terrainChance = 0;
     

@@ -598,20 +598,35 @@ function drawHighScoresList(centerX, startY, limit = 5) {
         return;
     }
     
-    scores.slice(0, limit).forEach((scoreEntry, index) => {
-        const y = startY + (index * lineHeight);
-        const text = `${index + 1}. ${scoreEntry.name} - ${scoreEntry.score}`;
-        
-        if (scoreEntry.score === score && scoreEntry.name === player.name) {
-            ctx.fillStyle = '#FFD700';
-            ctx.font = 'bold 14px Arial';
-        } else {
-            ctx.fillStyle = 'white';
-            ctx.font = '14px Arial';
-        }
-        
-        ctx.fillText(text, centerX, y);
-    });
+        scores.slice(0, limit).forEach((scoreEntry, index) => {
+            const y = startY + (index * lineHeight);
+            const scoreText = `${scoreEntry.score} pts`;
+            const levelText = scoreEntry.level ? `Lvl ${scoreEntry.level}` : '';
+            
+            // Time formatting
+            let timeText = '';
+            if (scoreEntry.time) {
+                const m = Math.floor(scoreEntry.time / 60);
+                const s = Math.floor(scoreEntry.time % 60);
+                timeText = `${m}:${s.toString().padStart(2, '0')}`;
+            }
+            
+            // Left: Rank + Name
+            ctx.fillStyle = scoreEntry.score === score && scoreEntry.name === player.name ? '#FFD700' : 'white';
+            ctx.textAlign = 'left';
+            ctx.font = scoreEntry.score === score && scoreEntry.name === player.name ? 'bold 14px Arial' : '14px Arial';
+            ctx.fillText(`${index + 1}. ${scoreEntry.name}`, centerX - 120, y);
+            
+            // Middle: Level + Time
+            ctx.fillStyle = '#AAA';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${levelText} ${timeText ? `(${timeText})` : ''}`, centerX + 10, y);
+            
+            // Right: Score
+            ctx.fillStyle = scoreEntry.score === score && scoreEntry.name === player.name ? '#FFD700' : 'white';
+            ctx.textAlign = 'right';
+            ctx.fillText(scoreText, centerX + 130, y);
+        });
 }
 
 // Draw Play Again button (prominent, touch-friendly)

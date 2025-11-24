@@ -9,9 +9,19 @@ class LevelManager {
         this.highestLevelReached = parseInt(localStorage.getItem('highestLevel')) || 1;
     }
     
-    // Get points required to complete current level
+    // Get points required to complete current level (delta)
     getPointsRequired() {
         return this.currentLevel * 1500; // Tripled for longer, more engaging levels
+    }
+    
+    // Get cumulative points required to reach the NEXT level
+    getCumulativePointsRequired() {
+        let total = 0;
+        // Sum points for all levels up to current
+        for (let i = 1; i <= this.currentLevel; i++) {
+            total += i * 1500;
+        }
+        return total;
     }
     
     // Get points earned in current level
@@ -29,6 +39,20 @@ class LevelManager {
         const progress = this.getLevelProgress(currentScore);
         const required = this.getPointsRequired();
         return Math.min(100, (progress / required) * 100);
+    }
+    
+    // Get cumulative progress percentage
+    getCumulativeProgressPercent(currentScore) {
+        // Previous level total
+        let prevTotal = 0;
+        for (let i = 1; i < this.currentLevel; i++) {
+            prevTotal += i * 1500;
+        }
+        
+        const currentLevelTotal = this.getCumulativePointsRequired();
+        
+        // Progress within the total range
+        return Math.min(100, ((currentScore - prevTotal) / (currentLevelTotal - prevTotal)) * 100);
     }
     
     // Start a new level
