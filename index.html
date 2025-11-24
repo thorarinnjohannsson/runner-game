@@ -43,21 +43,49 @@
             // Generate a unique version number based on the current time
             var v = Date.now();
             
-            // Set version info with timestamp
+            // Load and display version info
             var versionDiv = document.getElementById('version-info');
             if (versionDiv) {
-                var buildDate = new Date(v);
-                var dateStr = buildDate.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                });
-                var timeStr = buildDate.toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true
-                });
-                versionDiv.textContent =  dateStr + ' ' + timeStr;
+                // Try to load version.json, fallback to timestamp
+                fetch('version.json?v=' + v)
+                    .then(function(response) {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('Version file not found');
+                    })
+                    .then(function(versionInfo) {
+                        // Format commit date
+                        var commitDate = new Date(versionInfo.date);
+                        var dateStr = commitDate.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                        });
+                        var timeStr = commitDate.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                        
+                        // Display: version hash | date time
+                        versionDiv.textContent = 'v' + versionInfo.hash + ' • ' + dateStr + ' ' + timeStr;
+                    })
+                    .catch(function(error) {
+                        // Fallback to timestamp if version.json not available
+                        var buildDate = new Date(v);
+                        var dateStr = buildDate.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                        });
+                        var timeStr = buildDate.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                        versionDiv.textContent = 'dev • ' + dateStr + ' ' + timeStr;
+                    });
             } 
 
             // 1. Load CSS with version
