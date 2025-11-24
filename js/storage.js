@@ -35,7 +35,7 @@ function isStorageAvailable() {
 }
 
 // Save a high score (Local + Global attempt)
-async function saveHighScore(name, score, level = 1, time = 0) {
+async function saveHighScore(name, score, level = 1, time = 0, obstaclesCleared = 0) {
     // 1. Local Save (Always safe)
     const localScores = getLocalHighScores();
     const newScore = {
@@ -43,15 +43,17 @@ async function saveHighScore(name, score, level = 1, time = 0) {
         score: score,
         level: level,
         time: time,
+        obstaclesCleared: obstaclesCleared,
         date: new Date().toISOString()
     };
     
     localScores.push(newScore);
     
-    // Sort: Primary Score (desc), Secondary Level (desc), Tertiary Time (asc)
+    // Sort: Primary Score (desc), Secondary Level (desc), Tertiary Obstacles (desc), Quaternary Time (asc)
     localScores.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         if ((b.level || 1) !== (a.level || 1)) return (b.level || 1) - (a.level || 1);
+        if ((b.obstaclesCleared || 0) !== (a.obstaclesCleared || 0)) return (b.obstaclesCleared || 0) - (a.obstaclesCleared || 0);
         return (a.time || 0) - (b.time || 0);
     });
     
@@ -66,7 +68,7 @@ async function saveHighScore(name, score, level = 1, time = 0) {
     // 2. Global Save via Supabase
     if (typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {
         // Fire and forget - don't await to block UI
-        SupabaseClient.submitScore(name || 'Anonymous', score, level, time).then(success => {
+        SupabaseClient.submitScore(name || 'Anonymous', score, level, time, obstaclesCleared).then(success => {
             if (success) console.log('Score submitted to global leaderboard');
         });
     }

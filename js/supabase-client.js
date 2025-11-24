@@ -35,8 +35,11 @@ const SupabaseClient = {
         try {
             const { data, error } = await this.client
                 .from('high_scores')
-                .select('player_name, score, created_at')
+                .select('player_name, score, level, time, obstacles_cleared, created_at')
                 .order('score', { ascending: false })
+                .order('level', { ascending: false })
+                .order('obstacles_cleared', { ascending: false })
+                .order('time', { ascending: true })
                 .limit(limit);
                 
             if (error) throw error;
@@ -45,6 +48,9 @@ const SupabaseClient = {
             return data.map(entry => ({
                 name: entry.player_name,
                 score: entry.score,
+                level: entry.level || 1,
+                time: entry.time || 0,
+                obstaclesCleared: entry.obstacles_cleared || 0,
                 date: entry.created_at
             }));
             
@@ -55,14 +61,20 @@ const SupabaseClient = {
     },
     
     // Submit a new score
-    submitScore: async function(name, score) {
+    submitScore: async function(name, score, level = 1, time = 0, obstaclesCleared = 0) {
         if (!this.initialized) return false;
         
         try {
             const { data, error } = await this.client
                 .from('high_scores')
                 .insert([
-                    { player_name: name, score: score }
+                    { 
+                        player_name: name, 
+                        score: score,
+                        level: level,
+                        time: time,
+                        obstacles_cleared: obstaclesCleared
+                    }
                 ]);
                 
             if (error) throw error;

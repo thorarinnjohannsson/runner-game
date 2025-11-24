@@ -992,9 +992,9 @@ function onCollision() {
             audioManager.playSound('gameOver');
             audioManager.stopMusic();
         }
-        // Save highscore with level and time
+        // Save highscore with level, time, and obstacles cleared
         const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
-        saveHighScore(player.name, score, currentLevel, elapsedTime);
+        saveHighScore(player.name, score, currentLevel, elapsedTime, scoreStats.obstaclesCleared);
         return;
     }
     

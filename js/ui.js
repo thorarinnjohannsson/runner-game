@@ -580,7 +580,7 @@ function drawHighScoresBox(centerX, y, width, height) {
 function drawHighScoresList(centerX, startY, limit = 5) {
     // Use cached scores or fallback
     const scores = (globalScoresCache.length > 0) ? globalScoresCache : getHighScores();
-    const lineHeight = 24;
+    const lineHeight = 40; // Increased for two-line format
     
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
@@ -598,35 +598,38 @@ function drawHighScoresList(centerX, startY, limit = 5) {
         return;
     }
     
-        scores.slice(0, limit).forEach((scoreEntry, index) => {
-            const y = startY + (index * lineHeight);
-            const scoreText = `${scoreEntry.score} pts`;
-            const levelText = scoreEntry.level ? `Lvl ${scoreEntry.level}` : '';
-            
-            // Time formatting
-            let timeText = '';
-            if (scoreEntry.time) {
-                const m = Math.floor(scoreEntry.time / 60);
-                const s = Math.floor(scoreEntry.time % 60);
-                timeText = `${m}:${s.toString().padStart(2, '0')}`;
-            }
-            
-            // Left: Rank + Name
-            ctx.fillStyle = scoreEntry.score === score && scoreEntry.name === player.name ? '#FFD700' : 'white';
-            ctx.textAlign = 'left';
-            ctx.font = scoreEntry.score === score && scoreEntry.name === player.name ? 'bold 14px Arial' : '14px Arial';
-            ctx.fillText(`${index + 1}. ${scoreEntry.name}`, centerX - 120, y);
-            
-            // Middle: Level + Time
-            ctx.fillStyle = '#AAA';
-            ctx.textAlign = 'center';
-            ctx.fillText(`${levelText} ${timeText ? `(${timeText})` : ''}`, centerX + 10, y);
-            
-            // Right: Score
-            ctx.fillStyle = scoreEntry.score === score && scoreEntry.name === player.name ? '#FFD700' : 'white';
-            ctx.textAlign = 'right';
-            ctx.fillText(scoreText, centerX + 130, y);
-        });
+    scores.slice(0, limit).forEach((scoreEntry, index) => {
+        const y = startY + (index * lineHeight);
+        const isCurrentPlayer = scoreEntry.score === score && scoreEntry.name === player.name;
+        
+        // Line 1: Rank, Name, Score
+        ctx.textAlign = 'left';
+        ctx.font = isCurrentPlayer ? 'bold 14px Arial' : '14px Arial';
+        ctx.fillStyle = isCurrentPlayer ? '#FFD700' : 'white';
+        ctx.fillText(`${index + 1}. ${scoreEntry.name}`, centerX - 140, y);
+        
+        ctx.textAlign = 'right';
+        ctx.fillText(`${scoreEntry.score} pts`, centerX + 140, y);
+        
+        // Line 2: Level, Obstacles, Time (secondary info)
+        ctx.font = '11px Arial';
+        ctx.fillStyle = '#AAA';
+        ctx.textAlign = 'center';
+        
+        const levelText = scoreEntry.level ? `📊 Lvl ${scoreEntry.level}` : '';
+        const obstaclesText = scoreEntry.obstaclesCleared ? `⚡ ${scoreEntry.obstaclesCleared}` : '';
+        
+        // Time formatting
+        let timeText = '';
+        if (scoreEntry.time) {
+            const m = Math.floor(scoreEntry.time / 60);
+            const s = Math.floor(scoreEntry.time % 60);
+            timeText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+        }
+        
+        const secondLine = [levelText, obstaclesText, timeText].filter(t => t).join('  •  ');
+        ctx.fillText(secondLine, centerX, y + 14);
+    });
 }
 
 // Draw Play Again button (prominent, touch-friendly)
@@ -951,7 +954,7 @@ function drawHighScoreModal() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     const width = Math.min(400, canvas.width - 40);
-    const height = 500;
+    const height = 550; // Increased height for two-line entries
     const x = (canvas.width - width) / 2;
     const y = (canvas.height - height) / 2;
     
@@ -980,7 +983,7 @@ function drawHighScoreModal() {
     const scores = (globalScoresCache.length > 0) ? globalScoresCache : getLocalHighScores();
     
     ctx.fillStyle = 'white';
-    ctx.font = '18px Arial';
+    ctx.font = '16px Arial';
     
     // Loading State
     if (isLoadingScores) {
@@ -990,7 +993,7 @@ function drawHighScoreModal() {
         ctx.fillText('No scores yet!', canvas.width/2, y + 150);
     } else {
         const startY = y + 100;
-        const lineHeight = 35;
+        const lineHeight = 42; // Increased for two-line format
         
         scores.forEach((entry, i) => {
             if (i >= 10) return; // Show top 10
@@ -998,12 +1001,34 @@ function drawHighScoreModal() {
             const rank = i + 1;
             const color = rank === 1 ? '#FFD700' : (rank === 2 ? '#C0C0C0' : (rank === 3 ? '#CD7F32' : 'white'));
             
+            const entryY = startY + i * lineHeight;
+            
+            // Line 1: Rank, Name, Score
             ctx.fillStyle = color;
+            ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText(`${rank}. ${entry.name}`, x + 40, startY + i * lineHeight);
+            ctx.fillText(`${rank}. ${entry.name}`, x + 30, entryY);
             
             ctx.textAlign = 'right';
-            ctx.fillText(entry.score, x + width - 40, startY + i * lineHeight);
+            ctx.fillText(`${entry.score}`, x + width - 30, entryY);
+            
+            // Line 2: Stats
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#AAA';
+            ctx.textAlign = 'center';
+            
+            const levelText = entry.level ? `📊 Lvl ${entry.level}` : '';
+            const obstaclesText = entry.obstaclesCleared ? `⚡ ${entry.obstaclesCleared}` : '';
+            
+            let timeText = '';
+            if (entry.time) {
+                const m = Math.floor(entry.time / 60);
+                const s = Math.floor(entry.time % 60);
+                timeText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+            }
+            
+            const secondLine = [levelText, obstaclesText, timeText].filter(t => t).join('  •  ');
+            ctx.fillText(secondLine, canvas.width/2, entryY + 16);
         });
     }
     
