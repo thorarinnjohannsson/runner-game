@@ -142,46 +142,6 @@ class DustParticle {
     }
 }
 
-// Speed Line (for running effect)
-class SpeedLine {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y + (Math.random() - 0.5) * 30; // Vary vertical position
-        this.length = 15 + Math.random() * 25; // 15-40px long
-        this.width = 2 + Math.random() * 2; // 2-4px wide
-        this.speed = -8 - Math.random() * 4; // Move backward (left)
-        this.life = 1.0;
-        this.decay = 0.03 + Math.random() * 0.02;
-        this.opacity = 0.6 + Math.random() * 0.4;
-    }
-    
-    update() {
-        this.x += this.speed;
-        this.life -= this.decay;
-    }
-    
-    draw(ctx) {
-        if (this.life <= 0) return;
-        
-        ctx.save();
-        ctx.globalAlpha = this.life * this.opacity;
-        
-        // Create gradient for speed line
-        const gradient = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(200, 200, 255, 0.4)');
-        gradient.addColorStop(1, 'rgba(150, 150, 200, 0)');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(this.x - this.length, this.y, this.length, this.width);
-        ctx.restore();
-    }
-    
-    isDead() {
-        return this.life <= 0;
-    }
-}
-
 // Impact Wave (for landing effect)
 class ImpactWave {
     constructor(x, y) {

@@ -50,6 +50,57 @@ class ParallaxBackground {
     }
 
     initLayers() {
+        // 0. SUN/MOON (Static, furthest back - drawn before clouds)
+        this.layers.push(new BackgroundLayer(0, (ctx, width, groundY) => {
+            // Draw sun or moon based on theme
+            const theme = (typeof currentTheme !== 'undefined') ? currentTheme : {};
+            const isNight = theme.isNight || false;
+            
+            // Position in upper right area
+            const sunX = width * 0.85;
+            const sunY = 80;
+            const sunRadius = 40;
+            
+            if (isNight) {
+                // Draw moon (white/grey)
+                ctx.fillStyle = '#F5F5F5';
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Moon craters (darker spots)
+                ctx.fillStyle = '#E0E0E0';
+                ctx.beginPath();
+                ctx.arc(sunX - 10, sunY - 5, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(sunX + 8, sunY + 10, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Draw sun with glow
+                // Outer glow
+                const gradient = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.5, sunX, sunY, sunRadius * 1.5);
+                gradient.addColorStop(0, 'rgba(255, 220, 100, 0.3)');
+                gradient.addColorStop(1, 'rgba(255, 220, 100, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, sunRadius * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Main sun body
+                ctx.fillStyle = '#FFD700'; // Gold
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Highlight
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(sunX - 10, sunY - 10, sunRadius * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }));
+        
         // 1. CLOUDS (Furthest, Slowest)
         this.layers.push(new BackgroundLayer(0.1, (ctx, width, groundY) => {
             // Sky is drawn separately as static background usually, but clouds move

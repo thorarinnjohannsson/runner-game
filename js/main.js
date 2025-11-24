@@ -108,6 +108,10 @@ function generateRandomName() {
 
 // Initialize game
 function init() {
+    // Initialize player stats display
+    if (typeof initPlayerStatsDisplay === 'function') {
+        initPlayerStatsDisplay();
+    }
     // Setup responsive canvas first
     setupResponsiveCanvas();
     
@@ -555,6 +559,11 @@ function startCountdown() {
                     player.name
                 );
             }
+            
+            // Start player stats tracking
+            if (typeof PlayerStatsTracker !== 'undefined' && player) {
+                PlayerStatsTracker.startTracking(player.name);
+            }
         }
     }, 1000);
 }
@@ -595,12 +604,6 @@ function updateGameplay() {
             comboTracker.reset();
         }
         
-        // Create speed lines when running on ground
-        if (player.isOnGround && Math.random() < 0.3) {
-            if (typeof addEffect === 'function' && typeof SpeedLine !== 'undefined') {
-                addEffect(new SpeedLine(player.x, player.y + player.height - 10));
-            }
-        }
     }
     
     // Update obstacles
@@ -704,7 +707,9 @@ function drawGameplay() {
     
     // Draw player
     if (player) {
-        player.draw(ctx);
+        // Force running animation in pause mode
+        const forceRunning = (gameState === GAME_STATES.PAUSED);
+        player.draw(ctx, forceRunning);
     }
     
     // Draw obstacles
@@ -1007,6 +1012,12 @@ function onCollision() {
             audioManager.playSound('gameOver');
             audioManager.stopMusic();
         }
+        
+        // Stop player stats tracking
+        if (typeof PlayerStatsTracker !== 'undefined') {
+            PlayerStatsTracker.stopTracking();
+        }
+        
         // Save highscore with level, time, and obstacles cleared
         const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
         saveHighScore(player.name, score, currentLevel, elapsedTime, scoreStats.obstaclesCleared);
@@ -1209,11 +1220,6 @@ function createLandingParticles(x, y) {
         const vy = -Math.random() * 2;
         const size = 2 + Math.random() * 2;
         particles.push(new Particle(x, y, vx, vy, color, size, 'circle'));
-    }
-    
-    // Add impact wave effect
-    if (typeof addEffect === 'function' && typeof ImpactWave !== 'undefined') {
-        addEffect(new ImpactWave(x, y));
     }
 }
 

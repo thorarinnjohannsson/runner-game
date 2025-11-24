@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" fill="#6ABE30"/>
+  
+  <!-- Simple running character silhouette (pixel art style) -->
+  <!-- Head -->
+  <rect x="20" y="8" width="8" height="8" fill="#FF8C42"/>
+  <!-- Body -->
+  <rect x="16" y="14" width="10" height="6" fill="#FF8C42"/>
+  <!-- Front leg -->
+  <rect x="18" y="20" width="2" height="6" fill="#FF8C42"/>
+  <!-- Back leg -->
+  <rect x="24" y="20" width="2" height="6" fill="#FF8C42"/>
+  <!-- Tail -->
+  <rect x="14" y="16" width="3" height="2" fill="#FF8C42"/>
+  <!-- Eye -->
+  <rect x="22" y="10" width="2" height="2" fill="#2C3E50"/>
+  
+  <!-- Speed lines behind character -->
+  <rect x="8" y="18" width="4" height="1" fill="#D2B48C" opacity="0.6"/>
+  <rect x="4" y="20" width="4" height="1" fill="#D2B48C" opacity="0.5"/>
+  <rect x="2" y="22" width="3" height="1" fill="#D2B48C" opacity="0.4"/>
+</svg>
+

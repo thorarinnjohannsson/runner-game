@@ -121,10 +121,6 @@ class TransitionManager {
             this.characterY = this.targetGroundY;
         }
         
-        // Speed lines when running on ground
-        if (this.characterY >= this.targetGroundY - 5 && Math.random() < 0.4) {
-            addEffect(new SpeedLine(this.characterX, this.characterY + 40));
-        }
         
         if (elapsed > duration) {
             this.nextPhase();

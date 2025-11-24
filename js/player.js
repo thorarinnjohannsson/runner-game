@@ -36,6 +36,11 @@ class Player {
         this.legOffset = 0;
         this.armOffset = 0;
         
+        // Running frame system for four-legged animation
+        this.runningFrame = 0; // 0-3 for different leg positions
+        this.runningFrameTimer = 0;
+        this.runningFrameSpeed = 0.2; // Speed of frame cycling
+        
         // Somersault animation
         this.rotation = 0;
         this.rotationSpeed = 0;
@@ -137,10 +142,7 @@ class Player {
             this.somersaultFrame = 0;
             this.somersaultProgress = 0;
             
-            // Create landing particles
-            if (typeof createLandingParticles === 'function') {
-                createLandingParticles(this.x + this.width / 2, groundY);
-            }
+            // Landing particles removed - using speed lines instead
         } else {
             // Only set to false if not on an obstacle
             // (collision detection will set it to true if landing on obstacle)
@@ -165,17 +167,25 @@ class Player {
     }
     
     // Draw player on canvas (Pixel Art)
-    draw(ctx) {
+    draw(ctx, forceRunning = false) {
         // Update animation frame
-        if (this.isOnGround) {
+        const shouldAnimate = this.isOnGround || forceRunning;
+        if (shouldAnimate) {
             this.animationFrame += this.animationSpeed;
+            
+            // Update running frame cycle (4 frames for four-legged gait)
+            this.runningFrameTimer += this.runningFrameSpeed;
+            if (this.runningFrameTimer >= 1) {
+                this.runningFrame = (this.runningFrame + 1) % 4;
+                this.runningFrameTimer = 0;
+            }
         } else {
             // Jump pose
             this.animationFrame = 0;
         }
         
         // Calculate bounce for running
-        const bounce = this.isOnGround ? Math.sin(this.animationFrame * 2) * 2 : 0;
+        const bounce = shouldAnimate ? Math.sin(this.animationFrame * 2) * 2 : 0;
         
         ctx.save();
         // Translate to player center
@@ -202,7 +212,8 @@ class Player {
         const p = 4; // Pixel size
         
         // Check if we should draw somersault animation
-        if (!this.isOnGround && typeof window.SomersaultDrawer === 'function') {
+        const showRunning = this.isOnGround || forceRunning;
+        if (!showRunning && typeof window.SomersaultDrawer === 'function') {
             // Draw somersault frame
             window.SomersaultDrawer(ctx, this.type, colors, this.somersaultFrame, p);
         } else {
@@ -212,7 +223,7 @@ class Player {
                 ? window.CharacterDrawers[this.type] 
                 : window.CharacterDrawers['cat']; // Fallback
                 
-            drawFunc(ctx, colors, p, this.animationFrame, this.isOnGround, this.legOffset);
+            drawFunc(ctx, colors, p, this.animationFrame, true, this.legOffset, this.runningFrame);
         }
         
         ctx.restore();

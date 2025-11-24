@@ -29,10 +29,7 @@ function checkCollisions() {
                 // Mark obstacle as "landed on" so we don't keep triggering
                 if (!obstacle.landedOn) {
                     obstacle.landedOn = true;
-                    // Optional: create landing particles
-                    if (typeof createLandingParticles === 'function') {
-                        createLandingParticles(player.x + player.width / 2, obstacleBox.y);
-                    }
+                    // Landing particles removed - using speed lines instead
                 }
             } else if (collisionSide === 'bottom') {
                 // Hit ceiling - stop upward momentum

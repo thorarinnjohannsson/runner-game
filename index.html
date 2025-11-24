@@ -6,6 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <title>Animal Jump</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%236ABE30'/><rect x='20' y='8' width='8' height='8' fill='%23FF8C42'/><rect x='16' y='14' width='10' height='6' fill='%23FF8C42'/><rect x='18' y='20' width='2' height='6' fill='%23FF8C42'/><rect x='24' y='20' width='2' height='6' fill='%23FF8C42'/><rect x='14' y='16' width='3' height='2' fill='%23FF8C42'/><rect x='22' y='10' width='2' height='2' fill='%232C3E50'/><rect x='8' y='18' width='4' height='1' fill='%23D2B48C' opacity='0.6'/><rect x='4' y='20' width='4' height='1' fill='%23D2B48C' opacity='0.5'/><rect x='2' y='22' width='3' height='1' fill='%23D2B48C' opacity='0.4'/></svg>">
     
   <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -30,6 +33,7 @@
         <canvas id="gameCanvas"></canvas>
         <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="12" autocomplete="off">
         <div id="version-info"></div>
+        <div id="player-stats"></div>
     </div>
 
     <!-- Auto-loader: Forces fresh files every reload for testing -->
@@ -53,7 +57,7 @@
                     minute: '2-digit',
                     hour12: true
                 });
-                versionDiv.textContent = 'v1.0.0 • ' + dateStr + ' ' + timeStr;
+                versionDiv.textContent =  dateStr + ' ' + timeStr;
             } 
 
             // 1. Load CSS with version
@@ -67,6 +71,7 @@
                 "js/analytics.js",
                 "js/mobile.js",
                 "js/supabase-client.js",
+                "js/player-stats.js",
                 "js/themes.js",
                 "js/level.js",
                 "js/effects.js",

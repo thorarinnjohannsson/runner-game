@@ -6,6 +6,13 @@ let isLoadingScores = false;
 let lastScoreFetch = 0;
 let isEditingName = false; // Track if user is typing name
 
+// Player stats display state
+let activePlayerCount = 0;
+let dailyPlayerCount = 0;
+let lastStatsUpdate = 0;
+let statsUpdateInterval = null;
+let statsRealtimeSubscription = null;
+
 // Polyfill for roundRect if not available
 if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
@@ -1253,5 +1260,85 @@ function getThemeColor(theme) {
 function handleStartGame() {
     if (selectedCharacter) {
         startNewGame();
+    }
+}
+
+// Draw player stats below canvas
+function drawPlayerStats() {
+    if (typeof canvas === 'undefined' || !canvas) return;
+    
+    const statsDiv = document.getElementById('player-stats');
+    if (!statsDiv) return;
+    
+    // Update stats text
+    const statsText = `👥 ${activePlayerCount} playing now • 📊 ${dailyPlayerCount} played today`;
+    statsDiv.textContent = statsText;
+}
+
+// Update player stats periodically
+async function updatePlayerStats() {
+    if (typeof SupabaseClient === 'undefined' || !SupabaseClient.initialized) {
+        return;
+    }
+    
+    try {
+        // Update active player count
+        const activeCount = await SupabaseClient.getActivePlayerCount();
+        activePlayerCount = activeCount;
+        
+        // Update daily player count
+        const dailyCount = await SupabaseClient.getDailyPlayerCount();
+        dailyPlayerCount = dailyCount;
+        
+        // Update display
+        drawPlayerStats();
+        
+        lastStatsUpdate = Date.now();
+    } catch (e) {
+        console.error('Error updating player stats:', e);
+    }
+}
+
+// Initialize player stats display
+function initPlayerStatsDisplay() {
+    // Initial update
+    updatePlayerStats();
+    
+    // Set up periodic updates (every 5 seconds)
+    if (statsUpdateInterval) {
+        clearInterval(statsUpdateInterval);
+    }
+    statsUpdateInterval = setInterval(() => {
+        updatePlayerStats();
+    }, 5000);
+    
+    // Set up Realtime subscription for active players (if available)
+    if (typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {
+        if (statsRealtimeSubscription) {
+            // Unsubscribe existing
+            if (typeof statsRealtimeSubscription.unsubscribe === 'function') {
+                statsRealtimeSubscription.unsubscribe();
+            }
+        }
+        
+        statsRealtimeSubscription = SupabaseClient.subscribeToActivePlayers((count) => {
+            activePlayerCount = count;
+            drawPlayerStats();
+        });
+    }
+}
+
+// Cleanup player stats display
+function cleanupPlayerStatsDisplay() {
+    if (statsUpdateInterval) {
+        clearInterval(statsUpdateInterval);
+        statsUpdateInterval = null;
+    }
+    
+    if (statsRealtimeSubscription) {
+        if (typeof statsRealtimeSubscription.unsubscribe === 'function') {
+            statsRealtimeSubscription.unsubscribe();
+        }
+        statsRealtimeSubscription = null;
     }
 }
