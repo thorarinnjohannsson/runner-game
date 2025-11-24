@@ -119,3 +119,25 @@ body {
     overscroll-behavior: none;
 }
 
+/* Version info */
+#version-info {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: rgba(0, 0, 0, 0.4);
+    font-family: 'Press Start 2P', cursive;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Mobile adjustments for version info */
+@media (max-width: 768px) {
+    #version-info {
+        font-size: 6px;
+        bottom: -25px;
+    }
+}
+

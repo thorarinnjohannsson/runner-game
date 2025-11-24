@@ -6,6 +6,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <title>Animal Jump</title>
+    
+  <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TZ35GHWW');</script>
+    <!-- End Google Tag Manager -->
+    
     <!-- Google Fonts: Press Start 2P -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,9 +22,14 @@
     <!-- Styles loaded dynamically by loader script to prevent caching -->
 </head>
 <body>
+    <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TZ35GHWW"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="12" autocomplete="off">
+        <div id="version-info"></div>
     </div>
 
     <!-- Auto-loader: Forces fresh files every reload for testing -->
@@ -23,7 +37,24 @@
     <script>
         (function() {
             // Generate a unique version number based on the current time
-            var v = Date.now(); 
+            var v = Date.now();
+            
+            // Set version info with timestamp
+            var versionDiv = document.getElementById('version-info');
+            if (versionDiv) {
+                var buildDate = new Date(v);
+                var dateStr = buildDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+                var timeStr = buildDate.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true
+                });
+                versionDiv.textContent = 'v1.0.0 • ' + dateStr + ' ' + timeStr;
+            } 
 
             // 1. Load CSS with version
             var link = document.createElement('link');
@@ -33,6 +64,7 @@
 
             // 2. List of scripts to load in order
             var scripts = [
+                "js/analytics.js",
                 "js/mobile.js",
                 "js/supabase-client.js",
                 "js/themes.js",

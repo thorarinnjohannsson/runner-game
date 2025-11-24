@@ -344,19 +344,35 @@ function updateObstacles() {
     }
 }
 
+// Helper: Find the ground level at a given x position (checks for terrain)
+function getGroundLevelAtX(x) {
+    const baseGroundY = (typeof GROUND_Y !== 'undefined') ? GROUND_Y : (canvas.height - 50);
+    
+    // Check if there's terrain at this x position
+    for (let obstacle of obstacles) {
+        if (obstacle.isTerrain) {
+            // Check if x is within terrain bounds
+            if (x >= obstacle.x && x <= obstacle.x + obstacle.width) {
+                // Return the top of the terrain as the ground level
+                return obstacle.y;
+            }
+        }
+    }
+    
+    return baseGroundY;
+}
+
 // Spawn a new obstacle
 function spawnObstacle() {
     const groundY = (typeof GROUND_Y !== 'undefined') ? GROUND_Y : (canvas.height - 50);
+    const spawnX = canvas.width;
 
     // Check for Collectable Heart (Rare: 1 in 20, 5%)
     const heartChance = 0.05;
     if (Math.random() < heartChance && typeof spawnCollectable === 'function') {
-        // Don't spawn heart AND obstacle at exact same time to avoid impossible jumps?
-        // Actually, placing hearts ON or ABOVE obstacles is fun.
-        // For now, let's spawn it separately in the air.
-        spawnCollectable(groundY);
-        // Still spawn obstacle? Maybe skip obstacle this time to make it a "safe" bonus?
-        // Or spawn it high up. Let's continue to spawn obstacle as normal.
+        // Spawn heart at appropriate height based on ground level
+        const effectiveGroundY = getGroundLevelAtX(spawnX);
+        spawnCollectable(effectiveGroundY);
     }
 
     // Check for elevated terrain (elevated ground)
@@ -367,7 +383,7 @@ function spawnObstacle() {
         const height = Math.floor(Math.random() * 40) + 40; // 40-80px high
         
         const obstacle = new Obstacle(
-            canvas.width,
+            spawnX,
             groundY - height,
             width,
             height,
@@ -384,6 +400,16 @@ function spawnObstacle() {
         return;
     }
 
+    // Get the effective ground level at spawn position (accounts for terrain)
+    const effectiveGroundY = getGroundLevelAtX(spawnX);
+    
+    // Don't spawn regular obstacles or floating platforms if we're on elevated terrain
+    // This prevents obstacles from appearing inside terrain blocks
+    if (effectiveGroundY < groundY) {
+        // We're on elevated terrain, skip spawning this time
+        return;
+    }
+
     // Determine if we should spawn a floating platform
     const isFloating = Math.random() < (typeof floatingChance !== 'undefined' ? floatingChance : 0);
     
@@ -393,10 +419,13 @@ function spawnObstacle() {
         const height = 20; // Fixed thickness
         
         // Calculate Y position to allow running under
-        const y = groundY - (Math.floor(Math.random() * 50) + 80);
+        // Make sure it's above the effective ground level
+        const minY = effectiveGroundY - 130; // Minimum height above ground
+        const maxY = effectiveGroundY - 80;  // Maximum height above ground
+        const y = Math.floor(Math.random() * (maxY - minY)) + minY;
         
         const obstacle = new Obstacle(
-            canvas.width,
+            spawnX,
             y,
             width,
             height,
@@ -412,9 +441,10 @@ function spawnObstacle() {
     const height = baseHeight * level;
     const width = 20 + (level * 5);
     
+    // Ground obstacle to the effective ground level
     const obstacle = new Obstacle(
-        canvas.width,
-        groundY - height,
+        spawnX,
+        effectiveGroundY - height,
         width,
         height,
         level,

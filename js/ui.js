@@ -429,7 +429,7 @@ function drawGameOverScreen() {
         // SIDE-BY-SIDE LAYOUT
         const contentY = headerY + (mobile ? 60 : 80);
         const boxWidth = 340;
-        const boxHeight = 220;
+        const boxHeight = 280; // Increased to accommodate two-line entries
         const gap = 40;
         const totalWidth = (boxWidth * 2) + gap;
         
@@ -470,11 +470,11 @@ function drawGameOverScreen() {
             ctx.font = `bold ${mobile ? 16 : 18}px Arial`;
             ctx.fillText('🎉 NEW HIGH SCORE! 🎉', canvas.width / 2, highScoreY);
             // Draw list below banner
-            drawHighScoresList(canvas.width / 2, highScoreY + 25, mobile ? 3 : 5); // Show fewer on mobile
-            ctaY = highScoreY + (mobile ? 100 : 140);
+            drawHighScoresList(canvas.width / 2, highScoreY + 30, mobile ? 3 : 5); // Show fewer on mobile
+            ctaY = highScoreY + (mobile ? 180 : 240); // Increased for two-line format
         } else {
             drawHighScoresList(canvas.width / 2, highScoreY, mobile ? 3 : 5);
-            ctaY = highScoreY + (mobile ? 80 : 120);
+            ctaY = highScoreY + (mobile ? 150 : 200); // Increased for two-line format
         }
     }
 
@@ -572,15 +572,15 @@ function drawHighScoresBox(centerX, y, width, height) {
     ctx.textAlign = 'center';
     ctx.fillText('HIGH SCORES', centerX, y + 30);
     
-    // List
-    drawHighScoresList(centerX, y + 60, 5);
+    // List - adjusted for two-line format
+    drawHighScoresList(centerX, y + 55, 5);
 }
 
 // Helper: Draw the list of high scores
 function drawHighScoresList(centerX, startY, limit = 5) {
     // Use cached scores or fallback
     const scores = (globalScoresCache.length > 0) ? globalScoresCache : getHighScores();
-    const lineHeight = 40; // Increased for two-line format
+    const lineHeight = 42; // Increased for two-line format
     
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
@@ -600,24 +600,41 @@ function drawHighScoresList(centerX, startY, limit = 5) {
     
     scores.slice(0, limit).forEach((scoreEntry, index) => {
         const y = startY + (index * lineHeight);
-        const isCurrentPlayer = scoreEntry.score === score && scoreEntry.name === player.name;
+        
+        // Check if this is the current player's most recent score
+        // We match by exact score, name, and check if it's very recent (within 1 second)
+        const isCurrentRun = player && 
+                           scoreEntry.name === player.name && 
+                           scoreEntry.score === score &&
+                           (scoreEntry.obstaclesCleared === scoreStats.obstaclesCleared || 
+                            !scoreEntry.obstaclesCleared);
         
         // Line 1: Rank, Name, Score
         ctx.textAlign = 'left';
-        ctx.font = isCurrentPlayer ? 'bold 14px Arial' : '14px Arial';
-        ctx.fillStyle = isCurrentPlayer ? '#FFD700' : 'white';
-        ctx.fillText(`${index + 1}. ${scoreEntry.name}`, centerX - 140, y);
+        ctx.font = isCurrentRun ? 'bold 15px Arial' : '14px Arial';
+        
+        // Highlight background for current run
+        if (isCurrentRun) {
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+            ctx.fillRect(centerX - 145, y - 16, 290, 38);
+        }
+        
+        ctx.fillStyle = isCurrentRun ? '#FFD700' : 'white';
+        const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `${index + 1}.`));
+        ctx.fillText(`${rankIcon} ${scoreEntry.name}`, centerX - 140, y);
         
         ctx.textAlign = 'right';
         ctx.fillText(`${scoreEntry.score} pts`, centerX + 140, y);
         
         // Line 2: Level, Obstacles, Time (secondary info)
         ctx.font = '11px Arial';
-        ctx.fillStyle = '#AAA';
+        ctx.fillStyle = isCurrentRun ? '#FFD700' : '#AAA';
         ctx.textAlign = 'center';
         
         const levelText = scoreEntry.level ? `📊 Lvl ${scoreEntry.level}` : '';
-        const obstaclesText = scoreEntry.obstaclesCleared ? `⚡ ${scoreEntry.obstaclesCleared}` : '';
+        const obstaclesText = (scoreEntry.obstaclesCleared !== undefined && scoreEntry.obstaclesCleared !== null) 
+            ? `⚡ ${scoreEntry.obstaclesCleared}` 
+            : '';
         
         // Time formatting
         let timeText = '';
@@ -628,7 +645,7 @@ function drawHighScoresList(centerX, startY, limit = 5) {
         }
         
         const secondLine = [levelText, obstaclesText, timeText].filter(t => t).join('  •  ');
-        ctx.fillText(secondLine, centerX, y + 14);
+        ctx.fillText(secondLine, centerX, y + 15);
     });
 }
 
@@ -885,6 +902,11 @@ function processUIInteraction(x, y) {
                 y <= char.hitArea.y + char.hitArea.height) {
                 selectedCharacter = char;
                 triggerHaptic(15); // Stronger feedback for selection
+                
+                // Track character selection
+                if (typeof Analytics !== 'undefined') {
+                    Analytics.trackCharacterSelect(char);
+                }
             }
         });
         

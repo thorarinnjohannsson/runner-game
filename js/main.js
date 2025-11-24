@@ -547,6 +547,14 @@ function startCountdown() {
             clearInterval(countdownInterval);
             gameState = GAME_STATES.PLAYING;
             startTime = Date.now(); // Reset start time after countdown
+            
+            // Track game start
+            if (typeof Analytics !== 'undefined' && player) {
+                Analytics.trackGameStart(
+                    characters.find(c => c.id === player.type) || characters[0],
+                    player.name
+                );
+            }
         }
     }, 1000);
 }
@@ -585,6 +593,13 @@ function updateGameplay() {
         // Track if player lands on ground (reset combo)
         if (player.isOnGround && comboTracker.count > 0) {
             comboTracker.reset();
+        }
+        
+        // Create speed lines when running on ground
+        if (player.isOnGround && Math.random() < 0.3) {
+            if (typeof addEffect === 'function' && typeof SpeedLine !== 'undefined') {
+                addEffect(new SpeedLine(player.x, player.y + player.height - 10));
+            }
         }
     }
     
@@ -995,6 +1010,17 @@ function onCollision() {
         // Save highscore with level, time, and obstacles cleared
         const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
         saveHighScore(player.name, score, currentLevel, elapsedTime, scoreStats.obstaclesCleared);
+        
+        // Track game over
+        if (typeof Analytics !== 'undefined' && player) {
+            Analytics.trackGameOver({
+                score: score,
+                level: currentLevel,
+                time: elapsedTime,
+                obstaclesCleared: scoreStats.obstaclesCleared,
+                characterType: player.type
+            });
+        }
         return;
     }
     
@@ -1184,6 +1210,11 @@ function createLandingParticles(x, y) {
         const size = 2 + Math.random() * 2;
         particles.push(new Particle(x, y, vx, vy, color, size, 'circle'));
     }
+    
+    // Add impact wave effect
+    if (typeof addEffect === 'function' && typeof ImpactWave !== 'undefined') {
+        addEffect(new ImpactWave(x, y));
+    }
 }
 
 // Create trail particle
@@ -1345,6 +1376,11 @@ function triggerLevelTransition() {
         lastLevelStats.bonusPoints = scoreStats.bonusPoints;
         lastLevelStats.startTime = levelManager.levelStartTime;
         lastLevelStats.endTime = elapsedTime;
+    }
+    
+    // Track level completion
+    if (typeof Analytics !== 'undefined' && typeof levelManager !== 'undefined') {
+        Analytics.trackLevelComplete(levelManager.currentLevel, score, elapsedTime);
     }
     
     gameState = GAME_STATES.LEVEL_TRANSITION;

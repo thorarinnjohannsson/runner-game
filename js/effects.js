@@ -108,7 +108,7 @@ class GemSparkle {
     }
 }
 
-// Dust Particle
+// Dust Particle (for stone carving effects)
 class DustParticle {
     constructor(x, y) {
         this.x = x;
@@ -134,6 +134,96 @@ class DustParticle {
         ctx.globalAlpha = this.life * 0.5;
         ctx.fillStyle = '#8B7355';
         ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.restore();
+    }
+    
+    isDead() {
+        return this.life <= 0;
+    }
+}
+
+// Speed Line (for running effect)
+class SpeedLine {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y + (Math.random() - 0.5) * 30; // Vary vertical position
+        this.length = 15 + Math.random() * 25; // 15-40px long
+        this.width = 2 + Math.random() * 2; // 2-4px wide
+        this.speed = -8 - Math.random() * 4; // Move backward (left)
+        this.life = 1.0;
+        this.decay = 0.03 + Math.random() * 0.02;
+        this.opacity = 0.6 + Math.random() * 0.4;
+    }
+    
+    update() {
+        this.x += this.speed;
+        this.life -= this.decay;
+    }
+    
+    draw(ctx) {
+        if (this.life <= 0) return;
+        
+        ctx.save();
+        ctx.globalAlpha = this.life * this.opacity;
+        
+        // Create gradient for speed line
+        const gradient = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(200, 200, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(150, 150, 200, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(this.x - this.length, this.y, this.length, this.width);
+        ctx.restore();
+    }
+    
+    isDead() {
+        return this.life <= 0;
+    }
+}
+
+// Impact Wave (for landing effect)
+class ImpactWave {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 5;
+        this.maxRadius = 40;
+        this.expandSpeed = 3;
+        this.life = 1.0;
+        this.decay = 0.04;
+    }
+    
+    update() {
+        this.radius += this.expandSpeed;
+        this.life -= this.decay;
+        
+        if (this.radius >= this.maxRadius) {
+            this.life = 0;
+        }
+    }
+    
+    draw(ctx) {
+        if (this.life <= 0) return;
+        
+        ctx.save();
+        ctx.globalAlpha = this.life * 0.6;
+        
+        // Draw expanding circle wave
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner glow
+        ctx.globalAlpha = this.life * 0.3;
+        ctx.strokeStyle = '#FFA500';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+        
         ctx.restore();
     }
     

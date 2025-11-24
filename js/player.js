@@ -4,8 +4,8 @@ class Player {
     constructor(x, y, width, height, color, type = 'cat') {
         this.x = x;
         this.y = y;
-        this.width = width;
-        this.height = height;
+        this.width = width * 1.5;  // 50% bigger
+        this.height = height * 1.5; // 50% bigger
         this.color = color;
         this.name = '';
         this.type = type; // 'cat', 'frog', 'penguin', 'dog', 'rabbit'
@@ -35,6 +35,12 @@ class Player {
         this.animationSpeed = 0.15; // Controls animation speed
         this.legOffset = 0;
         this.armOffset = 0;
+        
+        // Somersault animation
+        this.rotation = 0;
+        this.rotationSpeed = 0;
+        this.somersaultFrame = 0; // Current animation frame (0-4)
+        this.somersaultProgress = 0; // Progress through animation cycle
     }
     
     // Execute a jump with given level (1-4)
@@ -50,6 +56,9 @@ class Player {
             this.jumpLevel = level;
             this.jumpCount = 1; // First jump
             this.lastClearType = 'ground'; // Reset clear type on new jump
+            
+            // Start somersault rotation
+            this.rotationSpeed = 0.15; // Rotation speed in radians per frame
             
             // Play jump sound
             if (typeof audioManager !== 'undefined') {
@@ -80,6 +89,9 @@ class Player {
         this.lastClearType = 'aerial'; // Mark as aerial jump
         this.wasAtPeakOnClear = atPeak; // Track if at peak
         
+        // Add extra rotation speed for each air jump
+        this.rotationSpeed += 0.12;
+        
         // Play jump sound
         if (typeof audioManager !== 'undefined') {
             audioManager.playSound('jump', level);
@@ -99,6 +111,18 @@ class Player {
         // Update position
         this.y += this.velocityY;
         
+        // Update somersault animation when in air
+        if (!this.isOnGround && this.rotationSpeed > 0) {
+            this.rotation += this.rotationSpeed;
+            this.somersaultProgress = this.rotation;
+            
+            // Cycle through 5 frames (0-4) based on rotation progress
+            // Complete one full somersault every 2*PI radians
+            const fullCycle = Math.PI * 2;
+            const frameProgress = (this.rotation % fullCycle) / fullCycle;
+            this.somersaultFrame = Math.floor(frameProgress * 5) % 5;
+        }
+        
         // Ground collision
         if (this.y + this.height >= groundY) {
             this.y = groundY - this.height;
@@ -106,6 +130,12 @@ class Player {
             this.isOnGround = true;
             this.jumpLevel = 0; // Reset jump level when landing
             this.jumpCount = 0; // Reset jump count on landing
+            
+            // Reset rotation and somersault when landing
+            this.rotation = 0;
+            this.rotationSpeed = 0;
+            this.somersaultFrame = 0;
+            this.somersaultProgress = 0;
             
             // Create landing particles
             if (typeof createLandingParticles === 'function') {
@@ -148,14 +178,15 @@ class Player {
         const bounce = this.isOnGround ? Math.sin(this.animationFrame * 2) * 2 : 0;
         
         ctx.save();
-        // Translate to player position (plus bounce)
-        ctx.translate(this.x, this.y + bounce);
+        // Translate to player center
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2 + bounce);
         
-        // Scale to fit the 30x40 hitbox roughly
-        const scale = 1; 
-        const offsetX = -2; // Center horizontally
-        const offsetY = 5;  // Align vertically
+        // Scale to 1.5x (50% bigger) and adjust offset
+        const scale = 1.5; 
+        const offsetX = -this.width / (2 * scale); // Center horizontally
+        const offsetY = -this.height / (2 * scale) + 3; // Align vertically
         
+        ctx.scale(scale, scale);
         ctx.translate(offsetX, offsetY);
         
         // Cat Colors (Default)
@@ -170,12 +201,19 @@ class Player {
         
         const p = 4; // Pixel size
         
-        // Select drawing function based on type
-        const drawFunc = window.CharacterDrawers && window.CharacterDrawers[this.type] 
-            ? window.CharacterDrawers[this.type] 
-            : window.CharacterDrawers['cat']; // Fallback
-            
-        drawFunc(ctx, colors, p, this.animationFrame, this.isOnGround, this.legOffset);
+        // Check if we should draw somersault animation
+        if (!this.isOnGround && typeof window.SomersaultDrawer === 'function') {
+            // Draw somersault frame
+            window.SomersaultDrawer(ctx, this.type, colors, this.somersaultFrame, p);
+        } else {
+            // Normal running animation
+            // Select drawing function based on type
+            const drawFunc = window.CharacterDrawers && window.CharacterDrawers[this.type] 
+                ? window.CharacterDrawers[this.type] 
+                : window.CharacterDrawers['cat']; // Fallback
+                
+            drawFunc(ctx, colors, p, this.animationFrame, this.isOnGround, this.legOffset);
+        }
         
         ctx.restore();
         

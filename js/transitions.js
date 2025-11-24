@@ -121,9 +121,9 @@ class TransitionManager {
             this.characterY = this.targetGroundY;
         }
         
-        // Particle trail when running on ground
-        if (this.characterY >= this.targetGroundY - 5 && Math.random() < 0.3) {
-            addEffect(new DustParticle(this.characterX, this.characterY + 40));
+        // Speed lines when running on ground
+        if (this.characterY >= this.targetGroundY - 5 && Math.random() < 0.4) {
+            addEffect(new SpeedLine(this.characterX, this.characterY + 40));
         }
         
         if (elapsed > duration) {
