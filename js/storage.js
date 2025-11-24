@@ -1,16 +1,23 @@
-// HIGH SCORE STORAGE with GLOBAL API support
-// Uses a simple external API or local storage as fallback
+// HIGH SCORE STORAGE with SUPABASE GLOBAL SUPPORT
+// Uses Supabase for global scores and localStorage as fallback/offline cache
 
-// API Configuration
-// Since we don't have a dedicated backend, we will simulate the structure 
-// or use a free service like KV/Firebase if provided. 
-// For now, we will stick to localStorage but structure it to be easily swapped.
-// To share scores across devices, we would need a real backend.
-// I will implement a mock "Global" storage using a shared key if possible, 
-// but without a server, cross-device is impossible.
-// HOWEVER, I can provide the code structure to Fetch from an endpoint.
+// Initialize Supabase
+// You need to replace these with your actual Project URL and Anon Key
+const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL'; 
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-const API_URL = ''; // Enter your API endpoint here if you have one (e.g., AWS Lambda / Firebase)
+// Attempt initialization if client is available
+if (typeof SupabaseClient !== 'undefined') {
+    // Wait for user to input keys or check if they are set
+    // In a real scenario, these would be constants or env vars
+    // Since we are asking the user to provide them, we might need a way to input them.
+    // For now, we will assume the user might edit this file or we prompt via console?
+    // Actually, let's leave them as empty strings and let the user know.
+    
+    // IMPORTANT: Initialize with placeholders.
+    // If you have the keys, replace them above.
+    SupabaseClient.init(SUPABASE_URL, SUPABASE_KEY);
+}
 
 // Fallback in-memory storage
 let memoryHighScores = [];
@@ -29,7 +36,7 @@ function isStorageAvailable() {
 
 // Save a high score (Local + Global attempt)
 async function saveHighScore(name, score) {
-    // 1. Local Save
+    // 1. Local Save (Always safe)
     const localScores = getLocalHighScores();
     const newScore = {
         name: name || 'Anonymous',
@@ -47,38 +54,29 @@ async function saveHighScore(name, score) {
         memoryHighScores = topLocal;
     }
 
-    // 2. Global Save (Placeholder for API)
-    if (API_URL) {
-        try {
-            await fetch(`${API_URL}/scores`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newScore)
-            });
-        } catch (e) {
-            console.warn('Failed to save to global leaderboard', e);
-        }
+    // 2. Global Save via Supabase
+    if (typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {
+        // Fire and forget - don't await to block UI
+        SupabaseClient.submitScore(name || 'Anonymous', score).then(success => {
+            if (success) console.log('Score submitted to global leaderboard');
+        });
     }
 }
 
-// Get all high scores (Returns Local for now, Async ready for API)
+// Get global high scores (Async)
 async function getGlobalHighScores() {
-    // If we had an API:
-    if (API_URL) {
-        try {
-            const res = await fetch(`${API_URL}/scores`);
-            const data = await res.json();
-            return data; // Expecting array of objects
-        } catch (e) {
-            console.warn('Failed to fetch global scores', e);
-            return getLocalHighScores(); // Fallback
+    if (typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {
+        const scores = await SupabaseClient.getTopScores(10);
+        if (scores && scores.length > 0) {
+            return scores;
         }
     }
     
-    // Default to local
+    // Fallback if offline or no keys
     return getLocalHighScores();
 }
 
+// Get local high scores (Sync)
 function getLocalHighScores() {
     if (isStorageAvailable()) {
         try {
@@ -93,12 +91,13 @@ function getLocalHighScores() {
     return memoryHighScores || [];
 }
 
-// For backward compatibility with synchronous calls in UI
+// For backward compatibility/UI rendering (Sync default, mostly Local)
+// UI should prefer calling getGlobalHighScores() when possible
 function getHighScores() {
     return getLocalHighScores();
 }
 
-// Check if score is a new high score (Top 10)
+// Check if score is a new high score (Top 10 Local)
 function isNewHighScore(score) {
     const scores = getLocalHighScores();
     if (scores.length < 10) return true;

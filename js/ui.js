@@ -1,5 +1,11 @@
 // UI SCREENS - Start screen and Game Over screen
 
+// Global state for async scores
+let globalScoresCache = [];
+let isLoadingScores = false;
+let lastScoreFetch = 0;
+let isEditingName = false; // Track if user is typing name
+
 // Polyfill for roundRect if not available
 if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
@@ -17,117 +23,212 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     };
 }
 
+// Utility to draw soft panels used on the start screen
+function drawSoftPanel(x, y, width, height, options = {}) {
+    ctx.save();
+    
+    if (options.shadow !== false) {
+        ctx.shadowColor = options.shadowColor || 'rgba(0, 0, 0, 0.25)';
+        ctx.shadowBlur = options.shadowBlur ?? 12;
+        ctx.shadowOffsetX = options.shadowOffsetX ?? 0;
+        ctx.shadowOffsetY = options.shadowOffsetY ?? 6;
+    }
+    
+    ctx.fillStyle = options.fill || 'rgba(255, 255, 255, 0.9)';
+    ctx.strokeStyle = options.stroke || 'rgba(0, 0, 0, 0.12)';
+    ctx.lineWidth = options.lineWidth || 2;
+    
+    const radius = options.radius || 16;
+    
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+    ctx.fill();
+    
+    if (!options.hideBorder) {
+        ctx.stroke();
+    }
+    
+    ctx.restore();
+}
+
 // Draw start screen with "Player Card" layout
 function drawStartScreen() {
     const mobile = isMobile || canvas.width < 600;
     const center = canvas.width / 2;
     const h = canvas.height;
     
-    // Layout Logic:
-    // Tight mode: For very short screens (iPhone landscape ~350px)
-    // Compact mode: For standard desktop runner size (400px)
     const tight = h < 380;
-    const compact = h <= 450; // Includes standard 400px desktop view
-    
-    // Layout Constants
+    const compact = h <= 450;
     const headerY = tight ? 30 : (compact ? 40 : 60);
     
-    // Card Position & Size
-    // If tight/compact, move card up and shrink it
-    const cardY = tight ? 50 : (compact ? 75 : 110);
-    const cardWidth = mobile ? 320 : 400;
-    // Shrink height in compact modes to make room for button
-    const cardHeight = tight ? 180 : (compact ? 210 : 280);
+    const layoutWidth = Math.min(canvas.width - 40, mobile ? canvas.width - 20 : 540);
+    const layoutX = center - layoutWidth / 2;
+    const topY = tight ? 65 : (compact ? 85 : 110);
+    const namePanelHeight = mobile ? 92 : 72;
+    const charPanelHeight = mobile ? 180 : 155;
+    const panelGap = mobile ? 22 : 16;
     
-    // Button Position
-    const buttonY = cardY + cardHeight + (tight ? 15 : 25);
+    const namePanelY = topY;
+    const charPanelY = namePanelY + namePanelHeight + panelGap;
+    const selectionLabelY = charPanelY - 0;
+    const characterNameY = charPanelY + charPanelHeight - (mobile ? 8 : 16);
+    const buttonY = charPanelY + charPanelHeight + (mobile ? 35 : 25);
     
-    // Internal Card Spacing (adjusted for new heights)
-    const inputOffset = tight ? 30 : 40;
-    const labelOffset = tight ? 75 : (compact ? 85 : 110);
-    const charsOffset = tight ? 95 : (compact ? 110 : 140);
-    const nameOffset = tight ? 150 : (compact ? 175 : 220);
+    drawSoftPanel(layoutX, namePanelY, layoutWidth, namePanelHeight, {
+        fill: 'rgba(255, 255, 255, 0.92)',
+        stroke: 'rgba(0, 0, 0, 0.12)',
+        radius: 18
+    });
     
-    // Show name input & position it dynamically
-    const nameInput = document.getElementById('playerNameInput');
-    if (nameInput) {
-        if (gameState === 'HIGHSCORE_MODAL') {
-            nameInput.style.display = 'none';
-        } else {
-            if (nameInput.style.display !== 'block') {
-                nameInput.style.display = 'block';
-                if (!nameInput.value && localStorage.getItem('lastPlayerName')) {
-                    nameInput.value = localStorage.getItem('lastPlayerName');
-                }
-            }
-            nameInput.style.top = `${cardY + inputOffset}px`;
-        }
-    }
+    drawSoftPanel(layoutX, charPanelY, layoutWidth, charPanelHeight, {
+        fill: 'rgba(0, 0, 0, 0.35)',
+        stroke: 'rgba(255, 255, 255, 0.2)',
+        radius: 20
+    });
     
-    // Update ripples
+    drawNameEntryUI(center, namePanelY + (mobile ? 28 : 24), layoutWidth);
+    
     if (typeof updateRipples === 'function') updateRipples();
     if (typeof drawRipples === 'function') drawRipples();
     
-    // 1. Header
-    // Use Pixel font look with shadow
     ctx.fillStyle = 'white';
-    ctx.font = `bold ${tight ? 32 : (mobile ? 40 : 48)}px Arial`; // A pixel font would be better if loaded
+    ctx.font = `24px "Press Start 2P"`;
     ctx.textAlign = 'center';
-    
-    // Text Shadow/Border
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 4;
     ctx.strokeText('RUNNER GAME', center, headerY);
     ctx.fillText('RUNNER GAME', center, headerY);
     
-    // Audio Controls (Top Right)
     drawAudioControls(canvas.width - 80, 20);
-    
-    // High Score Button (Top Left)
     drawHighScoreButton(20, 20);
     
-    // 2. Player Card
-    // Card Background - Use a frame/box style instead of plain round rect
-    // Semi-transparent dark box
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.beginPath();
-    ctx.roundRect(center - cardWidth/2, cardY, cardWidth, cardHeight, 15);
-    ctx.fill();
-    
-    // Border for the card
-    ctx.strokeStyle = '#FFD700'; // Gold border
+    ctx.font = `bold ${tight ? 14 : 16}px "Press Start 2P"`;
+    ctx.strokeStyle = 'black';
     ctx.lineWidth = 4;
-    ctx.stroke();
-    
-    // Character Selection Section
+    ctx.strokeText('SELECT RUNNER', center, selectionLabelY);
     ctx.fillStyle = '#FFD700';
-    ctx.font = `bold ${tight ? 14 : 16}px Arial`;
-    ctx.fillText('SELECT RUNNER', center, cardY + labelOffset - 30);
+    ctx.fillText('SELECT RUNNER', center, selectionLabelY);
     
-    // Draw Characters
-    drawCardCharacterSelection(center, cardY + charsOffset - 10);
+    const charRowTop = charPanelY + (mobile ? 32 : 26);
+    drawCardCharacterSelection(center, charRowTop, {
+        availableWidth: layoutWidth - 80,
+        baseSize: mobile ? 64 : 56,
+        padding: mobile ? 20 : 16
+    });
     
-    // Selected Character Name
     if (selectedCharacter) {
-        ctx.fillStyle = 'white';
         ctx.font = `bold ${tight ? 18 : 22}px Arial`;
-        ctx.fillText(selectedCharacter.name.toUpperCase(), center, cardY + nameOffset);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 4;
+        ctx.strokeText(selectedCharacter.name.toUpperCase(), center, characterNameY);
+        ctx.fillStyle = 'white';
+        ctx.fillText(selectedCharacter.name.toUpperCase(), center, characterNameY);
     }
     
-    // 3. Start Button (Pulsing)
     const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
     drawCardStartButton(center, buttonY, pulse);
 }
 
+// Draw Name Entry UI (Text mode vs Edit mode)
+function drawNameEntryUI(centerX, y, panelWidth = 320) {
+    const nameInput = document.getElementById('playerNameInput');
+    const currentName = nameInput ? nameInput.value : (localStorage.getItem('lastPlayerName') || 'Player');
+    const boxWidth = Math.max(180, Math.min(panelWidth - 80, 280));
+    const boxHeight = 40;
+    const boxX = centerX - boxWidth / 2;
+    const diceSize = 36;
+    const diceGap = 12;
+    const panelRight = centerX + panelWidth / 2;
+    const boxTop = y;
+    const diceX = Math.min(boxX + boxWidth + diceGap, panelRight - diceSize - 12);
+    const diceY = y;
+
+    if (nameInput) {
+        const widthPx = `${boxWidth}px`;
+        if (nameInput.style.width !== widthPx) {
+            nameInput.style.width = widthPx;
+        }
+    }
+    
+    ctx.fillStyle = '#5C6672';
+    ctx.font = `10px "Press Start 2P"`;
+    ctx.textAlign = 'left';
+    ctx.fillText('PLAYER NAME', boxX, boxTop - 8);
+    
+    if (isEditingName) {
+        // Show Input
+        if (nameInput) {
+            nameInput.style.display = 'block';
+            nameInput.style.top = `${boxTop}px`;
+            nameInput.style.width = `${boxWidth}px`;
+            // Ensure focus if not already
+            if (document.activeElement !== nameInput) {
+                nameInput.focus();
+            }
+        }
+    } else {
+        // Hide Input
+        if (nameInput) {
+            nameInput.style.display = 'none';
+        }
+        
+        // Draw Name Box (Click to edit)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(boxX, boxTop, boxWidth, boxHeight);
+        ctx.strokeStyle = '#1F2933';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(boxX, boxTop, boxWidth, boxHeight);
+        
+        // Draw Name Text
+        ctx.fillStyle = '#111';
+        ctx.font = '16px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText(currentName, centerX, boxTop + 28);
+        
+        // Draw Edit Icon (Pencil) - Right side of box
+        const editX = boxX + boxWidth - 20;
+        const editY = boxTop + boxHeight / 2;
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText('✎', editX, editY + 5);
+        
+        // Draw Randomize Button (Dice) - Next to box
+        ctx.fillStyle = '#2ECC71';
+        ctx.fillRect(diceX, diceY, diceSize, diceSize);
+        ctx.strokeStyle = '#1B5E20';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(diceX, diceY, diceSize, diceSize);
+        
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎲', diceX + diceSize / 2, diceY + 26);
+        ctx.textAlign = 'left';
+        
+        // Define Hit Areas
+        window.nameBoxHit = { x: boxX, y: boxTop, width: boxWidth, height: boxHeight };
+        window.randomizeHit = { x: diceX, y: diceY, width: diceSize, height: diceSize };
+    }
+}
+
 // Draw character selection in card
-function drawCardCharacterSelection(centerX, y) {
+function drawCardCharacterSelection(centerX, y, options = {}) {
     // Ensure characters array is available
     const charList = window.characters || (typeof characters !== 'undefined' ? characters : []);
     if (!charList || charList.length === 0) return;
 
-    const charSize = 60; // Slightly larger
-    const padding = 20;
-    const totalWidth = (charSize * charList.length) + (padding * (charList.length - 1));
+    const availableWidth = options.availableWidth || canvas.width - 40;
+    let charSize = options.baseSize || 60;
+    let padding = options.padding || 20;
+    let totalWidth = (charSize * charList.length) + (padding * (charList.length - 1));
+
+    if (totalWidth > availableWidth) {
+        const scale = availableWidth / totalWidth;
+        charSize = Math.max(42, charSize * scale);
+        padding = Math.max(10, padding * scale);
+        totalWidth = (charSize * charList.length) + (padding * (charList.length - 1));
+    }
+
     const startX = centerX - (totalWidth / 2);
     
     charList.forEach((char, index) => {
@@ -141,20 +242,19 @@ function drawCardCharacterSelection(centerX, y) {
         
         // Selection Spotlight/Box
         if (selectedCharacter === char) {
-            // Glow
             ctx.shadowColor = '#FFD700';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-            ctx.fillRect(x - 5, y - 5 - bounce, charSize + 10, charSize + 10);
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.fillRect(x - 6, y - 6 - bounce, charSize + 12, charSize + 12);
             ctx.shadowBlur = 0;
             
-            // Border
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 3;
-            ctx.strokeRect(x - 5, y - 5 - bounce, charSize + 10, charSize + 10);
+            ctx.strokeRect(x - 6, y - 6 - bounce, charSize + 12, charSize + 12);
         } else {
-            // Unselected Border
-            ctx.strokeStyle = '#ddd';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.fillRect(x, y, charSize, charSize);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, charSize, charSize);
         }
@@ -462,11 +562,25 @@ function drawHighScoresBox(centerX, y, width, height) {
 
 // Helper: Draw the list of high scores
 function drawHighScoresList(centerX, startY, limit = 5) {
-    const scores = getHighScores();
+    // Use cached scores or fallback
+    const scores = (globalScoresCache.length > 0) ? globalScoresCache : getHighScores();
     const lineHeight = 24;
     
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
+    
+    // Show simple loading text if we think we're waiting
+    if (scores.length === 0 && isLoadingScores) {
+        ctx.fillStyle = '#AAA';
+        ctx.fillText('Loading global scores...', centerX, startY + 20);
+        return;
+    }
+    
+    if (scores.length === 0) {
+        ctx.fillStyle = '#AAA';
+        ctx.fillText('No scores yet!', centerX, startY + 20);
+        return;
+    }
     
     scores.slice(0, limit).forEach((scoreEntry, index) => {
         const y = startY + (index * lineHeight);
@@ -560,6 +674,21 @@ function setupUIListeners() {
     
     // Handle touch events for mobile
     gameCanvas.addEventListener('touchend', handleUITouch, { passive: false });
+    
+    // Handle Input Blur/Enter
+    const nameInput = document.getElementById('playerNameInput');
+    if (nameInput) {
+        nameInput.addEventListener('blur', () => {
+            isEditingName = false;
+            localStorage.setItem('lastPlayerName', nameInput.value.trim() || 'Player');
+        });
+        
+        nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                nameInput.blur(); // Will trigger blur handler above
+            }
+        });
+    }
 }
 
 // Handle UI click
@@ -646,13 +775,69 @@ function processUIInteraction(x, y) {
     
     // Start screen interactions
     if (gameState === GAME_STATES.START_SCREEN) {
+        // Check Name UI Interactions
+        if (!isEditingName) {
+            // Check Name Box (Enter Edit Mode)
+            if (window.nameBoxHit && 
+                x >= window.nameBoxHit.x && x <= window.nameBoxHit.x + window.nameBoxHit.width &&
+                y >= window.nameBoxHit.y && y <= window.nameBoxHit.y + window.nameBoxHit.height) {
+                
+                isEditingName = true;
+                triggerHaptic(10);
+                return;
+            }
+            
+            // Check Randomize Button
+            if (window.randomizeHit && 
+                x >= window.randomizeHit.x && x <= window.randomizeHit.x + window.randomizeHit.width &&
+                y >= window.randomizeHit.y && y <= window.randomizeHit.y + window.randomizeHit.height) {
+                
+                // Generate new name
+                if (typeof generateRandomName === 'function') {
+                    const newName = generateRandomName();
+                    const nameInput = document.getElementById('playerNameInput');
+                    if (nameInput) {
+                        nameInput.value = newName;
+                        localStorage.setItem('lastPlayerName', newName);
+                    }
+                }
+                triggerHaptic(15);
+                return;
+            }
+        } else {
+            // If editing, check if clicked outside to save
+            // We let the blur event handle this usually, but we can force it here
+            const nameInput = document.getElementById('playerNameInput');
+            if (nameInput) {
+                // If click is outside the input rect (approximate since input is DOM)
+                // We can just rely on the fact that we processed a canvas click, meaning we likely clicked outside the input?
+                // Actually, the input is on top of canvas. If we got here, we clicked canvas, so we clicked outside input.
+                isEditingName = false;
+                localStorage.setItem('lastPlayerName', nameInput.value.trim() || 'Player');
+                nameInput.blur();
+                return;
+            }
+        }
+
         // Check High Score Button
         if (window.highScoreButton) {
             const btn = window.highScoreButton;
             if (x >= btn.x && x <= btn.x + btn.width &&
                 y >= btn.y && y <= btn.y + btn.height) {
+                
+                // Open Modal and trigger fetch
                 gameState = 'HIGHSCORE_MODAL';
                 triggerHaptic(10);
+                
+                // Trigger fetch if old data
+                if (Date.now() - lastScoreFetch > 60000) { // Cache for 1 min
+                    isLoadingScores = true;
+                    getGlobalHighScores().then(scores => {
+                        globalScoresCache = scores;
+                        isLoadingScores = false;
+                        lastScoreFetch = Date.now();
+                    });
+                }
                 return;
             }
         }
@@ -761,11 +946,16 @@ function drawHighScoreModal() {
     window.closeModalButton = { x: x + width - 50, y: y + 10, width: 40, height: 40 };
     
     // List Content
-    const scores = getHighScores(); // Now uses our updated storage logic
+    const scores = (globalScoresCache.length > 0) ? globalScoresCache : getLocalHighScores();
+    
     ctx.fillStyle = 'white';
     ctx.font = '18px Arial';
     
-    if (scores.length === 0) {
+    // Loading State
+    if (isLoadingScores) {
+         ctx.fillStyle = '#FFD700';
+         ctx.fillText('Loading global scores...', canvas.width/2, y + 150);
+    } else if (scores.length === 0) {
         ctx.fillText('No scores yet!', canvas.width/2, y + 150);
     } else {
         const startY = y + 100;
@@ -840,4 +1030,3 @@ function handleStartGame() {
         startNewGame();
     }
 }
-

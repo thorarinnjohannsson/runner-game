@@ -420,6 +420,38 @@ class AudioManager {
                 osc.start(now);
                 osc.stop(now + 0.1);
                 break;
+            case 'powerup':
+                // Rising magical chime
+                osc.type = 'triangle';
+                // Arpeggio effect rapidly
+                osc.frequency.setValueAtTime(440, now); // A4
+                osc.frequency.setValueAtTime(554, now + 0.05); // C#5
+                osc.frequency.setValueAtTime(659, now + 0.1); // E5
+                osc.frequency.setValueAtTime(880, now + 0.15); // A5
+                
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.1, now + 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                
+                osc.start(now);
+                osc.stop(now + 0.4);
+                
+                // Add a second oscillator for "sparkle" (high sine)
+                const osc2 = this.ctx.createOscillator();
+                const gain2 = this.ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(this.ctx.destination);
+                
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880, now);
+                osc2.frequency.linearRampToValueAtTime(1760, now + 0.2);
+                
+                gain2.gain.setValueAtTime(0.05, now);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                
+                osc2.start(now);
+                osc2.stop(now + 0.3);
+                break;
         }
     }
 }

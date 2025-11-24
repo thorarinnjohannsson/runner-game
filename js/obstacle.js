@@ -1,4 +1,80 @@
 // OBSTACLE MANAGEMENT
+// Includes Obstacles and Collectables (Hearts)
+
+// Collectable Heart Class
+class Heart {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 24;
+        this.height = 24;
+        this.collected = false;
+        
+        // Animation
+        this.floatY = 0;
+        this.floatSpeed = 0.1;
+        this.floatOffset = Math.random() * Math.PI * 2;
+    }
+    
+    update(speed) {
+        this.x -= speed;
+        // Floating animation
+        this.floatY = Math.sin(Date.now() * 0.005 + this.floatOffset) * 5;
+    }
+    
+    draw(ctx) {
+        if (this.collected) return;
+        
+        const x = this.x;
+        const y = this.y + this.floatY;
+        const size = this.width;
+        
+        ctx.save();
+        ctx.translate(x + size/2, y + size/2);
+        
+        // Draw Pixel Heart
+        ctx.fillStyle = '#FF0000';
+        const p = 3; // pixel size
+        
+        // Simple 8x8 heart shape scaled
+        // 0 1 1 0 0 1 1 0
+        // 1 1 1 1 1 1 1 1
+        // 1 1 1 1 1 1 1 1
+        // 0 1 1 1 1 1 1 0
+        // 0 0 1 1 1 1 0 0
+        // 0 0 0 1 1 0 0 0
+        
+        // Easier to just draw paths or rects for "pixel" look
+        // Top humps
+        ctx.fillRect(-9, -9, 6, 6);
+        ctx.fillRect(3, -9, 6, 6);
+        // Middle
+        ctx.fillRect(-12, -3, 24, 6);
+        // Bottom taper
+        ctx.fillRect(-9, 3, 18, 3);
+        ctx.fillRect(-6, 6, 12, 3);
+        ctx.fillRect(-3, 9, 6, 3);
+        
+        // Shine
+        ctx.fillStyle = '#FF9999';
+        ctx.fillRect(-6, -6, 3, 3);
+        
+        ctx.restore();
+    }
+    
+    getHitbox() {
+        return {
+            x: this.x,
+            y: this.y + this.floatY,
+            width: this.width,
+            height: this.height
+        };
+    }
+    
+    isOffScreen() {
+        return this.x + this.width < 0;
+    }
+}
 
 // Obstacle class
 class Obstacle {
@@ -268,8 +344,18 @@ function updateObstacles() {
 function spawnObstacle() {
     const groundY = (typeof GROUND_Y !== 'undefined') ? GROUND_Y : (canvas.height - 50);
 
+    // Check for Collectable Heart (Rare: 1 in 20, 5%)
+    const heartChance = 0.05;
+    if (Math.random() < heartChance && typeof spawnCollectable === 'function') {
+        // Don't spawn heart AND obstacle at exact same time to avoid impossible jumps?
+        // Actually, placing hearts ON or ABOVE obstacles is fun.
+        // For now, let's spawn it separately in the air.
+        spawnCollectable(groundY);
+        // Still spawn obstacle? Maybe skip obstacle this time to make it a "safe" bonus?
+        // Or spawn it high up. Let's continue to spawn obstacle as normal.
+    }
+
     // Check for elevated terrain (elevated ground)
-    // terrainChance is from difficulty.js
     const isTerrain = Math.random() < (typeof terrainChance !== 'undefined' ? terrainChance : 0);
     
     if (isTerrain) {
@@ -288,7 +374,6 @@ function spawnObstacle() {
         obstacles.push(obstacle);
         
         // Delay next spawn to prevent overlapping obstacles spawning inside the hill
-        // We assume gameSpeed is available globally from difficulty.js
         const speed = (typeof gameSpeed !== 'undefined') ? gameSpeed : 5;
         const extraDelay = (width / speed) * 16.6;
         lastSpawnTime += extraDelay;
@@ -296,7 +381,6 @@ function spawnObstacle() {
     }
 
     // Determine if we should spawn a floating platform
-    // floatingChance is from difficulty.js
     const isFloating = Math.random() < (typeof floatingChance !== 'undefined' ? floatingChance : 0);
     
     if (isFloating) {
@@ -305,9 +389,6 @@ function spawnObstacle() {
         const height = 20; // Fixed thickness
         
         // Calculate Y position to allow running under
-        // Platform should be high enough to run under (player height ~40px)
-        // But low enough to jump onto.
-        // Range: 80px to 130px above ground
         const y = groundY - (Math.floor(Math.random() * 50) + 80);
         
         const obstacle = new Obstacle(
@@ -339,6 +420,18 @@ function spawnObstacle() {
     obstacles.push(obstacle);
 }
 
+// Spawn a Collectable Heart
+function spawnCollectable(groundY) {
+    // Spawn in air, reachable by jumping
+    const y = groundY - 150 - (Math.random() * 50);
+    // Add slight delay so it doesn't overlap exactly with obstacle x
+    const x = canvas.width + 100; 
+    
+    if (typeof collectables !== 'undefined') {
+        collectables.push(new Heart(x, y));
+    }
+}
+
 // Get random obstacle level based on difficulty
 function getRandomObstacleLevel() {
     const rand = Math.random();
@@ -365,4 +458,3 @@ function clearObstaclesInRange(minX, maxX) {
         return obstacle.x < minX || obstacle.x > maxX;
     });
 }
-

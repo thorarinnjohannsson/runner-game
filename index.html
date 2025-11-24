@@ -6,6 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <title>Animal Jump</title>
+    <!-- Google Fonts: Press Start 2P -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- Styles loaded dynamically by loader script to prevent caching -->
 </head>
 <body>
@@ -15,6 +19,7 @@
     </div>
 
     <!-- Auto-loader: Forces fresh files every reload for testing -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         (function() {
             // Generate a unique version number based on the current time
@@ -29,6 +34,7 @@
             // 2. List of scripts to load in order
             var scripts = [
                 "js/mobile.js",
+                "js/supabase-client.js",
                 "js/background.js",
                 "js/characters.js",
                 "js/scoring.js",

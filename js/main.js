@@ -48,6 +48,7 @@ let pausedTime = 0; // Track time spent paused
 let gameState = GAME_STATES.START_SCREEN;
 let player = null;
 let obstacles = [];
+let collectables = []; // Track active collectables (Hearts)
 let particles = []; // Particle effects
 let trailParticles = []; // Trail particles
 let ripples = []; // Touch ripple effects
@@ -79,6 +80,16 @@ const characters = [
 // Expose characters globally for UI
 window.characters = characters;
 
+// Random Name Generator
+const ADJECTIVES = ['Speedy', 'Mega', 'Super', 'Tiny', 'Giant', 'Happy', 'Crazy', 'Wild', 'Brave', 'Quick', 'Pixel', 'Retro', 'Turbo', 'Neon', 'Hyper'];
+const NOUNS = ['Runner', 'Dasher', 'Jumper', 'Hopper', 'Sprinter', 'Racer', 'Glider', 'Flyer', 'Dasher', 'Ninja', 'Hero', 'Legend', 'Master', 'Wizard', 'Bot'];
+
+function generateRandomName() {
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    return `${adj} ${noun}`;
+}
+
 // Initialize game
 function init() {
     // Setup responsive canvas first
@@ -98,6 +109,19 @@ function init() {
         }
     } else {
         selectedCharacter = characters[0]; // Smart default
+    }
+
+    // Load or Generate Player Name
+    let savedName = localStorage.getItem('lastPlayerName');
+    if (!savedName) {
+        savedName = generateRandomName();
+        localStorage.setItem('lastPlayerName', savedName);
+    }
+    
+    // Set input value if exists
+    const nameInput = document.getElementById('playerNameInput');
+    if (nameInput) {
+        nameInput.value = savedName;
     }
     
     // Set up input handler
@@ -221,15 +245,7 @@ function drawBackground() {
     
     for (let col = 0; col < cols; col++) {
         // Calculate x position with scrolling
-        // We want the grid to move with groundScroll
         let xOffset = (col * tileSize - (groundScroll % tileSize));
-        
-        // If we just use modulo, we get a jittery effect or sliding window
-        // Correct approach: 
-        // The world position is (col * tileSize).
-        // Screen position is world position - groundScroll.
-        // We need to iterate enough columns to cover the screen.
-        // Start from the first visible column index in world space.
         
         const worldCol = Math.floor(groundScroll / tileSize) + col;
         const screenX = (worldCol * tileSize) - groundScroll;
@@ -280,16 +296,12 @@ function drawBackground() {
         ctx.fillRect(x, GROUND_Y, blockWidth, grassTopHeight);
         
         // 2. Decorative Edge (The "teeth" or "drips")
-        // Pattern: [Light 4px][Dark 4px][Light 4px][Dark 4px]...
         const pixelSize = 4;
         const subBlocks = blockWidth / pixelSize; // 8 sub-blocks
         
         for (let j = 0; j < subBlocks; j++) {
             const subX = x + (j * pixelSize);
             
-            // Deterministic pattern for this block
-            // Let's make it look like the reference: alternating depths
-            // 0, 2, 4, 6... are distinct from 1, 3, 5...
             const isEven = j % 2 === 0;
             
             if (isEven) {
@@ -326,12 +338,11 @@ function drawCloud(x, y, scale) {
     const pixelSize = 6;
     
     // Define cloud shape using a matrix of 1s (white)
-    // 0 = empty, 1 = white, 2 = shadow
     const shape = [
         [0,0,1,1,1,1,0,0],
         [0,1,1,1,1,1,1,0],
         [1,1,1,1,1,1,1,1],
-        [0,0,0,0,0,0,0,0] // Bottom shadow line would go here manually
+        [0,0,0,0,0,0,0,0] 
     ];
 
     // Draw Shadow first (offset)
@@ -365,8 +376,6 @@ function drawBush(x, y, scale) {
     
     const pixelSize = 5;
     
-    // Bush shape definition (centers at bottom)
-    // 1 = light green, 2 = dark green
     const shape = [
         [0,0,1,1,1,0,0],
         [0,1,1,1,1,1,0],
@@ -406,6 +415,7 @@ function startNewGame() {
     score = 0;
     lives = 3;
     obstacles = [];
+    collectables = []; // Reset collectables
     startTime = Date.now();
     elapsedTime = 0;
     pausedTime = 0;
@@ -506,6 +516,9 @@ function updateGameplay() {
     // Update obstacles
     updateObstacles();
     
+    // Update collectables (Hearts)
+    updateCollectables();
+    
     // Update particles
     updateParticles();
     
@@ -528,6 +541,58 @@ function updateGameplay() {
     score = scoreStats.totalScore;
 }
 
+// Update collectables
+function updateCollectables() {
+    if (!collectables) return;
+    
+    for (let i = collectables.length - 1; i >= 0; i--) {
+        const item = collectables[i];
+        item.update(gameSpeed);
+        
+        // Collision detection with player
+        if (!item.collected && !item.isOffScreen()) {
+            // Simple box collision
+            if (player.x < item.x + item.width &&
+                player.x + player.width > item.x &&
+                player.y < item.y + item.height &&
+                player.y + player.height > item.y) {
+                
+                // Collect item
+                item.collected = true;
+                collectHeart(item);
+                collectables.splice(i, 1);
+                continue;
+            }
+        }
+        
+        // Remove off-screen items
+        if (item.isOffScreen()) {
+            collectables.splice(i, 1);
+        }
+    }
+}
+
+// Handle Heart Collection
+function collectHeart(item) {
+    // Increase lives (max 5)
+    if (lives < 5) {
+        lives++;
+    } else {
+        // Bonus points if full health
+        scoreStats.bonusPoints += 500;
+        createScorePopup(item.x, item.y, 500, "FULL HEALTH!");
+    }
+    
+    // Create visual effects
+    createScorePopup(item.x, item.y, 0, "+1 ❤️");
+    createParticleExplosion(item.x + item.width/2, item.y + item.height/2, '#FF0000');
+    
+    // Play sound
+    if (typeof audioManager !== 'undefined') {
+        audioManager.playSound('powerup');
+    }
+}
+
 // Draw gameplay elements
 function drawGameplay() {
     // Draw ripples (at the back)
@@ -547,6 +612,9 @@ function drawGameplay() {
     // Draw obstacles
     drawObstacles();
     
+    // Draw collectables
+    drawCollectables();
+    
     // Draw score popups
     drawScorePopups();
     
@@ -554,6 +622,12 @@ function drawGameplay() {
     if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) {
         drawHUD();
     }
+}
+
+// Draw collectables
+function drawCollectables() {
+    if (!collectables) return;
+    collectables.forEach(item => item.draw(ctx));
 }
 
 // Draw HUD (timer, score, lives)
@@ -627,7 +701,7 @@ function drawHUD() {
     
     // Lives (top center)
     ctx.textAlign = 'center';
-    const hearts = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+    const hearts = '❤️'.repeat(lives) + '🖤'.repeat(Math.max(0, 3 - lives)); // Support >3 lives
     ctx.fillText(hearts, canvas.width / 2, isMobile ? 25 : 30);
     ctx.textAlign = 'left';
     
@@ -1066,4 +1140,3 @@ function drawRipples() {
 
 // Initialize game when page loads
 window.addEventListener('load', init);
-
