@@ -6,17 +6,18 @@
 const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL'; 
 const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-// Attempt initialization if client is available
+// Attempt initialization if client is available and credentials are valid
 if (typeof SupabaseClient !== 'undefined') {
-    // Wait for user to input keys or check if they are set
-    // In a real scenario, these would be constants or env vars
-    // Since we are asking the user to provide them, we might need a way to input them.
-    // For now, we will assume the user might edit this file or we prompt via console?
-    // Actually, let's leave them as empty strings and let the user know.
-    
-    // IMPORTANT: Initialize with placeholders.
-    // If you have the keys, replace them above.
-    SupabaseClient.init(SUPABASE_URL, SUPABASE_KEY);
+    // Only initialize if URL and key are provided and not placeholders
+    if (SUPABASE_URL && 
+        SUPABASE_KEY && 
+        SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && 
+        SUPABASE_KEY !== 'YOUR_SUPABASE_ANON_KEY' &&
+        SUPABASE_URL.startsWith('http')) {
+        SupabaseClient.init(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+        console.log('Supabase not configured - using local storage only. To enable global leaderboards, set SUPABASE_URL and SUPABASE_KEY in storage.js');
+    }
 }
 
 // Fallback in-memory storage
