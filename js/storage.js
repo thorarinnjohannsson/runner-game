@@ -77,14 +77,21 @@ async function saveHighScore(name, score, level = 1, time = 0, obstaclesCleared 
 
 // Get global high scores (Async)
 async function getGlobalHighScores() {
+    // Always try Supabase first if initialized
     if (typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {
-        const scores = await SupabaseClient.getTopScores(10);
-        if (scores && scores.length > 0) {
-            return scores;
+        try {
+            const scores = await SupabaseClient.getTopScores(10);
+            if (scores && scores.length > 0) {
+                return scores;
+            }
+            // If Supabase returns empty array, still fall back to local
+        } catch (e) {
+            console.warn('Error fetching global scores from Supabase:', e);
+            // Fall through to local fallback
         }
     }
     
-    // Fallback if offline or no keys
+    // Fallback if offline, not configured, or no scores from Supabase
     return getLocalHighScores();
 }
 

@@ -1022,6 +1022,21 @@ function onCollision() {
         const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
         saveHighScore(player.name, score, currentLevel, elapsedTime, scoreStats.obstaclesCleared);
         
+        // Fetch global high scores for display on game over screen
+        if (typeof getGlobalHighScores === 'function') {
+            if (typeof isLoadingScores !== 'undefined') isLoadingScores = true;
+            getGlobalHighScores().then(scores => {
+                if (typeof globalScoresCache !== 'undefined') {
+                    globalScoresCache = scores;
+                }
+                if (typeof isLoadingScores !== 'undefined') isLoadingScores = false;
+                if (typeof lastScoreFetch !== 'undefined') lastScoreFetch = Date.now();
+            }).catch(err => {
+                console.warn('Failed to fetch global scores:', err);
+                if (typeof isLoadingScores !== 'undefined') isLoadingScores = false;
+            });
+        }
+        
         // Track game over
         if (typeof Analytics !== 'undefined' && player) {
             Analytics.trackGameOver({

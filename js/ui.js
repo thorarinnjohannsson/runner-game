@@ -60,6 +60,19 @@ function drawSoftPanel(x, y, width, height, options = {}) {
 
 // Draw start screen with "Player Card" layout
 function drawStartScreen() {
+    // Fetch global high scores on start screen (once, if cache is stale)
+    if (typeof getGlobalHighScores === 'function' && (Date.now() - lastScoreFetch > 30000 || globalScoresCache.length === 0)) {
+        isLoadingScores = true;
+        getGlobalHighScores().then(scores => {
+            globalScoresCache = scores;
+            isLoadingScores = false;
+            lastScoreFetch = Date.now();
+        }).catch(err => {
+            console.warn('Failed to fetch global scores:', err);
+            isLoadingScores = false;
+        });
+    }
+    
     const mobile = isMobile || canvas.width < 600;
     const center = canvas.width / 2;
     const h = canvas.height;
