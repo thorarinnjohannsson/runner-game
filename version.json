@@ -1,7 +1,7 @@
 {
-  "version": "10",
-  "hash": "34dbecc",
-  "date": "2025-11-25 08:38:48 +0100",
-  "message": "Increment version to 9 in VERSION and version.json. Enhance game logic by updating visibility of version info and player stats, ensuring they are only displayed on the start screen and during high score modal. Clear celebration effects before transitions to improve gameplay experience.",
-  "timestamp": 1764056328928
+  "version": "11",
+  "hash": "57d445c",
+  "date": "2025-11-25 08:41:05 +0100",
+  "message": "Increment version to 10 in VERSION and version.json. Enhance fullscreen functionality by prioritizing canvas element for mobile support and improving error handling. Update fullscreen button visibility logic based on support detection, and refine button design for better usability and aesthetics.",
+  "timestamp": 1764056465775
 }
