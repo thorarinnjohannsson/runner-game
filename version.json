@@ -1,7 +1,7 @@
 {
-  "version": "4",
-  "hash": "53015ce",
-  "date": "2025-11-25 05:07:15 +0100",
-  "message": "Revamp game branding and SEO elements. Update favicon to feature new character design, change game title to \"Animal Jump\" across multiple files, and enhance meta tags for improved search engine visibility. Increment version to 3.",
-  "timestamp": 1764043635281
+  "version": "5",
+  "hash": "5f67883",
+  "date": "2025-11-25 05:10:29 +0100",
+  "message": "Update version to 4, add puppeteer as a devDependency, and modify package-lock.json to reflect new dependencies. Update og-image.png for improved branding.",
+  "timestamp": 1764043829226
 }
