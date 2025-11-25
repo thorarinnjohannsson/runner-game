@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
-  "hash": "6c8fb69",
-  "date": "2025-11-25 04:27:11 +0100",
-  "message": "Update index.html to change meta tag for mobile web app capability and modify version.json with new version hash and timestamp. Update Supabase credentials in storage.js for proper initialization.",
-  "timestamp": 1764041232154
+  "version": "3",
+  "hash": "3c3a8e9",
+  "date": "2025-11-25 04:35:14 +0100",
+  "message": "Refactor scoring system to include total score and average points per obstacle calculations. Remove redundant methods from MultiObstacleTracker class. Update version.json with new version hash and timestamp.",
+  "timestamp": 1764042041090
 }

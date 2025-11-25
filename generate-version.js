@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Script to generate version info with semantic versioning
+// Script to generate version info with simple incremental versioning (1, 2, 3, etc.)
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -7,43 +7,28 @@ const path = require('path');
 const VERSION_FILE = path.join(__dirname, 'VERSION');
 const VERSION_JSON = path.join(__dirname, 'version.json');
 
-// Read current version or start at 1.0.0
+// Read current version or start at 1
 function getCurrentVersion() {
     try {
         const versionContent = fs.readFileSync(VERSION_FILE, 'utf-8').trim();
-        return versionContent || '1.0.0';
+        // Parse as integer, default to 1 if invalid
+        const version = parseInt(versionContent, 10);
+        return isNaN(version) ? 1 : version;
     } catch (error) {
-        return '1.0.0';
+        return 1;
     }
 }
 
-// Increment version (patch version by default)
-function incrementVersion(version, type = 'patch') {
-    const parts = version.split('.').map(Number);
-    if (parts.length !== 3) parts = [1, 0, 0];
-    
-    switch(type) {
-        case 'major':
-            parts[0]++;
-            parts[1] = 0;
-            parts[2] = 0;
-            break;
-        case 'minor':
-            parts[1]++;
-            parts[2] = 0;
-            break;
-        case 'patch':
-        default:
-            parts[2]++;
-            break;
-    }
-    
-    return parts.join('.');
+// Increment version (simple integer increment)
+function incrementVersion(version) {
+    return version + 1;
 }
 
 try {
-    // Get current version from VERSION file (source of truth)
-    const versionToUse = getCurrentVersion();
+    // Get current version and increment it
+    const currentVersion = getCurrentVersion();
+    const newVersion = incrementVersion(currentVersion);
+    const versionToUse = newVersion.toString();
     
     // Get commit date
     let commitDate;
@@ -80,15 +65,15 @@ try {
     // Write to version.json
     fs.writeFileSync(VERSION_JSON, JSON.stringify(versionInfo, null, 2));
     
-    // Update VERSION file
+    // Update VERSION file with incremented version
     fs.writeFileSync(VERSION_FILE, versionToUse);
     
-    console.log(`Version info generated: v${versionToUse} (${commitDate})`);
+    console.log(`Version incremented: ${currentVersion} → ${newVersion} (${commitDate})`);
 } catch (error) {
     console.error('Error generating version:', error.message);
     // Fallback
     const versionInfo = {
-        version: '1.0.0',
+        version: '1',
         hash: 'dev',
         date: new Date().toISOString(),
         message: 'Development build',
@@ -96,5 +81,6 @@ try {
     };
     
     fs.writeFileSync(VERSION_JSON, JSON.stringify(versionInfo, null, 2));
-    console.log('Version info generated (fallback): v1.0.0');
+    fs.writeFileSync(VERSION_FILE, '1');
+    console.log('Version info generated (fallback): v1');
 }
