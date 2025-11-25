@@ -30,6 +30,7 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     padding: 20px;
     position: relative; /* For absolute positioning of input and version/stats */
+    transition: width 0.2s ease, height 0.2s ease; /* Smooth zoom transitions */
 }
 
 #playerNameInput {

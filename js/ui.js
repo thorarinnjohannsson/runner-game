@@ -157,6 +157,11 @@ function drawStartScreen() {
     
     const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
     drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
+    
+    // Draw zoom controls
+    if (typeof drawZoomControls === 'function') {
+        drawZoomControls();
+    }
 }
 
 // Draw Name Entry UI (Text mode vs Edit mode)
@@ -844,6 +849,31 @@ function handleUITouch(e) {
 
 // Process UI interaction (works for both click and touch)
 function processUIInteraction(x, y) {
+    // Check zoom buttons (available in all states)
+    if (window.zoomOutButton) {
+        const btn = window.zoomOutButton;
+        if (x >= btn.x && x <= btn.x + btn.width &&
+            y >= btn.y && y <= btn.y + btn.height) {
+            if (typeof zoomOut === 'function') {
+                zoomOut();
+            }
+            triggerHaptic(10);
+            return;
+        }
+    }
+    
+    if (window.zoomInButton) {
+        const btn = window.zoomInButton;
+        if (x >= btn.x && x <= btn.x + btn.width &&
+            y >= btn.y && y <= btn.y + btn.height) {
+            if (typeof zoomIn === 'function') {
+                zoomIn();
+            }
+            triggerHaptic(10);
+            return;
+        }
+    }
+    
     // Check pause button during gameplay
     if (gameState === GAME_STATES.PLAYING || (gameState === GAME_STATES.PAUSED && wasPausedByUser)) {
         if (window.pauseButton) {
@@ -1170,6 +1200,87 @@ function drawAudioControls(x, y) {
     };
     
     ctx.textAlign = 'left'; // Reset alignment
+}
+
+// Draw zoom controls (zoom in/out buttons) - only on start screen
+function drawZoomControls() {
+    const mobile = isMobile || canvas.width < 600;
+    const btnSize = mobile ? 35 : 40;
+    const margin = mobile ? 10 : 12;
+    const gap = 6; // Gap between buttons
+    
+    // Position in lower right corner to avoid blocking start button and other UI
+    const safeInsets = window.safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
+    const rightMargin = Math.max(margin, safeInsets.right + 10);
+    const bottomMargin = Math.max(margin + 60, safeInsets.bottom + 60); // Leave space for start button
+    
+    const zoomOutX = canvas.width - rightMargin - btnSize * 2 - gap;
+    const zoomInX = canvas.width - rightMargin - btnSize;
+    const y = canvas.height - bottomMargin - btnSize; // Position from bottom
+    
+    // Zoom Out Button (-)
+    window.zoomOutButton = {
+        x: zoomOutX,
+        y: y,
+        width: btnSize,
+        height: btnSize
+    };
+    
+    // Button background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(zoomOutX, y, btnSize, btnSize);
+    
+    // Button border
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(zoomOutX, y, btnSize, btnSize);
+    
+    // Minus icon
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(zoomOutX + btnSize * 0.25, y + btnSize / 2);
+    ctx.lineTo(zoomOutX + btnSize * 0.75, y + btnSize / 2);
+    ctx.stroke();
+    
+    // Zoom In Button (+)
+    window.zoomInButton = {
+        x: zoomInX,
+        y: y,
+        width: btnSize,
+        height: btnSize
+    };
+    
+    // Button background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(zoomInX, y, btnSize, btnSize);
+    
+    // Button border
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(zoomInX, y, btnSize, btnSize);
+    
+    // Plus icon
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    // Horizontal line
+    ctx.moveTo(zoomInX + btnSize * 0.25, y + btnSize / 2);
+    ctx.lineTo(zoomInX + btnSize * 0.75, y + btnSize / 2);
+    // Vertical line
+    ctx.moveTo(zoomInX + btnSize / 2, y + btnSize * 0.25);
+    ctx.lineTo(zoomInX + btnSize / 2, y + btnSize * 0.75);
+    ctx.stroke();
+    
+    // Show current zoom level (small text above buttons)
+    if (typeof window !== 'undefined' && typeof window.canvasScale !== 'undefined') {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = `${mobile ? 7 : 9}px Arial`;
+        ctx.textAlign = 'center';
+        const zoomPercent = Math.round(window.canvasScale * 100);
+        ctx.fillText(`${zoomPercent}%`, (zoomOutX + zoomInX + btnSize) / 2, y - (mobile ? 8 : 10));
+        ctx.textAlign = 'left';
+    }
 }
 
 // Draw fullscreen button

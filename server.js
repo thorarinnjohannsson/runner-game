@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 8000;
-const HOST = process.env.HOST || 'localhost';
+const HOST = process.env.HOST || '0.0.0.0'; // Listen on all network interfaces by default
 const HOT_RELOAD = process.env.HOT_RELOAD !== 'false'; // Enable by default
 
 // MIME types
@@ -33,7 +33,7 @@ const hotReloadScript = `
 <script>
 (function() {
     if (typeof WebSocket === 'undefined') return;
-    const ws = new WebSocket('ws://${HOST}:${PORT}/__hot_reload__');
+    const ws = new WebSocket('ws://' + window.location.hostname + ':${PORT}/__hot_reload__');
     ws.onmessage = function(event) {
         if (event.data === 'reload') {
             console.log('🔄 Hot reload: Reloading page...');
@@ -299,11 +299,39 @@ function setupFileWatcher() {
     });
 }
 
+// Get network IP addresses
+function getNetworkIPs() {
+    const interfaces = require('os').networkInterfaces();
+    const ips = [];
+    
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            // Skip internal (loopback) and non-IPv4 addresses
+            if (iface.family === 'IPv4' && !iface.internal) {
+                ips.push(iface.address);
+            }
+        }
+    }
+    
+    return ips;
+}
+
 // Start server
 server.listen(PORT, HOST, () => {
     console.log('\n🚀 Game server started!');
-    console.log(`\n📍 Local:   http://${HOST}:${PORT}`);
-    console.log(`📍 Network: http://${require('os').networkInterfaces()['en0']?.[1]?.address || 'localhost'}:${PORT}`);
+    
+    const networkIPs = getNetworkIPs();
+    const localIP = networkIPs[0] || 'localhost';
+    
+    console.log(`\n📍 Local:    http://localhost:${PORT}`);
+    if (networkIPs.length > 0) {
+        console.log(`\n📍 Network access:`);
+        networkIPs.forEach(ip => {
+            console.log(`   http://${ip}:${PORT}`);
+        });
+    } else {
+        console.log(`\n⚠️  No network interfaces found. Only accessible via localhost.`);
+    }
     
     if (HOT_RELOAD) {
         console.log(`\n🔥 Hot reload: ENABLED`);
