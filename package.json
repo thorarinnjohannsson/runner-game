@@ -13,5 +13,8 @@
     "runner"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "puppeteer": "^21.11.0"
+  }
 }
