@@ -1411,8 +1411,16 @@ function drawPlayerStats() {
     const statsDiv = document.getElementById('player-stats');
     if (!statsDiv) return;
     
-    // Update stats text
-    const statsText = `👥 ${activePlayerCount} playing now • 📊 ${dailyPlayerCount} played today`;
+    // Check if mobile for shorter text
+    const mobile = isMobile || (typeof window !== 'undefined' && window.innerWidth < 768);
+    
+    // Update stats text - shorter on mobile
+    let statsText;
+    if (mobile) {
+        statsText = `👥 ${activePlayerCount} now • 📊 ${dailyPlayerCount} today`;
+    } else {
+        statsText = `👥 ${activePlayerCount} playing now • 📊 ${dailyPlayerCount} played today`;
+    }
     statsDiv.textContent = statsText;
 }
 

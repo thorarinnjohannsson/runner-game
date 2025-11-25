@@ -1,7 +1,7 @@
 {
-  "version": "7",
-  "hash": "9c2f721",
-  "date": "2025-11-25 08:28:39 +0100",
-  "message": "Increment version to 6 in VERSION and version.json. Update game logic to skip level intro after cave exit, enhancing gameplay flow. Refactor obstacle rendering to improve terrain elevation visuals and add clearer transitions for elevated and depressed terrains.",
-  "timestamp": 1764055719307
+  "version": "8",
+  "hash": "4e2b905",
+  "date": "2025-11-25 08:33:33 +0100",
+  "message": "Add fullscreen functionality with toggle and UI button. Increment version to 7 in VERSION and version.json.",
+  "timestamp": 1764056013852
 }
