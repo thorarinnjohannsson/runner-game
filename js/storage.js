@@ -3,8 +3,10 @@
 
 // Initialize Supabase
 // You need to replace these with your actual Project URL and Anon Key
-const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL'; 
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://mbaudgwntgrftpigoavr.supabase.co'; 
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iYXVkZ3dudGdyZnRwaWdvYXZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5OTMzMDQsImV4cCI6MjA3OTU2OTMwNH0.112kwdI6WaYDYj8zKC7_N3AsQuBYzzVmsQJ8j8KjVvg';
+
+//pass ZqQyTSPXEa5nvuNX
 
 // Attempt initialization if client is available and credentials are valid
 if (typeof SupabaseClient !== 'undefined') {

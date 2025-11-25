@@ -1,7 +1,7 @@
 {
   "version": "1.0.1",
-  "hash": "dcd2ed7",
-  "date": "2025-11-25 04:11:31 +0100",
-  "message": "Refactor version generation script to implement semantic versioning, improve error handling, and update version display in the UI. The script now reads the current version from a VERSION file, increments it based on type, and writes to version.json. The UI now displays the version number instead of the commit hash.",
-  "timestamp": 1764040291770
+  "hash": "978fe62",
+  "date": "2025-11-25 04:18:34 +0100",
+  "message": "Enhance collision and scoring mechanics by introducing a multi-obstacle combo tracker. Update player and obstacle interactions to reset and increment the tracker appropriately. Adjust scoring system to include bonuses for clearing multiple obstacles in a single jump, improving gameplay feedback and scoring accuracy.",
+  "timestamp": 1764040714709
 }
