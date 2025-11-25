@@ -675,9 +675,9 @@ function drawHighScoresList(centerX, startY, limit = 5, availableWidth = null) {
         ctx.fillStyle = isCurrentRun ? '#FFD700' : 'white';
         const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `${index + 1}.`));
         
-        // Truncate name if too long - leave more space for score
+        // Truncate name if too long - allow up to 16 characters
         let displayName = scoreEntry.name;
-        const maxNameLength = mobile ? 6 : 10;
+        const maxNameLength = 16;
         if (displayName.length > maxNameLength) {
             displayName = displayName.substring(0, maxNameLength - 1) + '…';
         }
