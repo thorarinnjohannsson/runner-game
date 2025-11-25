@@ -1,7 +1,7 @@
 {
-  "version": "9",
-  "hash": "7a3cdd3",
-  "date": "2025-11-25 08:36:03 +0100",
-  "message": "Update styles for player stats and version info, enhancing mobile responsiveness and visual clarity. Increment version to 8 in VERSION and version.json.",
-  "timestamp": 1764056163573
+  "version": "10",
+  "hash": "34dbecc",
+  "date": "2025-11-25 08:38:48 +0100",
+  "message": "Increment version to 9 in VERSION and version.json. Enhance game logic by updating visibility of version info and player stats, ensuring they are only displayed on the start screen and during high score modal. Clear celebration effects before transitions to improve gameplay experience.",
+  "timestamp": 1764056328928
 }

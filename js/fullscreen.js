@@ -10,11 +10,20 @@ function toggleFullscreen() {
 }
 
 function enterFullscreen() {
-    const element = document.documentElement; // Full page fullscreen
+    // Try canvas element first (better for mobile)
+    const canvas = document.getElementById('gameCanvas');
+    const element = canvas || document.documentElement;
     
+    // Check if fullscreen is supported
     if (element.requestFullscreen) {
-        element.requestFullscreen();
-    } else if (element.webkitRequestFullscreen) { // Safari
+        element.requestFullscreen().catch(err => {
+            console.log('Fullscreen error:', err);
+            // Fallback to document element
+            if (element !== document.documentElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        });
+    } else if (element.webkitRequestFullscreen) { // Safari/Chrome
         element.webkitRequestFullscreen();
     } else if (element.webkitRequestFullScreen) { // Older Safari
         element.webkitRequestFullScreen();
@@ -22,6 +31,10 @@ function enterFullscreen() {
         element.mozRequestFullScreen();
     } else if (element.msRequestFullscreen) { // IE/Edge
         element.msRequestFullscreen();
+    } else {
+        // Mobile fallback: try to maximize viewport
+        // iOS Safari doesn't support fullscreen API, so we'll just hide UI elements
+        console.log('Fullscreen not supported on this device');
     }
 }
 

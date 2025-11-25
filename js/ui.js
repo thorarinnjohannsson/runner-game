@@ -1194,10 +1194,32 @@ function drawAudioControls(x, y) {
 // Draw fullscreen button
 function drawFullscreenButton() {
     const mobile = isMobile || canvas.width < 600;
-    const btnSize = mobile ? 45 : 50; // Larger on mobile for better touch target
-    const margin = mobile ? 12 : 15;
-    const x = canvas.width - btnSize - margin;
-    const y = canvas.height - btnSize - margin; // Lower right corner
+    
+    // Check if fullscreen is supported
+    const canvasEl = document.getElementById('gameCanvas');
+    const fullscreenSupported = !!(
+        canvasEl?.requestFullscreen ||
+        canvasEl?.webkitRequestFullscreen ||
+        canvasEl?.mozRequestFullScreen ||
+        document.documentElement.requestFullscreen ||
+        document.documentElement.webkitRequestFullscreen
+    );
+    
+    // Hide button if fullscreen not supported (e.g., iOS Safari)
+    if (!fullscreenSupported && mobile) {
+        return;
+    }
+    
+    // Larger button on mobile, ensure it's not bleeding out
+    const btnSize = mobile ? 48 : 50;
+    const margin = mobile ? 15 : 15; // Increased margin to prevent bleeding
+    const safeMargin = Math.max(margin, 10); // Ensure minimum safe margin
+    
+    // Calculate position ensuring button stays within canvas bounds
+    const maxX = canvas.width - btnSize - safeMargin;
+    const maxY = canvas.height - btnSize - safeMargin;
+    const x = Math.max(safeMargin, Math.min(maxX, canvas.width - btnSize - safeMargin));
+    const y = Math.max(safeMargin, Math.min(maxY, canvas.height - btnSize - safeMargin));
     
     // Store button position for click detection
     window.fullscreenButton = {
@@ -1207,46 +1229,46 @@ function drawFullscreenButton() {
         height: btnSize
     };
     
-    // Button background with better visibility
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    // Button background with better visibility - darker for contrast
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
     ctx.fillRect(x, y, btnSize, btnSize);
     
     // Button border - thicker and more visible
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = mobile ? 3 : 3;
     ctx.strokeRect(x, y, btnSize, btnSize);
     
-    // Add subtle glow/shadow for better visibility
-    ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-    ctx.shadowBlur = 5;
+    // Add glow/shadow for better visibility
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+    ctx.shadowBlur = 8;
     ctx.strokeRect(x, y, btnSize, btnSize);
     ctx.shadowBlur = 0; // Reset shadow
     
     // Fullscreen icon (expand icon) - larger and more visible
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = mobile ? 3 : 3;
-    const iconSize = mobile ? 24 : 26;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = mobile ? 3.5 : 3;
+    const iconSize = mobile ? 26 : 28;
     const iconX = x + btnSize / 2 - iconSize / 2;
     const iconY = y + btnSize / 2 - iconSize / 2;
     
     // Draw expand icon (corner brackets) - thicker lines
     ctx.beginPath();
     // Top-left corner
-    ctx.moveTo(iconX, iconY + 6);
+    ctx.moveTo(iconX, iconY + 7);
     ctx.lineTo(iconX, iconY);
-    ctx.lineTo(iconX + 6, iconY);
+    ctx.lineTo(iconX + 7, iconY);
     // Top-right corner
-    ctx.moveTo(iconX + iconSize - 6, iconY);
+    ctx.moveTo(iconX + iconSize - 7, iconY);
     ctx.lineTo(iconX + iconSize, iconY);
-    ctx.lineTo(iconX + iconSize, iconY + 6);
+    ctx.lineTo(iconX + iconSize, iconY + 7);
     // Bottom-left corner
-    ctx.moveTo(iconX, iconY + iconSize - 6);
+    ctx.moveTo(iconX, iconY + iconSize - 7);
     ctx.lineTo(iconX, iconY + iconSize);
-    ctx.lineTo(iconX + 6, iconY + iconSize);
+    ctx.lineTo(iconX + 7, iconY + iconSize);
     // Bottom-right corner
-    ctx.moveTo(iconX + iconSize - 6, iconY + iconSize);
+    ctx.moveTo(iconX + iconSize - 7, iconY + iconSize);
     ctx.lineTo(iconX + iconSize, iconY + iconSize);
-    ctx.lineTo(iconX + iconSize, iconY + iconSize - 6);
+    ctx.lineTo(iconX + iconSize, iconY + iconSize - 7);
     ctx.stroke();
 }
 
