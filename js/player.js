@@ -120,9 +120,15 @@ class Player {
         if (this.y + this.height >= groundY) {
             this.y = groundY - this.height;
             this.velocityY = 0;
+            const wasInAir = !this.isOnGround;
             this.isOnGround = true;
             this.jumpLevel = 0; // Reset jump level when landing
             this.jumpCount = 0; // Reset jump count on landing
+            
+            // Reset multi-obstacle tracker when landing
+            if (wasInAir && typeof multiObstacleTracker !== 'undefined') {
+                multiObstacleTracker.reset();
+            }
             
             // Reset rotation (not used anymore)
             this.rotation = 0;

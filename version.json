@@ -1,7 +1,7 @@
 {
   "version": "1.0.1",
-  "hash": "f7fb927",
-  "date": "2025-11-25 04:09:37 +0100",
-  "message": "Update version.json with new hash and timestamp. Refactor character drawing functions to remove somersault animations, simplifying player movement and enhancing drawing logic for various characters.",
-  "timestamp": 1764040266380
+  "hash": "dcd2ed7",
+  "date": "2025-11-25 04:11:31 +0100",
+  "message": "Refactor version generation script to implement semantic versioning, improve error handling, and update version display in the UI. The script now reads the current version from a VERSION file, increments it based on type, and writes to version.json. The UI now displays the version number instead of the commit hash.",
+  "timestamp": 1764040291770
 }

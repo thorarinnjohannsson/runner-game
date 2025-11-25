@@ -114,7 +114,47 @@ class ScoreStats {
         this.platformLandings = 0;
         this.perfectTimings = 0;
         this.closeCalls = 0;
+        this.multiObstacleClears = 0; // Track multi-obstacle clears
     }
+}
+
+// Multi-obstacle combo tracker (tracks consecutive obstacles cleared in one jump)
+class MultiObstacleTracker {
+    constructor() {
+        this.count = 0; // Current count of obstacles cleared in this jump
+        this.lastClearTime = 0;
+        this.timeout = 2000; // 2 seconds to maintain combo
+    }
+    
+    increment() {
+        const now = Date.now();
+        // Reset if too much time has passed
+        if (now - this.lastClearTime > this.timeout) {
+            this.count = 0;
+        }
+        this.count++;
+        this.lastClearTime = now;
+    }
+    
+    reset() {
+        this.count = 0;
+        this.lastClearTime = 0;
+    }
+    
+    getBonus() {
+        if (this.count >= 4) return POINTS.multiObstacle4;
+        if (this.count === 3) return POINTS.multiObstacle3;
+        if (this.count === 2) return POINTS.multiObstacle2;
+        return 0;
+    }
+    
+    getBonusText() {
+        if (this.count >= 4) return '4X COMBO!';
+        if (this.count === 3) return '3X COMBO!';
+        if (this.count === 2) return '2X COMBO!';
+        return '';
+    }
+}
     
     get totalScore() {
         return this.timePoints + this.obstaclePoints + this.bonusPoints;
@@ -128,6 +168,7 @@ class ScoreStats {
 
 // Global scoring objects
 let comboTracker = new ComboTracker();
+let multiObstacleTracker = new MultiObstacleTracker();
 let scorePopups = [];
 let scoreStats = new ScoreStats();
 let lastMilestone = 0;
@@ -143,7 +184,12 @@ const POINTS = {
     // Jump type bonuses
     aerial: 20,
     perfect: 30,
-    platform: 10,
+    platform: 50,  // Increased bonus for jumping over platforms
+    
+    // Multi-obstacle combo bonuses
+    multiObstacle2: 30,  // Bonus for clearing 2 obstacles in one jump
+    multiObstacle3: 60,  // Bonus for clearing 3 obstacles in one jump
+    multiObstacle4: 100, // Bonus for clearing 4+ obstacles in one jump
     
     // Style bonuses
     efficient: 15,  // Using minimal jumps
@@ -169,10 +215,14 @@ function calculateObstacleScore(obstacle, clearType, jumpsUsed, wasAtPeak) {
     let jumpBonus = 0;
     let bonusText = '';
     
+    // Check if this is a platform (floating platform)
+    const isPlatform = obstacle.isFloating || false;
+    
     if (clearType === 'aerial') {
         jumpBonus += POINTS.aerial;
         bonusText = 'AERIAL!';
-    } else if (clearType === 'platform') {
+    } else if (clearType === 'platform' || isPlatform) {
+        // Extra bonus for jumping over platforms
         jumpBonus += POINTS.platform;
         bonusText = 'PLATFORM!';
     }
@@ -180,6 +230,17 @@ function calculateObstacleScore(obstacle, clearType, jumpsUsed, wasAtPeak) {
     if (wasAtPeak && clearType !== 'ground') {
         jumpBonus += POINTS.perfect - (clearType === 'aerial' ? POINTS.aerial : 0);
         bonusText = 'PERFECT!';
+    }
+    
+    // Multi-obstacle combo bonus (only if clearing while in air)
+    let multiObstacleBonus = 0;
+    let multiObstacleText = '';
+    if (clearType !== 'ground') {
+        multiObstacleBonus = multiObstacleTracker.getBonus();
+        multiObstacleText = multiObstacleTracker.getBonusText();
+        if (multiObstacleBonus > 0) {
+            bonusText = multiObstacleText || bonusText;
+        }
     }
     
     // Style bonus
@@ -199,23 +260,25 @@ function calculateObstacleScore(obstacle, clearType, jumpsUsed, wasAtPeak) {
     }
     
     // Apply combo multiplier
-    const subtotal = basePoints + jumpBonus + styleBonus;
+    const subtotal = basePoints + jumpBonus + styleBonus + multiObstacleBonus;
     const total = Math.floor(subtotal * comboTracker.multiplier);
     
     // Update stats
     scoreStats.obstaclePoints += total;
     scoreStats.obstaclesCleared++;
-    scoreStats.bonusPoints += Math.floor((jumpBonus + styleBonus) * comboTracker.multiplier);
+    scoreStats.bonusPoints += Math.floor((jumpBonus + styleBonus + multiObstacleBonus) * comboTracker.multiplier);
     
     if (clearType === 'aerial') scoreStats.aerialClears++;
-    if (clearType === 'platform') scoreStats.platformLandings++;
+    if (clearType === 'platform' || isPlatform) scoreStats.platformLandings++;
     if (wasAtPeak) scoreStats.perfectTimings++;
     if (obstacle.closeCall) scoreStats.closeCalls++;
+    if (multiObstacleBonus > 0) scoreStats.multiObstacleClears++;
     
     return {
         base: basePoints,
         jump: jumpBonus,
         style: styleBonus,
+        multiObstacle: multiObstacleBonus,
         combo: comboTracker.multiplier,
         total: total,
         bonusText: bonusText
@@ -280,6 +343,7 @@ function updateTimeScore(deltaTime) {
 // Reset scoring for new game
 function resetScoring() {
     comboTracker = new ComboTracker();
+    multiObstacleTracker = new MultiObstacleTracker();
     scorePopups = [];
     scoreStats.reset();
     lastMilestone = 0;

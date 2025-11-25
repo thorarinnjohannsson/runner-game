@@ -323,6 +323,15 @@ function updateObstacles() {
             // Increment combo
             if (!player.isOnGround) {
                 comboTracker.increment();
+                // Track multi-obstacle combo (clearing multiple obstacles in one jump)
+                if (typeof multiObstacleTracker !== 'undefined') {
+                    multiObstacleTracker.increment();
+                }
+            } else {
+                // Reset multi-obstacle tracker when landing
+                if (typeof multiObstacleTracker !== 'undefined') {
+                    multiObstacleTracker.reset();
+                }
             }
             
             // Play score sound

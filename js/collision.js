@@ -20,11 +20,17 @@ function checkCollisions() {
                 return; // Only handle one collision per frame
             } else if (collisionSide === 'top') {
                 // Landing on top - allow it, just stop falling
+                const wasInAir = !player.isOnGround;
                 player.y = obstacleBox.y - player.height;
                 player.velocityY = 0;
                 player.isOnGround = true;
                 player.jumpCount = 0; // Reset jump count when landing on obstacle
                 player.lastClearType = 'platform'; // Mark as platform landing
+                
+                // Reset multi-obstacle tracker when landing on platform
+                if (wasInAir && typeof multiObstacleTracker !== 'undefined') {
+                    multiObstacleTracker.reset();
+                }
                 
                 // Mark obstacle as "landed on" so we don't keep triggering
                 if (!obstacle.landedOn) {
