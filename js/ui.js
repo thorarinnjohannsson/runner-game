@@ -1195,43 +1195,111 @@ function drawAudioControls(x, y) {
 function drawFullscreenButton() {
     const mobile = isMobile || canvas.width < 600;
     
-    // Check if fullscreen is supported
+    // Check if fullscreen is supported - more comprehensive check
     const canvasEl = document.getElementById('gameCanvas');
+    const element = canvasEl || document.documentElement;
+    
+    // Check for fullscreen support with multiple methods
     const fullscreenSupported = !!(
-        canvasEl?.requestFullscreen ||
-        canvasEl?.webkitRequestFullscreen ||
-        canvasEl?.mozRequestFullScreen ||
-        document.documentElement.requestFullscreen ||
-        document.documentElement.webkitRequestFullscreen
+        element.requestFullscreen ||
+        element.webkitRequestFullscreen ||
+        element.webkitRequestFullScreen ||
+        element.mozRequestFullScreen ||
+        element.msRequestFullscreen ||
+        // Also check document methods
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.mozCancelFullScreen ||
+        document.msExitFullscreen
     );
     
-    // Hide button if fullscreen not supported (e.g., iOS Safari)
-    if (!fullscreenSupported && mobile) {
-        return;
-    }
+    // Show button on all mobile browsers - let users try fullscreen
+    // Even if it doesn't work on iOS Safari, showing the button is fine
+    // The fullscreen function will handle gracefully if not supported
+    
+    // Always show the button - fullscreen function handles unsupported cases
     
     // Get safe area insets
     const safeInsets = window.safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
     
-    // Adaptive button size based on screen size
-    const btnSize = mobile ? (isPortrait ? 44 : 40) : 50;
+    // Adaptive button size based on screen size - ensure it's visible
+    const btnSize = mobile ? (isPortrait ? 48 : 44) : 50;
     
-    // Calculate safe margins - account for safe areas and UI elements
-    const baseMargin = mobile ? 12 : 15;
-    const rightMargin = Math.max(baseMargin, safeInsets.right + 8);
-    const bottomMargin = Math.max(baseMargin, safeInsets.bottom + 8);
+    // Calculate safe margins - account for safe areas, browser UI, and UI elements
+    const baseMargin = mobile ? 15 : 15;
+    const rightMargin = Math.max(baseMargin, safeInsets.right + 10);
+    
+    // Account for browser UI at bottom (address bar, nav bar)
+    const visualViewport = window.visualViewport;
+    const browserUIBottom = visualViewport 
+        ? Math.max(0, window.innerHeight - visualViewport.height - safeInsets.bottom)
+        : (mobile ? 48 : 0);
+    
+    const bottomMargin = Math.max(baseMargin, safeInsets.bottom + browserUIBottom + 10);
     
     // Calculate position ensuring button stays within canvas bounds
-    const x = Math.max(safeInsets.left + 8, canvas.width - btnSize - rightMargin);
-    const y = Math.max(safeInsets.top + 8, canvas.height - btnSize - bottomMargin);
+    // Ensure button is always visible and not cut off
+    const maxX = canvas.width - btnSize - rightMargin;
+    const maxY = canvas.height - btnSize - bottomMargin;
+    const x = Math.max(safeInsets.left + 10, Math.min(maxX, canvas.width - btnSize - rightMargin));
+    const y = Math.max(safeInsets.top + 10, Math.min(maxY, canvas.height - btnSize - bottomMargin));
     
     // Ensure button doesn't overlap with metadata boxes on left
-    const metadataBoxHeight = mobile ? 20 : 24;
-    const metadataBoxesHeight = metadataBoxHeight * 2 + 8; // Two boxes + gap
-    const minYForMetadata = safeInsets.bottom + metadataBoxesHeight + 8;
+    const metadataBoxHeight = mobile ? 22 : 24;
+    const metadataBoxesHeight = metadataBoxHeight * 2 + 10; // Two boxes + gap
+    const minYForMetadata = safeInsets.bottom + browserUIBottom + metadataBoxesHeight + 10;
     
-    // If button would overlap with metadata, move it up
-    const finalY = Math.min(y, canvas.height - minYForMetadata - btnSize - 8);
+    // If button would overlap with metadata, move it up, but ensure it's still visible
+    const finalY = Math.max(
+        safeInsets.top + 10, // Don't go too high
+        Math.min(y, canvas.height - minYForMetadata - btnSize - 10)
+    );
+    
+    // Final safety check - ensure button is within canvas bounds
+    if (x < 0 || finalY < 0 || x + btnSize > canvas.width || finalY + btnSize > canvas.height) {
+        // Fallback: position in safe corner
+        const safeX = Math.max(10, canvas.width - btnSize - 15);
+        const safeY = Math.max(10, canvas.height - btnSize - 15);
+        const adjustedX = safeX;
+        const adjustedY = safeY;
+        
+        // Use adjusted position
+        window.fullscreenButton = {
+            x: adjustedX,
+            y: adjustedY,
+            width: btnSize,
+            height: btnSize
+        };
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(adjustedX, adjustedY, btnSize, btnSize);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(adjustedX, adjustedY, btnSize, btnSize);
+        
+        // Draw icon
+        const iconSize = mobile ? 24 : 28;
+        const iconX = adjustedX + btnSize / 2 - iconSize / 2;
+        const iconY = adjustedY + btnSize / 2 - iconSize / 2;
+        
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = mobile ? 3.5 : 3;
+        ctx.beginPath();
+        ctx.moveTo(iconX, iconY + 7);
+        ctx.lineTo(iconX, iconY);
+        ctx.lineTo(iconX + 7, iconY);
+        ctx.moveTo(iconX + iconSize - 7, iconY);
+        ctx.lineTo(iconX + iconSize, iconY);
+        ctx.lineTo(iconX + iconSize, iconY + 7);
+        ctx.moveTo(iconX, iconY + iconSize - 7);
+        ctx.lineTo(iconX, iconY + iconSize);
+        ctx.lineTo(iconX + 7, iconY + iconSize);
+        ctx.moveTo(iconX + iconSize - 7, iconY + iconSize);
+        ctx.lineTo(iconX + iconSize, iconY + iconSize);
+        ctx.lineTo(iconX + iconSize, iconY + iconSize - 7);
+        ctx.stroke();
+        return;
+    }
     
     // Store button position for click detection
     window.fullscreenButton = {

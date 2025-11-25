@@ -1,7 +1,7 @@
 {
-  "version": "14",
-  "hash": "5630a0b",
-  "date": "2025-11-25 08:53:07 +0100",
-  "message": "Increment version to 13 in VERSION and version.json. Update hash and timestamp in version.json. Adjust maximum display name length for high scores to 16 characters for better readability.",
-  "timestamp": 1764057187573
+  "version": "15",
+  "hash": "3333081",
+  "date": "2025-11-25 09:00:25 +0100",
+  "message": "Enhance mobile responsiveness by implementing safe area support in styles and JavaScript. Adjust positioning, font sizes, and padding for version info and player stats to improve visibility across devices. Increment version to 14 in VERSION and version.json.",
+  "timestamp": 1764057625344
 }
