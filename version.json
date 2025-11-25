@@ -1,7 +1,7 @@
 {
-  "version": "8",
-  "hash": "4e2b905",
-  "date": "2025-11-25 08:33:33 +0100",
-  "message": "Add fullscreen functionality with toggle and UI button. Increment version to 7 in VERSION and version.json.",
-  "timestamp": 1764056013852
+  "version": "9",
+  "hash": "7a3cdd3",
+  "date": "2025-11-25 08:36:03 +0100",
+  "message": "Update styles for player stats and version info, enhancing mobile responsiveness and visual clarity. Increment version to 8 in VERSION and version.json.",
+  "timestamp": 1764056163573
 }

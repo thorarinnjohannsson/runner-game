@@ -55,6 +55,12 @@ class TransitionManager {
             obstacles = obstacles.filter(obs => obs.x < this.characterX);
         }
         
+        // Clear any existing effects before starting transition
+        // This ensures celebration effects only appear during the transition scene
+        if (typeof clearEffects !== 'undefined') {
+            clearEffects();
+        }
+        
         // Prepare stats for reveal
         this.prepareStats();
         

@@ -177,6 +177,9 @@ function gameLoop() {
     // Draw background
     drawBackground();
     
+    // Show/hide version info and player stats based on game state
+    updateVersionAndStatsVisibility();
+    
     // Handle different game states
     switch (gameState) {
         case GAME_STATES.START_SCREEN:
@@ -201,10 +204,8 @@ function gameLoop() {
         case GAME_STATES.PLAYING:
             updateGameplay();
             drawGameplay();
-            // Draw effects
-            if (typeof drawEffects !== 'undefined') {
-                drawEffects(ctx);
-            }
+            // Don't draw celebration effects during gameplay - only during transitions
+            // Effects are only drawn during LEVEL_TRANSITION state
             // Draw level intro overlay if active
             if (showLevelIntro) {
                 drawLevelIntro();
@@ -527,6 +528,11 @@ function startNewGame() {
     
     // Reset difficulty
     resetDifficulty();
+    
+    // Clear all effects to ensure no celebration particles persist
+    if (typeof clearEffects !== 'undefined') {
+        clearEffects();
+    }
     
     // Start countdown
     gameState = GAME_STATES.COUNTDOWN;
@@ -1372,10 +1378,11 @@ function showMilestoneMessage(milestone) {
     // Create popup
     createScorePopup(canvas.width / 2, canvas.height / 3, 0, message);
     
-    // Create celebration particles
-    if (typeof addEffect !== 'undefined' && typeof createCelebrationBurst !== 'undefined') {
-        addEffect(createCelebrationBurst(canvas.width / 2, canvas.height / 3, 15));
-    }
+    // Don't create celebration particles during gameplay milestones
+    // Celebration effects are only shown during level transition scenes
+    // if (typeof addEffect !== 'undefined' && typeof createCelebrationBurst !== 'undefined') {
+    //     addEffect(createCelebrationBurst(canvas.width / 2, canvas.height / 3, 15));
+    // }
     
     // Play sound
     if (typeof audioManager !== 'undefined') {
@@ -1494,6 +1501,23 @@ function drawProgressBorder(progress) {
     ctx.shadowColor = '#FF4444';
     ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
     ctx.restore();
+}
+
+// Update visibility of version info and player stats
+function updateVersionAndStatsVisibility() {
+    const versionDiv = document.getElementById('version-info');
+    const statsDiv = document.getElementById('player-stats');
+    
+    // Only show on start screen
+    const shouldShow = gameState === GAME_STATES.START_SCREEN || gameState === 'HIGHSCORE_MODAL';
+    
+    if (versionDiv) {
+        versionDiv.style.display = shouldShow ? 'block' : 'none';
+    }
+    
+    if (statsDiv) {
+        statsDiv.style.display = shouldShow ? 'block' : 'none';
+    }
 }
 
 // Draw level intro (brief overlay at start of level)
