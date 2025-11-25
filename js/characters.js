@@ -1,41 +1,37 @@
-// Character Drawing Functions (Classic Simple Style)
+// Character Drawing Functions (called by Player.draw)
 
 // --- CAT (The classic orange one) ---
 function drawCat(ctx, colors, p, animationFrame, isOnGround, legOffset, runningFrame = 0) {
-    // Use legOffset for simple animation (ignore runningFrame for classic style)
-    const legAnim = legOffset || 0;
-    
     // 1. TAIL (Animated)
     const tailWag = Math.sin(animationFrame * 3) * 4;
-    ctx.fillStyle = colors.fur || '#E67E22';
-    
+    ctx.fillStyle = colors.fur;
     // Tail base
     ctx.fillRect(-2 * p, (4 * p) + tailWag, 2 * p, 2 * p);
     // Tail tip
     ctx.fillRect(-3 * p, (3 * p) + tailWag, 2 * p, 2 * p);
     
     // 2. BACK LEGS (Left)
-    ctx.fillStyle = colors.furDark || '#D35400';
-    ctx.fillRect(2 * p + legAnim, 7 * p, 2 * p, 2 * p);
+    ctx.fillStyle = colors.furDark;
+    ctx.fillRect(2 * p + legOffset, 7 * p, 2 * p, 2 * p);
     
     // 3. BODY
-    ctx.fillStyle = colors.fur || '#E67E22';
+    ctx.fillStyle = colors.fur;
     ctx.fillRect(2 * p, 4 * p, 6 * p, 3 * p); // Main body
     
     // Belly (Lighter)
-    ctx.fillStyle = colors.furLight || '#F39C12';
+    ctx.fillStyle = colors.furLight;
     ctx.fillRect(3 * p, 5 * p, 4 * p, 2 * p);
     
     // 4. FRONT LEGS (Right)
-    ctx.fillStyle = colors.furDark || '#D35400';
-    ctx.fillRect(6 * p - legAnim, 7 * p, 2 * p, 2 * p);
+    ctx.fillStyle = colors.furDark;
+    ctx.fillRect(6 * p - legOffset, 7 * p, 2 * p, 2 * p);
     
     // 5. HEAD
-    ctx.fillStyle = colors.fur || '#E67E22';
+    ctx.fillStyle = colors.fur;
     ctx.fillRect(0, 0, 9 * p, 5 * p); // Big head box
     
     // Ears
-    ctx.fillStyle = colors.fur || '#E67E22';
+    ctx.fillStyle = colors.fur;
     ctx.fillRect(1 * p, -2 * p, 2 * p, 2 * p); // Left Ear base
     ctx.fillRect(1 * p, -3 * p, 1 * p, 1 * p); // Left Ear tip
     
@@ -43,87 +39,91 @@ function drawCat(ctx, colors, p, animationFrame, isOnGround, legOffset, runningF
     ctx.fillRect(7 * p, -3 * p, 1 * p, 1 * p); // Right Ear tip
     
     // Ear Insides
-    ctx.fillStyle = colors.furDark || '#D35400';
+    ctx.fillStyle = colors.furDark;
     ctx.fillRect(1.5 * p, -1.5 * p, 1 * p, 1 * p);
     ctx.fillRect(6.5 * p, -1.5 * p, 1 * p, 1 * p);
     
     // 6. FACE DETAILS
     // Eyes
-    ctx.fillStyle = colors.black || '#000000';
+    ctx.fillStyle = colors.black;
     ctx.fillRect(2 * p, 2 * p, 1 * p, 1 * p); // Left Eye
     ctx.fillRect(6 * p, 2 * p, 1 * p, 1 * p); // Right Eye
     
     // Eye Shine
-    ctx.fillStyle = colors.white || '#FFFFFF';
+    ctx.fillStyle = colors.white;
     ctx.fillRect(2.2 * p, 2.2 * p, 0.4 * p, 0.4 * p);
     ctx.fillRect(6.2 * p, 2.2 * p, 0.4 * p, 0.4 * p);
     
     // Nose
-    ctx.fillStyle = colors.nose || '#E74C3C';
+    ctx.fillStyle = colors.nose;
     ctx.fillRect(4.5 * p - 1, 3 * p, 2, 2);
     
     // Whiskers
-    ctx.fillStyle = colors.black || '#000000';
+    ctx.fillStyle = colors.black;
     ctx.fillRect(0.5 * p, 3.5 * p, 1.5 * p, 1); // Left
     ctx.fillRect(7 * p, 3.5 * p, 1.5 * p, 1);   // Right
 }
 
-// --- WOLF (Simple Grey - adapted from old style) ---
+// --- WOLF (Replaces Frog) ---
 function drawWolf(ctx, colors, p, animationFrame, isOnGround, legOffset, runningFrame = 0) {
-    const legAnim = legOffset || 0;
-    
     // Wolf Palette
     const c = {
-        fur: '#78909C',        // Medium grey
-        dark: '#607D8B',       // Darker grey
-        eye: '#FDD835',        // Yellow eyes
-        nose: '#263238'        // Dark nose
+        fur: '#607D8B',      // Blue Grey
+        dark: '#455A64',     // Dark Blue Grey
+        light: '#90A4AE',    // Light Grey
+        nose: '#263238',     // Almost Black
+        eye: '#FFEB3B'       // Yellow Eyes
     };
-    
-    // Tail
+
+    // Bushy Tail (Wagging)
     const tailWag = Math.sin(animationFrame * 3) * 3;
     ctx.fillStyle = c.dark;
-    ctx.fillRect(-2 * p, 4 * p + tailWag, 2 * p, 2 * p);
+    ctx.fillRect(-3 * p, (4 * p) + tailWag, 3 * p, 2 * p); // Base
+    ctx.fillRect(-4 * p, (3 * p) + tailWag, 2 * p, 3 * p); // Fluff
     
-    // Legs
+    // Legs (Running)
     ctx.fillStyle = c.dark;
-    ctx.fillRect(2 * p + legAnim, 7 * p, 2 * p, 2 * p);
-    ctx.fillRect(6 * p - legAnim, 7 * p, 2 * p, 2 * p);
+    ctx.fillRect(2 * p + legOffset, 7 * p, 2 * p, 2 * p); // Back
+    ctx.fillRect(6 * p - legOffset, 7 * p, 2 * p, 2 * p); // Front
     
     // Body
     ctx.fillStyle = c.fur;
     ctx.fillRect(1 * p, 4 * p, 7 * p, 3 * p);
     
+    // Chest/Belly (Lighter)
+    ctx.fillStyle = c.light;
+    ctx.fillRect(2 * p, 5 * p, 3 * p, 2 * p);
+    
     // Head
     ctx.fillStyle = c.fur;
-    ctx.fillRect(1 * p, 0, 7 * p, 5 * p);
+    ctx.fillRect(1 * p, 1 * p, 7 * p, 4 * p);
     
-    // Ears (pointed)
-    ctx.fillStyle = c.dark;
-    ctx.fillRect(0, 0, 2 * p, 2.5 * p);
-    ctx.fillRect(6 * p, 0, 2 * p, 2.5 * p);
+    // Pointy Ears
+    ctx.fillStyle = c.fur;
+    ctx.fillRect(1.5 * p, -1 * p, 2 * p, 2 * p); // Left Base
+    ctx.fillRect(2 * p, -2.5 * p, 1 * p, 1.5 * p); // Left Tip
     
-    // Eyes
-    ctx.fillStyle = c.eye;
-    ctx.fillRect(2.5 * p, 2 * p, 1.5 * p, 1.5 * p);
-    ctx.fillRect(4 * p, 2 * p, 1.5 * p, 1.5 * p);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(2.7 * p, 2.2 * p, p, p);
-    ctx.fillRect(4.2 * p, 2.2 * p, p, p);
+    ctx.fillRect(5.5 * p, -1 * p, 2 * p, 2 * p); // Right Base
+    ctx.fillRect(6 * p, -2.5 * p, 1 * p, 1.5 * p); // Right Tip
     
-    // Muzzle
-    ctx.fillStyle = '#ECEFF1';
-    ctx.fillRect(2 * p, 3.5 * p, 4 * p, 1.5 * p);
-    
-    // Nose
+    // Snout (Protruding slightly)
+    ctx.fillStyle = c.light;
+    ctx.fillRect(3 * p, 3.5 * p, 3 * p, 1.5 * p);
     ctx.fillStyle = c.nose;
-    ctx.fillRect(3.5 * p, 3.5 * p, p, p);
+    ctx.fillRect(4 * p, 3.5 * p, 1 * p, 1 * p);
+    
+    // Intense Eyes
+    ctx.fillStyle = c.eye; // Yellow
+    ctx.fillRect(2 * p, 2 * p, 1.5 * p, 1 * p);
+    ctx.fillRect(5.5 * p, 2 * p, 1.5 * p, 1 * p);
+    
+    ctx.fillStyle = colors.black; // Pupil
+    ctx.fillRect(2.5 * p, 2.2 * p, 0.5 * p, 0.6 * p);
+    ctx.fillRect(6 * p, 2.2 * p, 0.5 * p, 0.6 * p);
 }
 
 // --- PENGUIN ---
 function drawPenguin(ctx, colors, p, animationFrame, isOnGround, legOffset, runningFrame = 0) {
-    const legAnim = legOffset || 0;
-    
     // Penguin Palette
     const c = {
         body: '#263238', // Dark Blue/Black
@@ -131,32 +131,32 @@ function drawPenguin(ctx, colors, p, animationFrame, isOnGround, legOffset, runn
         beak: '#FF9800', // Orange
         feet: '#FF9800'
     };
-    
+
     // Feet (Waddling)
     ctx.fillStyle = c.feet;
-    ctx.fillRect(2 * p + legAnim, 7 * p, 2 * p, 1 * p); // Left
-    ctx.fillRect(5 * p - legAnim, 7 * p, 2 * p, 1 * p); // Right
-    
+    ctx.fillRect(2 * p + legOffset, 7 * p, 2 * p, 1 * p); // Left
+    ctx.fillRect(5 * p - legOffset, 7 * p, 2 * p, 1 * p); // Right
+
     // Body (Oval-ish)
     ctx.fillStyle = c.body;
     ctx.fillRect(1 * p, 1 * p, 7 * p, 6 * p); // Main
     ctx.fillRect(2 * p, 0, 5 * p, 1 * p); // Top rounding
-    
+
     // Belly (White Patch)
     ctx.fillStyle = c.belly;
     ctx.fillRect(2.5 * p, 3 * p, 4 * p, 4 * p);
     ctx.fillRect(2 * p, 2 * p, 2 * p, 2 * p); // Face white left
     ctx.fillRect(5 * p, 2 * p, 2 * p, 2 * p); // Face white right
-    
+
     // Eyes
-    ctx.fillStyle = colors.black || '#000000';
+    ctx.fillStyle = colors.black;
     ctx.fillRect(2.5 * p, 2.5 * p, 0.8 * p, 0.8 * p);
     ctx.fillRect(5.5 * p, 2.5 * p, 0.8 * p, 0.8 * p);
-    
+
     // Beak
     ctx.fillStyle = c.beak;
     ctx.fillRect(4 * p, 3.5 * p, 2 * p, 1 * p);
-    
+
     // Wings (Flapping slightly)
     const flap = Math.sin(animationFrame * 5) * 2;
     ctx.fillStyle = c.body;
@@ -165,7 +165,7 @@ function drawPenguin(ctx, colors, p, animationFrame, isOnGround, legOffset, runn
     ctx.lineTo(-1 * p - flap, 5 * p);
     ctx.lineTo(1 * p, 6 * p);
     ctx.fill(); // Left Wing
-    
+
     ctx.beginPath();
     ctx.moveTo(8 * p, 4 * p);
     ctx.lineTo(10 * p + flap, 5 * p);
@@ -175,43 +175,41 @@ function drawPenguin(ctx, colors, p, animationFrame, isOnGround, legOffset, runn
 
 // --- DOG ---
 function drawDog(ctx, colors, p, animationFrame, isOnGround, legOffset, runningFrame = 0) {
-    const legAnim = legOffset || 0;
-    
     // Dog Palette
     const c = {
         fur: '#8D6E63', // Brown
         dark: '#5D4037', // Dark Brown (Ears/Spots)
         nose: '#3E2723'
     };
-    
+
     // Tail (Wagging fast)
     const wag = Math.sin(animationFrame * 8) * 3;
     ctx.fillStyle = c.dark;
     ctx.fillRect(-1 * p, 4 * p + wag, 1.5 * p, 3 * p);
-    
+
     // Legs
     ctx.fillStyle = c.dark;
-    ctx.fillRect(2 * p + legAnim, 7 * p, 1.5 * p, 2 * p);
-    ctx.fillRect(6.5 * p - legAnim, 7 * p, 1.5 * p, 2 * p);
-    
+    ctx.fillRect(2 * p + legOffset, 7 * p, 1.5 * p, 2 * p);
+    ctx.fillRect(6.5 * p - legOffset, 7 * p, 1.5 * p, 2 * p);
+
     // Body
     ctx.fillStyle = c.fur;
     ctx.fillRect(1 * p, 4 * p, 7 * p, 3 * p);
-    
+
     // Head (Boxy)
     ctx.fillStyle = c.fur;
     ctx.fillRect(1 * p, 0 * p, 7 * p, 5 * p);
-    
+
     // Floppy Ears
     ctx.fillStyle = c.dark;
     ctx.fillRect(0, 1 * p, 1.5 * p, 3 * p); // Left Ear
     ctx.fillRect(7.5 * p, 1 * p, 1.5 * p, 3 * p); // Right Ear
-    
+
     // Face
-    ctx.fillStyle = colors.black || '#000000';
+    ctx.fillStyle = colors.black;
     ctx.fillRect(2.5 * p, 2 * p, 1 * p, 1 * p); // Eye L
     ctx.fillRect(5.5 * p, 2 * p, 1 * p, 1 * p); // Eye R
-    
+
     // Snout
     ctx.fillStyle = '#D7CCC8'; // Light snout
     ctx.fillRect(3 * p, 3.5 * p, 3 * p, 1.5 * p);
@@ -221,33 +219,31 @@ function drawDog(ctx, colors, p, animationFrame, isOnGround, legOffset, runningF
 
 // --- RABBIT ---
 function drawRabbit(ctx, colors, p, animationFrame, isOnGround, legOffset, runningFrame = 0) {
-    const legAnim = legOffset || 0;
-    
     // Rabbit Palette
     const c = {
         fur: '#F5F5F5', // White/Cream
         shadow: '#E0E0E0',
         earInner: '#F48FB1', // Pink
     };
-    
+
     // Bobbing tail
     ctx.fillStyle = c.fur;
     ctx.fillRect(-1 * p, 5.5 * p, 1.5 * p, 1.5 * p); // Fluffy tail
-    
+
     // Legs (Big hopping feet)
     ctx.fillStyle = c.shadow;
     const jumpLeg = isOnGround ? 0 : -2; // Tuck legs in air
-    ctx.fillRect(2 * p + legAnim, 7 * p + jumpLeg, 2 * p, 1.5 * p);
-    ctx.fillRect(5 * p - legAnim, 7 * p + jumpLeg, 2 * p, 1.5 * p);
-    
+    ctx.fillRect(2 * p + legOffset, 7 * p + jumpLeg, 2 * p, 1.5 * p);
+    ctx.fillRect(5 * p - legOffset, 7 * p + jumpLeg, 2 * p, 1.5 * p);
+
     // Body
     ctx.fillStyle = c.fur;
     ctx.fillRect(1.5 * p, 3.5 * p, 6 * p, 4 * p);
-    
+
     // Head
     ctx.fillStyle = c.fur;
     ctx.fillRect(1 * p, 1 * p, 7 * p, 4 * p);
-    
+
     // Ears (Long)
     const earWiggle = Math.sin(animationFrame * 2) * 2;
     
@@ -256,15 +252,15 @@ function drawRabbit(ctx, colors, p, animationFrame, isOnGround, legOffset, runni
     ctx.fillRect(2 * p, -3 * p, 1.5 * p, 4 * p);
     ctx.fillStyle = c.earInner;
     ctx.fillRect(2.5 * p, -2.5 * p, 0.5 * p, 3 * p);
-    
+
     // Right Ear
     ctx.fillStyle = c.fur;
     ctx.fillRect(5.5 * p, -3 * p, 1.5 * p, 4 * p);
     ctx.fillStyle = c.earInner;
     ctx.fillRect(6 * p, -2.5 * p, 0.5 * p, 3 * p);
-    
+
     // Face
-    ctx.fillStyle = colors.black || '#000000';
+    ctx.fillStyle = colors.black;
     ctx.fillRect(2 * p, 2.5 * p, 1 * p, 1 * p); // Eye L
     ctx.fillRect(6 * p, 2.5 * p, 1 * p, 1 * p); // Eye R
     

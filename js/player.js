@@ -62,8 +62,7 @@ class Player {
             this.jumpCount = 1; // First jump
             this.lastClearType = 'ground'; // Reset clear type on new jump
             
-            // Start somersault rotation
-            this.rotationSpeed = 0.15; // Rotation speed in radians per frame
+            // Rotation removed - no somersaults
             
             // Play jump sound
             if (typeof audioManager !== 'undefined') {
@@ -94,8 +93,7 @@ class Player {
         this.lastClearType = 'aerial'; // Mark as aerial jump
         this.wasAtPeakOnClear = atPeak; // Track if at peak
         
-        // Add extra rotation speed for each air jump
-        this.rotationSpeed += 0.12;
+        // Rotation removed - no somersaults
         
         // Play jump sound
         if (typeof audioManager !== 'undefined') {
@@ -116,17 +114,7 @@ class Player {
         // Update position
         this.y += this.velocityY;
         
-        // Update somersault animation when in air
-        if (!this.isOnGround && this.rotationSpeed > 0) {
-            this.rotation += this.rotationSpeed;
-            this.somersaultProgress = this.rotation;
-            
-            // Cycle through 5 frames (0-4) based on rotation progress
-            // Complete one full somersault every 2*PI radians
-            const fullCycle = Math.PI * 2;
-            const frameProgress = (this.rotation % fullCycle) / fullCycle;
-            this.somersaultFrame = Math.floor(frameProgress * 5) % 5;
-        }
+        // Somersault animation removed
         
         // Ground collision
         if (this.y + this.height >= groundY) {
@@ -136,7 +124,7 @@ class Player {
             this.jumpLevel = 0; // Reset jump level when landing
             this.jumpCount = 0; // Reset jump count on landing
             
-            // Reset rotation and somersault when landing
+            // Reset rotation (not used anymore)
             this.rotation = 0;
             this.rotationSpeed = 0;
             this.somersaultFrame = 0;
@@ -211,20 +199,13 @@ class Player {
         
         const p = 4; // Pixel size
         
-        // Check if we should draw somersault animation
-        const showRunning = this.isOnGround || forceRunning;
-        if (!showRunning && typeof window.SomersaultDrawer === 'function') {
-            // Draw somersault frame
-            window.SomersaultDrawer(ctx, this.type, colors, this.somersaultFrame, p);
-        } else {
-            // Normal running animation
-            // Select drawing function based on type
-            const drawFunc = window.CharacterDrawers && window.CharacterDrawers[this.type] 
-                ? window.CharacterDrawers[this.type] 
-                : window.CharacterDrawers['cat']; // Fallback
-                
-            drawFunc(ctx, colors, p, this.animationFrame, true, this.legOffset, this.runningFrame);
-        }
+        // Always draw normal character (no somersaults)
+        // Select drawing function based on type
+        const drawFunc = window.CharacterDrawers && window.CharacterDrawers[this.type] 
+            ? window.CharacterDrawers[this.type] 
+            : window.CharacterDrawers['cat']; // Fallback
+            
+        drawFunc(ctx, colors, p, this.animationFrame, this.isOnGround, this.legOffset, this.runningFrame);
         
         ctx.restore();
         
