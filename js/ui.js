@@ -448,10 +448,10 @@ function drawGameOverScreen() {
     if (sideBySide) {
         // SIDE-BY-SIDE LAYOUT
         const contentY = headerY + (mobile ? 60 : 80);
-        const boxWidth = 340;
-        const boxHeight = 280; // Increased to accommodate two-line entries
-        const gap = 40;
-        const totalWidth = (boxWidth * 2) + gap;
+        const gap = mobile ? 15 : 40;
+        const maxTotalWidth = canvas.width - 40;
+        const boxWidth = Math.min(340, (maxTotalWidth - gap) / 2);
+        const boxHeight = mobile ? 240 : 280; // Increased to accommodate two-line entries
         
         // Calculate centers for left and right panels
         const leftCenterX = (canvas.width / 2) - (boxWidth / 2) - (gap / 2);
@@ -489,11 +489,11 @@ function drawGameOverScreen() {
             ctx.fillStyle = '#FFD700';
             ctx.font = `bold ${mobile ? 16 : 18}px Arial`;
             ctx.fillText('🎉 NEW HIGH SCORE! 🎉', canvas.width / 2, highScoreY);
-            // Draw list below banner
-            drawHighScoresList(canvas.width / 2, highScoreY + 30, mobile ? 3 : 5); // Show fewer on mobile
+            // Draw list below banner - pass available width
+            drawHighScoresList(canvas.width / 2, highScoreY + 30, mobile ? 3 : 5, boxWidth - 20);
             ctaY = highScoreY + (mobile ? 180 : 240); // Increased for two-line format
         } else {
-            drawHighScoresList(canvas.width / 2, highScoreY, mobile ? 3 : 5);
+            drawHighScoresList(canvas.width / 2, highScoreY, mobile ? 3 : 5, boxWidth - 20);
             ctaY = highScoreY + (mobile ? 150 : 200); // Increased for two-line format
         }
     }
@@ -512,7 +512,8 @@ function drawGameOverScreen() {
 // Helper: Draw the Score Breakdown Box
 function drawScoreBreakdownBox(centerX, y, width, height) {
     const leftX = centerX - (width / 2);
-    const padding = 25;
+    const mobile = isMobile || canvas.width < 600;
+    const padding = mobile ? 15 : 25;
     
     // Box Background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -523,19 +524,19 @@ function drawScoreBreakdownBox(centerX, y, width, height) {
     
     // Title
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 18px Arial';
+    ctx.font = mobile ? 'bold 16px Arial' : 'bold 18px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('SCORE BREAKDOWN', centerX, y + 30);
+    ctx.fillText('SCORE BREAKDOWN', centerX, y + (mobile ? 25 : 30));
     
     // Content
     ctx.fillStyle = 'white';
-    ctx.font = '15px Arial';
+    ctx.font = mobile ? '13px Arial' : '15px Arial';
     ctx.textAlign = 'left';
     
     const contentLeft = leftX + padding;
     const contentRight = leftX + width - padding;
-    const startContentY = y + 60;
-    const lineH = 28;
+    const startContentY = y + (mobile ? 50 : 60);
+    const lineH = mobile ? 24 : 28;
 
     // Stats
     ctx.fillText('Survival Time:', contentLeft, startContentY);
@@ -562,17 +563,17 @@ function drawScoreBreakdownBox(centerX, y, width, height) {
     
     // Total
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 20px Arial';
+    ctx.font = mobile ? 'bold 18px Arial' : 'bold 20px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText('TOTAL:', contentLeft, startContentY + lineH * 3 + 15);
+    ctx.fillText('TOTAL:', contentLeft, startContentY + lineH * 3 + (mobile ? 12 : 15));
     ctx.textAlign = 'right';
-    ctx.fillText(`${score} pts`, contentRight, startContentY + lineH * 3 + 15);
+    ctx.fillText(`${score} pts`, contentRight, startContentY + lineH * 3 + (mobile ? 12 : 15));
     
     // Mini Stat
-    ctx.font = '12px Arial';
+    ctx.font = mobile ? '10px Arial' : '12px Arial';
     ctx.fillStyle = '#AAA';
     ctx.textAlign = 'center';
-    ctx.fillText(`Best Combo: x${comboTracker.maxCombo}`, centerX, y + height - 15);
+    ctx.fillText(`Best Combo: x${comboTracker.maxCombo}`, centerX, y + height - (mobile ? 10 : 15));
 }
 
 // Helper: Draw High Scores in a matching box (Side-by-Side layout)
@@ -588,21 +589,36 @@ function drawHighScoresBox(centerX, y, width, height) {
     
     // Title
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 18px Arial';
+    const mobile = isMobile || canvas.width < 600;
+    ctx.font = mobile ? 'bold 16px Arial' : 'bold 18px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('HIGH SCORES', centerX, y + 30);
     
-    // List - adjusted for two-line format
-    drawHighScoresList(centerX, y + 55, 5);
+    // List - pass available width with extra padding for responsive layout
+    const contentPadding = mobile ? 20 : 30;
+    drawHighScoresList(centerX, y + 55, 5, width - contentPadding);
 }
 
 // Helper: Draw the list of high scores
-function drawHighScoresList(centerX, startY, limit = 5) {
+function drawHighScoresList(centerX, startY, limit = 5, availableWidth = null) {
     // Use cached scores or fallback
     const scores = (globalScoresCache.length > 0) ? globalScoresCache : getHighScores();
-    const lineHeight = 42; // Increased for two-line format
     
-    ctx.font = '14px Arial';
+    // Calculate responsive width - use availableWidth if provided, otherwise adapt to canvas
+    const mobile = isMobile || canvas.width < 600;
+    const maxWidth = availableWidth || Math.min(canvas.width - 40, mobile ? canvas.width - 20 : 500);
+    // Increased padding significantly to prevent edge bleeding
+    // Use larger padding: 25px on mobile, 40px on desktop
+    const padding = mobile ? 25 : 40;
+    const contentWidth = Math.max(150, maxWidth - (padding * 2));
+    
+    // Responsive font sizes
+    const fontSize = mobile ? 12 : 14;
+    const fontSizeBold = mobile ? 13 : 15;
+    const fontSizeSmall = mobile ? 9 : 11;
+    const lineHeight = mobile ? 36 : 42;
+    
+    ctx.font = `${fontSize}px Arial`;
     ctx.textAlign = 'center';
     
     // Show simple loading text if we think we're waiting
@@ -629,25 +645,47 @@ function drawHighScoresList(centerX, startY, limit = 5) {
                            (scoreEntry.obstaclesCleared === scoreStats.obstaclesCleared || 
                             !scoreEntry.obstaclesCleared);
         
+        // Calculate text positions based on available width with extra margin
+        const leftX = centerX - (contentWidth / 2);
+        const rightX = centerX + (contentWidth / 2);
+        // Add significant margin on right side for score to prevent edge bleeding
+        const rightMargin = mobile ? 10 : 15;
+        const scoreRightX = rightX - rightMargin;
+        
+        // Ensure positions don't exceed bounds
+        const minLeftX = centerX - (contentWidth / 2);
+        const maxRightX = centerX + (contentWidth / 2) - rightMargin;
+        
         // Line 1: Rank, Name, Score
         ctx.textAlign = 'left';
-        ctx.font = isCurrentRun ? 'bold 15px Arial' : '14px Arial';
+        ctx.font = isCurrentRun ? `bold ${fontSizeBold}px Arial` : `${fontSize}px Arial`;
         
         // Highlight background for current run
         if (isCurrentRun) {
             ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-            ctx.fillRect(centerX - 145, y - 16, 290, 38);
+            ctx.fillRect(leftX - 5, y - 16, contentWidth + 10, lineHeight - 4);
         }
         
         ctx.fillStyle = isCurrentRun ? '#FFD700' : 'white';
         const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `${index + 1}.`));
-        ctx.fillText(`${rankIcon} ${scoreEntry.name}`, centerX - 140, y);
         
+        // Truncate name if too long - leave more space for score
+        let displayName = scoreEntry.name;
+        const maxNameLength = mobile ? 6 : 10;
+        if (displayName.length > maxNameLength) {
+            displayName = displayName.substring(0, maxNameLength - 1) + '…';
+        }
+        
+        ctx.fillText(`${rankIcon} ${displayName}`, leftX, y);
+        
+        // Score on the right - use margin to prevent edge bleeding
         ctx.textAlign = 'right';
-        ctx.fillText(`${scoreEntry.score} pts`, centerX + 140, y);
+        // Use shorter text on mobile to save space
+        const scoreText = mobile ? `${scoreEntry.score}` : `${scoreEntry.score}`;
+        ctx.fillText(scoreText, scoreRightX, y);
         
         // Line 2: Level, Obstacles, Time (secondary info)
-        ctx.font = '11px Arial';
+        ctx.font = `${fontSizeSmall}px Arial`;
         ctx.fillStyle = isCurrentRun ? '#FFD700' : '#AAA';
         ctx.textAlign = 'center';
         
@@ -664,8 +702,23 @@ function drawHighScoresList(centerX, startY, limit = 5) {
             timeText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
         }
         
-        const secondLine = [levelText, obstaclesText, timeText].filter(t => t).join('  •  ');
-        ctx.fillText(secondLine, centerX, y + 15);
+        // Build second line with spacing based on available width
+        const secondLineParts = [levelText, obstaclesText, timeText].filter(t => t);
+        const separator = mobile ? ' • ' : '  •  ';
+        const secondLine = secondLineParts.join(separator);
+        
+        // Truncate second line if too long
+        ctx.save();
+        ctx.font = `${fontSizeSmall}px Arial`;
+        const metrics = ctx.measureText(secondLine);
+        if (metrics.width > contentWidth - 10) {
+            // If too long, show only first two parts
+            const shortParts = secondLineParts.slice(0, 2);
+            ctx.fillText(shortParts.join(separator), centerX, y + 15);
+        } else {
+            ctx.fillText(secondLine, centerX, y + 15);
+        }
+        ctx.restore();
     });
 }
 
@@ -995,15 +1048,35 @@ function drawHighScoreModal() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    const width = Math.min(400, canvas.width - 40);
-    const height = 550; // Increased height for two-line entries
-    const x = (canvas.width - width) / 2;
-    const y = (canvas.height - height) / 2;
+    const mobile = isMobile || canvas.width < 600;
+    // Ensure modal stays well within canvas bounds
+    // Use larger margins: at least 20px on mobile, 40px on desktop
+    const minMargin = mobile ? 20 : 40;
+    const maxHeightMargin = mobile ? 30 : 40;
+    
+    // Calculate max available width and height
+    const maxAvailableWidth = canvas.width - (minMargin * 2);
+    const maxAvailableHeight = canvas.height - (maxHeightMargin * 2);
+    
+    // Set modal dimensions - ensure they never exceed available space
+    const preferredWidth = mobile ? Math.min(350, maxAvailableWidth) : Math.min(400, maxAvailableWidth);
+    const preferredHeight = mobile ? Math.min(450, maxAvailableHeight) : Math.min(520, maxAvailableHeight);
+    
+    const width = Math.min(preferredWidth, maxAvailableWidth);
+    const height = Math.min(preferredHeight, maxAvailableHeight);
+    
+    // Center the modal with proper margins
+    const x = Math.max(minMargin, (canvas.width - width) / 2);
+    const y = Math.max(maxHeightMargin / 2, (canvas.height - height) / 2);
+    
+    // Ensure modal doesn't exceed canvas bounds
+    const finalX = Math.min(x, canvas.width - width - minMargin);
+    const finalY = Math.min(y, canvas.height - height - maxHeightMargin / 2);
     
     // Modal Box
     ctx.fillStyle = '#2C3E50';
     ctx.beginPath();
-    ctx.roundRect(x, y, width, height, 15);
+    ctx.roundRect(finalX, finalY, width, height, mobile ? 10 : 15);
     ctx.fill();
     ctx.strokeStyle = '#FFD700';
     ctx.lineWidth = 3;
@@ -1011,73 +1084,50 @@ function drawHighScoreModal() {
     
     // Title
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 28px Arial';
+    ctx.font = mobile ? 'bold 22px Arial' : 'bold 28px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('LEADERBOARD', canvas.width/2, y + 50);
+    ctx.fillText('LEADERBOARD', finalX + width/2, finalY + (mobile ? 40 : 50));
     
-    // Close Button (X)
+    // Close Button (X) - ensure it's within bounds
+    const closeButtonPadding = mobile ? 15 : 20;
     ctx.fillStyle = '#FF4444';
-    ctx.font = 'bold 24px Arial';
-    ctx.fillText('✕', x + width - 30, y + 40);
-    window.closeModalButton = { x: x + width - 50, y: y + 10, width: 40, height: 40 };
+    ctx.font = mobile ? 'bold 20px Arial' : 'bold 24px Arial';
+    ctx.fillText('✕', finalX + width - closeButtonPadding, finalY + (mobile ? 30 : 40));
+    window.closeModalButton = { 
+        x: finalX + width - (mobile ? 40 : 45), 
+        y: finalY + 10, 
+        width: mobile ? 30 : 35, 
+        height: mobile ? 30 : 35 
+    };
     
-    // List Content
+    // List Content - use responsive drawHighScoresList function
     const scores = (globalScoresCache.length > 0) ? globalScoresCache : getLocalHighScores();
-    
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
     
     // Loading State
     if (isLoadingScores) {
-         ctx.fillStyle = '#FFD700';
-         ctx.fillText('Loading global scores...', canvas.width/2, y + 150);
+        ctx.fillStyle = '#FFD700';
+        ctx.font = mobile ? '14px Arial' : '16px Arial';
+        ctx.fillText('Loading global scores...', finalX + width/2, finalY + 150);
     } else if (scores.length === 0) {
-        ctx.fillText('No scores yet!', canvas.width/2, y + 150);
+        ctx.fillStyle = 'white';
+        ctx.font = mobile ? '14px Arial' : '16px Arial';
+        ctx.fillText('No scores yet!', finalX + width/2, finalY + 150);
     } else {
-        const startY = y + 100;
-        const lineHeight = 42; // Increased for two-line format
+        const startY = finalY + (mobile ? 80 : 100);
+        const maxEntries = mobile ? 8 : 10;
         
-        scores.forEach((entry, i) => {
-            if (i >= 10) return; // Show top 10
-            
-            const rank = i + 1;
-            const color = rank === 1 ? '#FFD700' : (rank === 2 ? '#C0C0C0' : (rank === 3 ? '#CD7F32' : 'white'));
-            
-            const entryY = startY + i * lineHeight;
-            
-            // Line 1: Rank, Name, Score
-            ctx.fillStyle = color;
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(`${rank}. ${entry.name}`, x + 30, entryY);
-            
-            ctx.textAlign = 'right';
-            ctx.fillText(`${entry.score}`, x + width - 30, entryY);
-            
-            // Line 2: Stats
-            ctx.font = '12px Arial';
-            ctx.fillStyle = '#AAA';
-            ctx.textAlign = 'center';
-            
-            const levelText = entry.level ? `📊 Lvl ${entry.level}` : '';
-            const obstaclesText = entry.obstaclesCleared ? `⚡ ${entry.obstaclesCleared}` : '';
-            
-            let timeText = '';
-            if (entry.time) {
-                const m = Math.floor(entry.time / 60);
-                const s = Math.floor(entry.time % 60);
-                timeText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
-            }
-            
-            const secondLine = [levelText, obstaclesText, timeText].filter(t => t).join('  •  ');
-            ctx.fillText(secondLine, canvas.width/2, entryY + 16);
-        });
+        // Use the responsive drawHighScoresList function
+        // Pass width minus extra padding to ensure content doesn't touch edges
+        // Use larger padding: 50px on desktop, 30px on mobile
+        const contentPadding = mobile ? 30 : 50;
+        const contentWidth = Math.max(200, width - contentPadding);
+        drawHighScoresList(finalX + width/2, startY, maxEntries, contentWidth);
     }
     
     ctx.textAlign = 'center';
     ctx.fillStyle = '#AAA';
-    ctx.font = '14px Arial';
-    ctx.fillText('Global scores sync automatically', canvas.width/2, y + height - 20);
+    ctx.font = mobile ? '11px Arial' : '14px Arial';
+    ctx.fillText('Global scores sync automatically', finalX + width/2, finalY + height - (mobile ? 15 : 20));
     
     ctx.textAlign = 'left';
 }

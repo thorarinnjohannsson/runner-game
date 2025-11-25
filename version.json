@@ -1,7 +1,7 @@
 {
-  "version": "3",
-  "hash": "3c3a8e9",
-  "date": "2025-11-25 04:35:14 +0100",
-  "message": "Refactor scoring system to include total score and average points per obstacle calculations. Remove redundant methods from MultiObstacleTracker class. Update version.json with new version hash and timestamp.",
-  "timestamp": 1764042041090
+  "version": "2",
+  "hash": "e876f06",
+  "date": "2025-11-25 04:40:51 +0100",
+  "message": "Refactor version generation script to use simple incremental versioning instead of semantic versioning. Update VERSION and version.json files to reflect the new versioning approach, starting from 1.",
+  "timestamp": 1764042051167
 }
