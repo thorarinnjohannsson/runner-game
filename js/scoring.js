@@ -116,6 +116,15 @@ class ScoreStats {
         this.closeCalls = 0;
         this.multiObstacleClears = 0; // Track multi-obstacle clears
     }
+    
+    get totalScore() {
+        return this.timePoints + this.obstaclePoints + this.bonusPoints;
+    }
+    
+    get avgPointsPerObstacle() {
+        return this.obstaclesCleared > 0 ? 
+            Math.floor(this.obstaclePoints / this.obstaclesCleared) : 0;
+    }
 }
 
 // Multi-obstacle combo tracker (tracks consecutive obstacles cleared in one jump)
@@ -153,16 +162,6 @@ class MultiObstacleTracker {
         if (this.count === 3) return '3X COMBO!';
         if (this.count === 2) return '2X COMBO!';
         return '';
-    }
-}
-    
-    get totalScore() {
-        return this.timePoints + this.obstaclePoints + this.bonusPoints;
-    }
-    
-    get avgPointsPerObstacle() {
-        return this.obstaclesCleared > 0 ? 
-            Math.floor(this.obstaclePoints / this.obstaclesCleared) : 0;
     }
 }
 
