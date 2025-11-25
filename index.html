@@ -68,8 +68,8 @@
                             hour12: true
                         });
                         
-                        // Display: version hash | date time
-                        versionDiv.textContent = 'v' + versionInfo.hash + ' • ' + dateStr + ' ' + timeStr;
+                        // Display: version number | date time
+                        versionDiv.textContent = 'v' + versionInfo.version + ' • ' + dateStr + ' ' + timeStr;
                     })
                     .catch(function(error) {
                         // Fallback to timestamp if version.json not available

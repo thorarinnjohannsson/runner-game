@@ -1,6 +1,7 @@
 {
-  "hash": "78cb557",
-  "date": "2025-11-24 20:06:42 +0100",
-  "message": "teast",
-  "timestamp": 1764011202636
+  "version": "1.0.1",
+  "hash": "f7fb927",
+  "date": "2025-11-25 04:09:37 +0100",
+  "message": "Update version.json with new hash and timestamp. Refactor character drawing functions to remove somersault animations, simplifying player movement and enhancing drawing logic for various characters.",
+  "timestamp": 1764040266380
 }
