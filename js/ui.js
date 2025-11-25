@@ -125,8 +125,8 @@ function drawStartScreen() {
     ctx.textAlign = 'center';
     ctx.strokeStyle = 'black';
     ctx.lineWidth = tight ? 3 : 4;
-    ctx.strokeText('RUNNER GAME', center, headerY);
-    ctx.fillText('RUNNER GAME', center, headerY);
+    ctx.strokeText('ANIMAL JUMP', center, headerY);
+    ctx.fillText('ANIMAL JUMP', center, headerY);
     
     drawAudioControls(canvas.width - 80, 20);
     drawHighScoreButton(20, 20);

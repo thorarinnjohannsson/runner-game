@@ -1,4 +1,4 @@
-# Runner Game 🎮
+# Animal Jump 🎮
 
 A fun endless runner game built with vanilla JavaScript, HTML5 Canvas, and CSS. Perfect for parent-child coding projects!
 
