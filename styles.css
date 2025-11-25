@@ -119,13 +119,12 @@ body {
     overscroll-behavior: none;
 }
 
-/* Version info */
+/* Version info - Lower left corner, similar to fullscreen button */
 #version-info {
     position: absolute;
     bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
+    left: 15px;
+    font-size: 7px;
     color: #FFFFFF;
     font-family: 'Press Start 2P', cursive;
     white-space: nowrap;
@@ -133,21 +132,24 @@ body {
     user-select: none;
     z-index: 1000;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.5);
-    background: rgba(0, 0, 0, 0.75);
-    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
     border-radius: 6px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    max-width: calc(100% - 80px); /* Leave space for fullscreen button */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
 }
 
-/* Player stats display */
+/* Player stats display - Above version info, lower left corner */
 #player-stats {
     position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
+    bottom: 28px; /* Reduced from 40px for less vertical space */
+    left: 15px;
+    font-size: 7px;
     color: #FFFFFF;
     font-family: 'Press Start 2P', cursive;
     white-space: nowrap;
@@ -155,49 +157,53 @@ body {
     user-select: none;
     z-index: 1000;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.5);
-    background: rgba(0, 0, 0, 0.75);
-    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
     border-radius: 6px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    max-width: calc(100% - 80px); /* Leave space for fullscreen button */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
 }
 
-/* Mobile adjustments for version info and player stats */
+/* Mobile adjustments */
 @media (max-width: 768px) {
     #version-info {
-        font-size: 9px;
+        font-size: 6px;
         bottom: 8px;
-        padding: 5px 10px;
-        max-width: 95%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-width: 1.5px;
+        left: 12px;
+        padding: 3px 6px;
+        max-width: calc(100% - 70px);
     }
     
     #player-stats {
-        font-size: 9px;
-        bottom: 32px;
-        padding: 5px 10px;
-        max-width: 95%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-width: 1.5px;
+        font-size: 6px;
+        bottom: 24px; /* Reduced vertical space */
+        left: 12px;
+        padding: 3px 6px;
+        max-width: calc(100% - 70px);
     }
 }
 
 /* Very small mobile screens */
 @media (max-width: 480px) {
     #version-info {
-        font-size: 8px;
+        font-size: 5px;
         bottom: 6px;
-        padding: 4px 8px;
+        left: 10px;
+        padding: 2px 5px;
+        max-width: calc(100% - 65px);
     }
     
     #player-stats {
-        font-size: 8px;
-        bottom: 28px;
-        padding: 4px 8px;
+        font-size: 5px;
+        bottom: 20px; /* Reduced vertical space */
+        left: 10px;
+        padding: 2px 5px;
+        max-width: calc(100% - 65px);
     }
 }
 

@@ -1,7 +1,7 @@
 {
-  "version": "11",
-  "hash": "57d445c",
-  "date": "2025-11-25 08:41:05 +0100",
-  "message": "Increment version to 10 in VERSION and version.json. Enhance fullscreen functionality by prioritizing canvas element for mobile support and improving error handling. Update fullscreen button visibility logic based on support detection, and refine button design for better usability and aesthetics.",
-  "timestamp": 1764056465775
+  "version": "12",
+  "hash": "aa4b69d",
+  "date": "2025-11-25 08:48:16 +0100",
+  "message": "Update index.html to replace Apple Touch Icons with new app icon, increment version to 11 in VERSION and version.json.",
+  "timestamp": 1764056896877
 }

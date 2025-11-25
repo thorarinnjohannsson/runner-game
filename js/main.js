@@ -1508,8 +1508,14 @@ function updateVersionAndStatsVisibility() {
     const versionDiv = document.getElementById('version-info');
     const statsDiv = document.getElementById('player-stats');
     
-    // Only show on start screen
-    const shouldShow = gameState === GAME_STATES.START_SCREEN || gameState === 'HIGHSCORE_MODAL';
+    // Check if mobile
+    const mobile = isMobile || (typeof window !== 'undefined' && window.innerWidth < 768);
+    
+    // On mobile: show on start screen and during gameplay (positioned at top)
+    // On desktop: only show on start screen
+    const shouldShow = mobile 
+        ? (gameState === GAME_STATES.START_SCREEN || gameState === 'HIGHSCORE_MODAL' || gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED)
+        : (gameState === GAME_STATES.START_SCREEN || gameState === 'HIGHSCORE_MODAL');
     
     if (versionDiv) {
         versionDiv.style.display = shouldShow ? 'block' : 'none';
