@@ -694,6 +694,15 @@ function drawHighScoresList(centerX, startY, limit = 5, availableWidth = null) {
         ctx.fillStyle = isCurrentRun ? '#FFD700' : '#AAA';
         ctx.textAlign = 'center';
         
+        // Get character name from characterType
+        let characterText = '';
+        if (scoreEntry.characterType && typeof characters !== 'undefined') {
+            const character = characters.find(c => c.id === scoreEntry.characterType);
+            if (character) {
+                characterText = character.name;
+            }
+        }
+        
         const levelText = scoreEntry.level ? `📊 Lvl ${scoreEntry.level}` : '';
         const obstaclesText = (scoreEntry.obstaclesCleared !== undefined && scoreEntry.obstaclesCleared !== null) 
             ? `⚡ ${scoreEntry.obstaclesCleared}` 
@@ -707,8 +716,12 @@ function drawHighScoresList(centerX, startY, limit = 5, availableWidth = null) {
             timeText = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
         }
         
-        // Build second line with spacing based on available width
-        const secondLineParts = [levelText, obstaclesText, timeText].filter(t => t);
+        // Build second line with spacing based on available width - include character first
+        const secondLineParts = [];
+        if (characterText) secondLineParts.push(characterText);
+        if (levelText) secondLineParts.push(levelText);
+        if (obstaclesText) secondLineParts.push(obstaclesText);
+        if (timeText) secondLineParts.push(timeText);
         const separator = mobile ? ' • ' : '  •  ';
         const secondLine = secondLineParts.join(separator);
         

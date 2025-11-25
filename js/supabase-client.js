@@ -61,7 +61,7 @@ const SupabaseClient = {
     },
     
     // Submit a new score
-    submitScore: async function(name, score, level = 1, time = 0, obstaclesCleared = 0) {
+    submitScore: async function(name, score, level = 1, time = 0, obstaclesCleared = 0, characterType = null) {
         if (!this.initialized) return false;
         
         try {
@@ -73,7 +73,8 @@ const SupabaseClient = {
                         score: score,
                         level: level,
                         time: time,
-                        obstacles_cleared: obstaclesCleared
+                        obstacles_cleared: obstaclesCleared,
+                        character_type: characterType
                     }
                 ]);
                 

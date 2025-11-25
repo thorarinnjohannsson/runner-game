@@ -1043,9 +1043,10 @@ function onCollision() {
             PlayerStatsTracker.stopTracking();
         }
         
-        // Save highscore with level, time, and obstacles cleared
+        // Save highscore with level, time, obstacles cleared, and character
         const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
-        saveHighScore(player.name, score, currentLevel, elapsedTime, scoreStats.obstaclesCleared);
+        const characterType = player ? player.type : null;
+        saveHighScore(player.name, score, currentLevel, elapsedTime, scoreStats.obstaclesCleared, characterType);
         
         // Fetch global high scores for display on game over screen
         if (typeof getGlobalHighScores === 'function') {

@@ -1,7 +1,7 @@
 {
-  "version": "18",
-  "hash": "a83a2ad",
-  "date": "2025-11-25 09:58:59 +0100",
-  "message": "Update Google Tag Manager to gtag.js for improved tracking, add zoom controls to the UI, and enhance server logging for network access. Increment version to 17 in VERSION and version.json.",
-  "timestamp": 1764061139921
+  "version": "19",
+  "hash": "8bf63e5",
+  "date": "2025-11-25 14:12:08 +0100",
+  "message": "Increment version to 18 in VERSION and version.json. Add custom event tracking for various game interactions, including pauses, resumes, high score achievements, and zoom changes, to enhance analytics capabilities.",
+  "timestamp": 1764076328364
 }
