@@ -1,7 +1,7 @@
 {
-  "version": "13",
-  "hash": "ed3e4c8",
-  "date": "2025-11-25 08:51:36 +0100",
-  "message": "Refactor styles for version info and player stats to improve mobile responsiveness and visual clarity. Adjust positioning, font sizes, and padding for better layout. Increment version to 12 in VERSION and version.json.",
-  "timestamp": 1764057097051
+  "version": "14",
+  "hash": "5630a0b",
+  "date": "2025-11-25 08:53:07 +0100",
+  "message": "Increment version to 13 in VERSION and version.json. Update hash and timestamp in version.json. Adjust maximum display name length for high scores to 16 characters for better readability.",
+  "timestamp": 1764057187573
 }

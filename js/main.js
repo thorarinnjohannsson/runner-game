@@ -15,6 +15,18 @@ function setupResponsiveCanvas() {
     canvas.width = size.width;
     canvas.height = size.height;
     
+    // Store safe area insets for UI positioning
+    if (size.safeAreaTop !== undefined) {
+        window.safeAreaInsets = {
+            top: size.safeAreaTop || 0,
+            bottom: size.safeAreaBottom || 0,
+            left: size.safeAreaLeft || 0,
+            right: size.safeAreaRight || 0
+        };
+    } else {
+        window.safeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 };
+    }
+    
     // Update game constants based on canvas size
     updateGameDimensions();
 }
@@ -1503,7 +1515,7 @@ function drawProgressBorder(progress) {
     ctx.restore();
 }
 
-// Update visibility of version info and player stats
+// Update visibility and positioning of version info and player stats
 function updateVersionAndStatsVisibility() {
     const versionDiv = document.getElementById('version-info');
     const statsDiv = document.getElementById('player-stats');
@@ -1519,10 +1531,58 @@ function updateVersionAndStatsVisibility() {
     
     if (versionDiv) {
         versionDiv.style.display = shouldShow ? 'block' : 'none';
+        if (shouldShow) {
+            // Dynamically adjust position to ensure visibility
+            updateMetadataPosition(versionDiv, statsDiv);
+        }
     }
     
     if (statsDiv) {
         statsDiv.style.display = shouldShow ? 'block' : 'none';
+    }
+}
+
+// Update metadata box positions to ensure they're always visible
+function updateMetadataPosition(versionDiv, statsDiv) {
+    if (!versionDiv || !statsDiv) return;
+    
+    const mobile = isMobile || canvas.width < 600;
+    const safeInsets = window.safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
+    
+    // Account for browser UI at bottom (address bar, navigation bar)
+    // Visual viewport height is more accurate, but if not available, estimate
+    const visualViewport = window.visualViewport;
+    const browserUIBottom = visualViewport 
+        ? Math.max(0, window.innerHeight - visualViewport.height - safeInsets.bottom)
+        : (mobile ? 48 : 0); // Estimate 48px for mobile browser UI
+    
+    // Calculate safe bottom position - account for browser UI and safe areas
+    const baseBottom = mobile ? 8 : 10;
+    const safeBottom = Math.max(baseBottom, safeInsets.bottom + browserUIBottom + 4);
+    
+    // Calculate safe left position
+    const baseLeft = mobile ? 12 : 15;
+    const safeLeft = Math.max(baseLeft, safeInsets.left + 4);
+    
+    // Get box heights - increased for better readability
+    const boxHeight = mobile ? 20 : 24; // Increased for minimum readable text
+    const gap = mobile ? 6 : 8; // Slightly more gap for readability
+    
+    // Set positions
+    versionDiv.style.bottom = `${safeBottom}px`;
+    versionDiv.style.left = `${safeLeft}px`;
+    
+    if (statsDiv) {
+        statsDiv.style.bottom = `${safeBottom + boxHeight + gap}px`;
+        statsDiv.style.left = `${safeLeft}px`;
+    }
+    
+    // Ensure they don't overflow - leave space for fullscreen button
+    const fullscreenButtonWidth = mobile ? 70 : 80;
+    const maxWidth = canvas.width - safeLeft - fullscreenButtonWidth;
+    versionDiv.style.maxWidth = `${Math.max(150, maxWidth)}px`; // Minimum 150px width
+    if (statsDiv) {
+        statsDiv.style.maxWidth = `${Math.max(150, maxWidth)}px`; // Minimum 150px width
     }
 }
 

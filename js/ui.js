@@ -1210,46 +1210,58 @@ function drawFullscreenButton() {
         return;
     }
     
-    // Larger button on mobile, ensure it's not bleeding out
-    const btnSize = mobile ? 48 : 50;
-    const margin = mobile ? 15 : 15; // Increased margin to prevent bleeding
-    const safeMargin = Math.max(margin, 10); // Ensure minimum safe margin
+    // Get safe area insets
+    const safeInsets = window.safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
+    
+    // Adaptive button size based on screen size
+    const btnSize = mobile ? (isPortrait ? 44 : 40) : 50;
+    
+    // Calculate safe margins - account for safe areas and UI elements
+    const baseMargin = mobile ? 12 : 15;
+    const rightMargin = Math.max(baseMargin, safeInsets.right + 8);
+    const bottomMargin = Math.max(baseMargin, safeInsets.bottom + 8);
     
     // Calculate position ensuring button stays within canvas bounds
-    const maxX = canvas.width - btnSize - safeMargin;
-    const maxY = canvas.height - btnSize - safeMargin;
-    const x = Math.max(safeMargin, Math.min(maxX, canvas.width - btnSize - safeMargin));
-    const y = Math.max(safeMargin, Math.min(maxY, canvas.height - btnSize - safeMargin));
+    const x = Math.max(safeInsets.left + 8, canvas.width - btnSize - rightMargin);
+    const y = Math.max(safeInsets.top + 8, canvas.height - btnSize - bottomMargin);
+    
+    // Ensure button doesn't overlap with metadata boxes on left
+    const metadataBoxHeight = mobile ? 20 : 24;
+    const metadataBoxesHeight = metadataBoxHeight * 2 + 8; // Two boxes + gap
+    const minYForMetadata = safeInsets.bottom + metadataBoxesHeight + 8;
+    
+    // If button would overlap with metadata, move it up
+    const finalY = Math.min(y, canvas.height - minYForMetadata - btnSize - 8);
     
     // Store button position for click detection
     window.fullscreenButton = {
         x: x,
-        y: y,
+        y: finalY,
         width: btnSize,
         height: btnSize
     };
     
     // Button background with better visibility - darker for contrast
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-    ctx.fillRect(x, y, btnSize, btnSize);
+    ctx.fillRect(x, finalY, btnSize, btnSize);
     
     // Button border - thicker and more visible
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = mobile ? 3 : 3;
-    ctx.strokeRect(x, y, btnSize, btnSize);
+    ctx.strokeRect(x, finalY, btnSize, btnSize);
     
     // Add glow/shadow for better visibility
     ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
     ctx.shadowBlur = 8;
-    ctx.strokeRect(x, y, btnSize, btnSize);
+    ctx.strokeRect(x, finalY, btnSize, btnSize);
     ctx.shadowBlur = 0; // Reset shadow
     
     // Fullscreen icon (expand icon) - larger and more visible
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = mobile ? 3.5 : 3;
-    const iconSize = mobile ? 26 : 28;
+    const iconSize = mobile ? (isPortrait ? 24 : 22) : 28;
     const iconX = x + btnSize / 2 - iconSize / 2;
-    const iconY = y + btnSize / 2 - iconSize / 2;
+    const iconY = finalY + btnSize / 2 - iconSize / 2;
     
     // Draw expand icon (corner brackets) - thicker lines
     ctx.beginPath();

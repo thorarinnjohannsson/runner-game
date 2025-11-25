@@ -22,13 +22,56 @@ function getOptimalCanvasSize() {
         return { width: 800, height: 400 };
     }
     
-    // Mobile: Scale to Fit logic
-    // We simply take the full available space.
-    // Game logic (gravity, spawn rates) might need minor tuning if aspect ratio is extreme,
-    // but visual layout is the priority here.
+    // Mobile: Use viewport dimensions but ensure UI elements fit
+    // Account for safe areas (notches, status bars, etc.) and browser UI
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate safe area insets (for devices with notches)
+    const safeAreaTop = CSS.supports('padding-top: env(safe-area-inset-top)') 
+        ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)')) || 0 
+        : 0;
+    const safeAreaBottom = CSS.supports('padding-bottom: env(safe-area-inset-bottom)') 
+        ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)')) || 0 
+        : 0;
+    const safeAreaLeft = CSS.supports('padding-left: env(safe-area-inset-left)') 
+        ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)')) || 0 
+        : 0;
+    const safeAreaRight = CSS.supports('padding-right: env(safe-area-inset-right)') 
+        ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)')) || 0 
+        : 0;
+    
+    // Account for browser UI (address bar, navigation bar, etc.)
+    // Mobile browsers typically use ~56px for address bar, ~48px for bottom nav
+    // Use visual viewport if available (more accurate for browser UI)
+    const visualViewport = window.visualViewport;
+    let effectiveWidth = viewportWidth;
+    let effectiveHeight = viewportHeight;
+    
+    if (visualViewport) {
+        // Visual viewport accounts for browser UI automatically
+        effectiveWidth = visualViewport.width;
+        effectiveHeight = visualViewport.height;
+    } else {
+        // Fallback: estimate browser UI space
+        // Address bar: ~56px in portrait, ~0px when scrolled
+        // Bottom nav: ~48px on Android, ~0px on iOS
+        const browserUIHeight = isPortrait ? 56 : 0; // Conservative estimate
+        const browserUIBottom = 48; // Android navigation bar
+        
+        // Adjust height to account for browser UI
+        effectiveHeight = viewportHeight - browserUIHeight - browserUIBottom;
+        effectiveHeight = Math.max(effectiveHeight, viewportHeight * 0.8); // Don't reduce too much
+    }
+    
+    // Use effective dimensions but account for safe areas
     return { 
-        width: window.innerWidth, 
-        height: window.innerHeight 
+        width: Math.max(effectiveWidth - safeAreaLeft - safeAreaRight, viewportWidth * 0.95), 
+        height: Math.max(effectiveHeight - safeAreaTop - safeAreaBottom, viewportHeight * 0.8),
+        safeAreaTop,
+        safeAreaBottom,
+        safeAreaLeft,
+        safeAreaRight
     };
 }
 
@@ -112,7 +155,7 @@ function shouldUseScreenShake() {
     return !isMobile; // Disable on mobile to prevent issues
 }
 
-// Listen for orientation changes
+// Listen for orientation changes and viewport changes
 window.addEventListener('resize', () => {
     updateMobileDetection();
     if (typeof setupResponsiveCanvas === 'function') {
@@ -128,4 +171,26 @@ window.addEventListener('orientationchange', () => {
         }
     }, 100);
 });
+
+// Listen for visual viewport changes (browser UI showing/hiding)
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        // Browser UI has changed (address bar hidden/shown)
+        updateMobileDetection();
+        if (typeof setupResponsiveCanvas === 'function') {
+            setupResponsiveCanvas();
+        }
+        // Update metadata positions to account for new viewport
+        if (typeof updateVersionAndStatsVisibility === 'function') {
+            updateVersionAndStatsVisibility();
+        }
+    });
+    
+    window.visualViewport.addEventListener('scroll', () => {
+        // Viewport scrolled (address bar may have moved)
+        if (typeof updateVersionAndStatsVisibility === 'function') {
+            updateVersionAndStatsVisibility();
+        }
+    });
+}
 

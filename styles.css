@@ -122,9 +122,9 @@ body {
 /* Version info - Lower left corner, similar to fullscreen button */
 #version-info {
     position: absolute;
-    bottom: 10px;
-    left: 15px;
-    font-size: 7px;
+    bottom: env(safe-area-inset-bottom, 10px);
+    left: max(15px, env(safe-area-inset-left, 15px));
+    font-size: 8px; /* Increased minimum for readability */
     color: #FFFFFF;
     font-family: 'Press Start 2P', cursive;
     white-space: nowrap;
@@ -142,14 +142,15 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: left;
+    transform: translateZ(0); /* Force GPU acceleration */
 }
 
 /* Player stats display - Above version info, lower left corner */
 #player-stats {
     position: absolute;
-    bottom: 28px; /* Reduced from 40px for less vertical space */
-    left: 15px;
-    font-size: 7px;
+    bottom: calc(env(safe-area-inset-bottom, 10px) + 18px); /* Reduced vertical space */
+    left: max(15px, env(safe-area-inset-left, 15px));
+    font-size: 8px; /* Increased minimum for readability */
     color: #FFFFFF;
     font-family: 'Press Start 2P', cursive;
     white-space: nowrap;
@@ -167,43 +168,67 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: left;
+    transform: translateZ(0); /* Force GPU acceleration */
 }
 
-/* Mobile adjustments */
+/* Mobile adjustments - Minimum readable size */
 @media (max-width: 768px) {
     #version-info {
-        font-size: 6px;
-        bottom: 8px;
-        left: 12px;
-        padding: 3px 6px;
+        font-size: 8px; /* Minimum readable size for portrait mobile */
+        bottom: max(8px, env(safe-area-inset-bottom, 8px));
+        left: max(12px, env(safe-area-inset-left, 12px));
+        padding: 4px 6px; /* Slightly more padding for readability */
         max-width: calc(100% - 70px);
+        min-height: 18px; /* Ensure minimum height for readability */
+        line-height: 1.2;
     }
     
     #player-stats {
-        font-size: 6px;
-        bottom: 24px; /* Reduced vertical space */
-        left: 12px;
-        padding: 3px 6px;
+        font-size: 8px; /* Minimum readable size for portrait mobile */
+        bottom: calc(max(8px, env(safe-area-inset-bottom, 8px)) + 20px); /* Adjusted spacing */
+        left: max(12px, env(safe-area-inset-left, 12px));
+        padding: 4px 6px; /* Slightly more padding for readability */
         max-width: calc(100% - 70px);
+        min-height: 18px; /* Ensure minimum height for readability */
+        line-height: 1.2;
     }
 }
 
-/* Very small mobile screens */
+/* Very small mobile screens - still maintain readability */
 @media (max-width: 480px) {
     #version-info {
-        font-size: 5px;
-        bottom: 6px;
-        left: 10px;
-        padding: 2px 5px;
+        font-size: 7px; /* Still readable minimum */
+        bottom: max(6px, env(safe-area-inset-bottom, 6px));
+        left: max(10px, env(safe-area-inset-left, 10px));
+        padding: 3px 5px;
         max-width: calc(100% - 65px);
+        min-height: 16px;
     }
     
     #player-stats {
-        font-size: 5px;
-        bottom: 20px; /* Reduced vertical space */
-        left: 10px;
-        padding: 2px 5px;
+        font-size: 7px; /* Still readable minimum */
+        bottom: calc(max(6px, env(safe-area-inset-bottom, 6px)) + 18px);
+        left: max(10px, env(safe-area-inset-left, 10px));
+        padding: 3px 5px;
         max-width: calc(100% - 65px);
+        min-height: 16px;
+    }
+}
+
+/* Landscape mobile - can be slightly smaller but still readable */
+@media (max-width: 768px) and (orientation: landscape) {
+    #version-info {
+        font-size: 7px; /* Slightly smaller in landscape but still readable */
+        bottom: max(6px, env(safe-area-inset-bottom, 6px));
+        padding: 3px 5px;
+        min-height: 16px;
+    }
+    
+    #player-stats {
+        font-size: 7px; /* Slightly smaller in landscape but still readable */
+        bottom: calc(max(6px, env(safe-area-inset-bottom, 6px)) + 16px);
+        padding: 3px 5px;
+        min-height: 16px;
     }
 }
 
