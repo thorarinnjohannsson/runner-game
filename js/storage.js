@@ -75,6 +75,27 @@ async function saveHighScore(name, score, level = 1, time = 0, obstaclesCleared 
             if (success) console.log('Score submitted to global leaderboard');
         });
     }
+    
+    // 3. Track high score achievement in Analytics
+    if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+        const localScores = getLocalHighScores();
+        const rank = localScores.findIndex(s => s.score === score && s.name === (name || 'Anonymous')) + 1;
+        
+        if (rank > 0 && rank <= 10) {
+            // Track if it's a top 10 score
+            Analytics.trackHighScore(rank, score, level);
+        }
+        
+        // Also track as a custom event with more details
+        Analytics.trackCustomEvent('score_saved', {
+            'score': score,
+            'level': level,
+            'time': Math.floor(time),
+            'obstacles_cleared': obstaclesCleared,
+            'rank': rank > 0 ? rank : null,
+            'is_new_high_score': rank === 1
+        });
+    }
 }
 
 // Get global high scores (Async)

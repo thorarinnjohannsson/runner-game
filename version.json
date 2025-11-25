@@ -1,7 +1,7 @@
 {
-  "version": "17",
-  "hash": "e0e5850",
-  "date": "2025-11-25 09:20:54 +0100",
-  "message": "Remove fullscreen functionality from the game, including related button and event handling. Increment version to 16 in VERSION and version.json.",
-  "timestamp": 1764058854616
+  "version": "18",
+  "hash": "a83a2ad",
+  "date": "2025-11-25 09:58:59 +0100",
+  "message": "Update Google Tag Manager to gtag.js for improved tracking, add zoom controls to the UI, and enhance server logging for network access. Increment version to 17 in VERSION and version.json.",
+  "timestamp": 1764061139921
 }

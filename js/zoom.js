@@ -48,6 +48,15 @@ function zoomIn() {
     canvasScale = Math.min(MAX_SCALE, canvasScale + SCALE_STEP);
     applyCanvasZoom();
     triggerHaptic(10);
+    
+    // Track zoom event
+    if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+        Analytics.trackCustomEvent('zoom_changed', {
+            'action': 'zoom_in',
+            'zoom_level': Math.round(canvasScale * 100),
+            'device_type': (typeof isMobile !== 'undefined' && isMobile) ? 'mobile' : 'desktop'
+        });
+    }
 }
 
 // Zoom out
@@ -55,6 +64,15 @@ function zoomOut() {
     canvasScale = Math.max(MIN_SCALE, canvasScale - SCALE_STEP);
     applyCanvasZoom();
     triggerHaptic(10);
+    
+    // Track zoom event
+    if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+        Analytics.trackCustomEvent('zoom_changed', {
+            'action': 'zoom_out',
+            'zoom_level': Math.round(canvasScale * 100),
+            'device_type': (typeof isMobile !== 'undefined' && isMobile) ? 'mobile' : 'desktop'
+        });
+    }
 }
 
 // Reset zoom to 100%

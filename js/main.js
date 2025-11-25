@@ -1080,6 +1080,19 @@ function onCollision() {
     wasPausedByUser = false;
     pauseCountdown = 3;
     
+    // Track life lost pause
+    if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+        const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
+        Analytics.trackPause('life_lost', elapsedTime);
+        Analytics.trackCustomEvent('life_lost', {
+            'level': currentLevel,
+            'score': score,
+            'lives_remaining': lives,
+            'time_played': Math.floor(elapsedTime),
+            'obstacles_cleared': scoreStats.obstaclesCleared
+        });
+    }
+    
     // Clear obstacles near player
     clearObstaclesInRange(player.x, player.x + 300);
     
@@ -1093,6 +1106,15 @@ function onCollision() {
             clearInterval(countdownInterval);
             gameState = GAME_STATES.PLAYING;
             pausedTime += Date.now() - pauseStartTime;
+            
+            // Track resume after life loss
+            if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+                Analytics.trackCustomEvent('game_resumed_after_life_loss', {
+                    'level': (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1,
+                    'score': score,
+                    'lives_remaining': lives
+                });
+            }
         }
     }, 1000);
 }
@@ -1105,11 +1127,30 @@ function togglePause() {
         wasPausedByUser = true;
         pauseCountdown = 0; // No countdown for user pause
         pausedTime -= Date.now(); // Start tracking pause time
+        
+        // Track pause event
+        if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+            const currentLevel = (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1;
+            Analytics.trackPause('user', elapsedTime);
+            Analytics.trackCustomEvent('game_paused_user', {
+                'level': currentLevel,
+                'score': score,
+                'time_played': Math.floor(elapsedTime)
+            });
+        }
     } else if (gameState === GAME_STATES.PAUSED && wasPausedByUser) {
         // Unpause the game
         gameState = GAME_STATES.PLAYING;
         wasPausedByUser = false;
         pausedTime += Date.now(); // End tracking pause time
+        
+        // Track resume event
+        if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+            Analytics.trackCustomEvent('game_resumed', {
+                'level': (typeof levelManager !== 'undefined') ? levelManager.currentLevel : 1,
+                'score': score
+            });
+        }
     }
 }
 
@@ -1428,6 +1469,15 @@ function triggerLevelTransition() {
     // Track level completion
     if (typeof Analytics !== 'undefined' && typeof levelManager !== 'undefined') {
         Analytics.trackLevelComplete(levelManager.currentLevel, score, elapsedTime);
+        
+        // Also track as custom event with more details
+        Analytics.trackCustomEvent('level_completed', {
+            'level': levelManager.currentLevel,
+            'score': score,
+            'time': Math.floor(elapsedTime),
+            'obstacles_cleared': scoreStats.obstaclesCleared,
+            'character_type': player.type
+        });
     }
     
     gameState = GAME_STATES.LEVEL_TRANSITION;

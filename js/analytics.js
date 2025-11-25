@@ -102,6 +102,20 @@ const Analytics = {
             'reason': reason, // 'user' or 'life_lost'
             'time': Math.floor(time)
         });
+    },
+    
+    // Generic custom event tracker - use this for any custom events
+    trackCustomEvent(eventName, eventParams = {}) {
+        if (!this.initialized) return;
+        
+        // Add common context to all events
+        const enrichedParams = {
+            ...eventParams,
+            'device_type': (typeof isMobile !== 'undefined' && isMobile) ? 'mobile' : 'desktop',
+            'timestamp': new Date().toISOString()
+        };
+        
+        gtag('event', eventName, enrichedParams);
     }
 };
 

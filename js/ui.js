@@ -979,6 +979,14 @@ function processUIInteraction(x, y) {
             if (x >= btn.x && x <= btn.x + btn.width &&
                 y >= btn.y && y <= btn.y + btn.height) {
                 
+                // Track high score modal open
+                if (typeof Analytics !== 'undefined' && Analytics.initialized) {
+                    Analytics.trackCustomEvent('high_score_modal_opened', {
+                        'source': 'button_click',
+                        'has_scores': (typeof globalScoresCache !== 'undefined' && globalScoresCache.length > 0)
+                    });
+                }
+                
                 // Open Modal and trigger fetch
                 gameState = 'HIGHSCORE_MODAL';
                 triggerHaptic(10);
