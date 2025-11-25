@@ -225,7 +225,9 @@ class TransitionManager {
         }
         
         if (elapsed > duration) {
-            this.nextPhase();
+            // Skip LEVEL_INTRO phase - go directly to completing the transition
+            // This starts the game immediately after exiting the cave
+            this.complete();
         }
     }
     

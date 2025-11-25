@@ -1472,9 +1472,9 @@ function startNextLevel() {
     // Return to playing state
     gameState = GAME_STATES.PLAYING;
     
-    // Show level intro
-    showLevelIntro = true;
-    levelIntroStartTime = Date.now();
+    // Skip level intro after cave exit - start playing immediately
+    // showLevelIntro = true;
+    // levelIntroStartTime = Date.now();
 }
 
 // Draw progress border effect

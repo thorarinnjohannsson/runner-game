@@ -1,7 +1,7 @@
 {
-  "version": "5",
-  "hash": "5f67883",
-  "date": "2025-11-25 05:10:29 +0100",
-  "message": "Update version to 4, add puppeteer as a devDependency, and modify package-lock.json to reflect new dependencies. Update og-image.png for improved branding.",
-  "timestamp": 1764043829226
+  "version": "6",
+  "hash": "ec3640b",
+  "date": "2025-11-25 08:15:26 +0100",
+  "message": "Update index.html to enhance PWA support with additional meta tags, improve favicon handling for various devices, and increment version to 5 in version.json.",
+  "timestamp": 1764054926753
 }

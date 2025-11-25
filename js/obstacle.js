@@ -120,37 +120,216 @@ class Obstacle {
         const theme = (typeof currentTheme !== 'undefined') ? currentTheme : {};
         
         if (this.isTerrain) {
-            // Terrain style (elevated ground)
+            // Get base ground level for comparison
+            const baseGroundY = (typeof GROUND_Y !== 'undefined') ? GROUND_Y : (ctx.canvas.height - 80);
+            const elevation = baseGroundY - this.y; // How much elevated (positive = higher)
+            // Steeper ramps: reduce width to make elevation changes more dramatic
+            const rampWidth = Math.min(35, this.width * 0.1); // Steeper: max 35px or 10% of width (was 60px/15%)
+            
+            // Extend visual to bottom of screen to look like solid ground
+            const bottomToFill = ctx.canvas.height - (this.y + this.height);
+            
+            // === SHADOW UNDER ELEVATED TERRAIN ===
+            if (elevation > 0) {
+                // Draw shadow on base ground before terrain starts
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                const shadowWidth = Math.min(this.width + rampWidth * 2, ctx.canvas.width);
+                const shadowX = Math.max(0, this.x - rampWidth);
+                ctx.fillRect(shadowX, baseGroundY, shadowWidth, 8);
+            }
+            
+            // === LEFT RAMP (Transition from base ground to elevated terrain) ===
+            if (elevation > 0 && this.x > 0) {
+                // Draw ramp connecting base ground to elevated terrain
+                ctx.fillStyle = theme.groundBase || '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(this.x - rampWidth, baseGroundY);
+                ctx.lineTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.height + bottomToFill);
+                ctx.lineTo(this.x - rampWidth, ctx.canvas.height);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Ramp grass top
+                ctx.fillStyle = theme.groundTop || '#66BB6A';
+                ctx.beginPath();
+                ctx.moveTo(this.x - rampWidth, baseGroundY);
+                ctx.lineTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + 10);
+                ctx.lineTo(this.x - rampWidth, baseGroundY + 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Ramp side border
+                ctx.strokeStyle = '#3E2723';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.x - rampWidth, baseGroundY);
+                ctx.lineTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.height + bottomToFill);
+                ctx.stroke();
+            }
+            
+            // === RIGHT RAMP (Transition from elevated terrain back to base ground) ===
+            if (elevation > 0 && this.x + this.width < ctx.canvas.width) {
+                // Draw ramp connecting elevated terrain back to base ground
+                ctx.fillStyle = theme.groundBase || '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width, this.y);
+                ctx.lineTo(this.x + this.width + rampWidth, baseGroundY);
+                ctx.lineTo(this.x + this.width + rampWidth, ctx.canvas.height);
+                ctx.lineTo(this.x + this.width, this.y + this.height + bottomToFill);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Ramp grass top
+                ctx.fillStyle = theme.groundTop || '#66BB6A';
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width, this.y);
+                ctx.lineTo(this.x + this.width + rampWidth, baseGroundY);
+                ctx.lineTo(this.x + this.width + rampWidth, baseGroundY + 10);
+                ctx.lineTo(this.x + this.width, this.y + 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Ramp side border
+                ctx.strokeStyle = '#3E2723';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width, this.y);
+                ctx.lineTo(this.x + this.width + rampWidth, baseGroundY);
+                ctx.lineTo(this.x + this.width + rampWidth, ctx.canvas.height);
+                ctx.stroke();
+            }
+            
+            // === HANDLE DEPRESSIONS (Terrain lower than base ground) ===
+            if (elevation < 0) {
+                // This is a depression/ditch - draw steep ramps down and walls
+                const depressionDepth = Math.abs(elevation);
+                
+                // === LEFT RAMP DOWN (Steep transition from base ground into depression) ===
+                if (this.x > 0) {
+                    ctx.fillStyle = theme.groundBase || '#8B4513';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - rampWidth, baseGroundY);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.lineTo(this.x, this.y + this.height + bottomToFill);
+                    ctx.lineTo(this.x - rampWidth, ctx.canvas.height);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Ramp grass top
+                    ctx.fillStyle = theme.groundTop || '#66BB6A';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - rampWidth, baseGroundY);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.lineTo(this.x, this.y + 10);
+                    ctx.lineTo(this.x - rampWidth, baseGroundY + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Ramp side border
+                    ctx.strokeStyle = '#3E2723';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - rampWidth, baseGroundY);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.lineTo(this.x, this.y + this.height + bottomToFill);
+                    ctx.stroke();
+                }
+                
+                // === RIGHT RAMP UP (Steep transition from depression back to base ground) ===
+                if (this.x + this.width < ctx.canvas.width) {
+                    ctx.fillStyle = theme.groundBase || '#8B4513';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width, this.y);
+                    ctx.lineTo(this.x + this.width + rampWidth, baseGroundY);
+                    ctx.lineTo(this.x + this.width + rampWidth, ctx.canvas.height);
+                    ctx.lineTo(this.x + this.width, this.y + this.height + bottomToFill);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Ramp grass top
+                    ctx.fillStyle = theme.groundTop || '#66BB6A';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width, this.y);
+                    ctx.lineTo(this.x + this.width + rampWidth, baseGroundY);
+                    ctx.lineTo(this.x + this.width + rampWidth, baseGroundY + 10);
+                    ctx.lineTo(this.x + this.width, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Ramp side border
+                    ctx.strokeStyle = '#3E2723';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width, this.y);
+                    ctx.lineTo(this.x + this.width + rampWidth, baseGroundY);
+                    ctx.lineTo(this.x + this.width + rampWidth, ctx.canvas.height);
+                    ctx.stroke();
+                }
+                
+                // Left wall (vertical edge)
+                ctx.fillStyle = theme.soilDark || '#4D3222';
+                ctx.fillRect(this.x - 6, baseGroundY, 6, depressionDepth);
+                
+                // Right wall (vertical edge)
+                ctx.fillRect(this.x + this.width, baseGroundY, 6, depressionDepth);
+                
+                // Darker bottom to show depth
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Edge highlight on top of depression walls
+                ctx.strokeStyle = '#3E2723';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.x - 6, baseGroundY);
+                ctx.lineTo(this.x - 6, baseGroundY + depressionDepth);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width, baseGroundY);
+                ctx.lineTo(this.x + this.width, baseGroundY + depressionDepth);
+                ctx.stroke();
+            }
+            
+            // === MAIN TERRAIN BODY ===
             // Soil body
             ctx.fillStyle = theme.groundBase || '#8B4513';
             ctx.fillRect(this.x, this.y, this.width, this.height);
             
-            // Extend visual to bottom of screen to look like solid ground
-            const bottomToFill = ctx.canvas.height - (this.y + this.height);
             if (bottomToFill > 0) {
                 ctx.fillRect(this.x, this.y + this.height, this.width, bottomToFill);
             }
             
+            // === ELEVATION INDICATOR (Darker when elevated) ===
+            if (elevation > 20) {
+                // Add darker overlay to show significant elevation
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            
             // Grass Top Layer
             ctx.fillStyle = theme.groundTop || '#66BB6A';
-            ctx.fillRect(this.x, this.y, this.width, 10);
+            ctx.fillRect(this.x, this.y, this.width, 12);
             
-            // Pixelated Grass Edge (Checkerboard pattern)
+            // Pixelated Grass Edge (Checkerboard pattern) - more visible
             ctx.fillStyle = theme.groundDark || '#4CAF50';
-            const pixelSize = 5;
+            const pixelSize = 6;
             for (let i = 0; i < this.width; i += pixelSize) {
                 if (Math.floor(i / pixelSize) % 2 === 0) {
-                    ctx.fillRect(this.x + i, this.y, pixelSize, 10);
+                    ctx.fillRect(this.x + i, this.y, pixelSize, 12);
                 }
             }
             
-            // Dark Green Grass Border
+            // Dark Green Grass Border (thicker for visibility)
             ctx.fillStyle = theme.grassBorder || '#2E7D32';
-            ctx.fillRect(this.x, this.y + 10, this.width, 4);
+            ctx.fillRect(this.x, this.y + 12, this.width, 5);
             
-            // Side Border (Left/Right edges)
+            // === SIDE BORDERS (Enhanced for clarity) ===
             ctx.strokeStyle = '#3E2723';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3; // Thicker borders
             ctx.beginPath();
             ctx.moveTo(this.x, this.y);
             ctx.lineTo(this.x, this.y + this.height + bottomToFill);
@@ -160,6 +339,16 @@ class Obstacle {
             ctx.moveTo(this.x + this.width, this.y);
             ctx.lineTo(this.x + this.width, this.y + this.height + bottomToFill);
             ctx.stroke();
+            
+            // === TOP EDGE HIGHLIGHT (Shows elevation clearly) ===
+            if (elevation > 0) {
+                ctx.strokeStyle = '#5D4037';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + this.width, this.y);
+                ctx.stroke();
+            }
             
             return;
         }
@@ -388,12 +577,31 @@ function spawnObstacle() {
     const isTerrain = Math.random() < (typeof terrainChance !== 'undefined' ? terrainChance : 0);
     
     if (isTerrain) {
+        // MINIMUM HEIGHT RULE: Terrain must be at least 50px higher or lower than base ground
+        // This ensures elevation changes are always clearly visible
+        const MIN_ELEVATION_CHANGE = 50; // Minimum pixels difference from base ground
+        
         const width = Math.floor(Math.random() * 600) + 400; // 400-1000px wide
-        const height = Math.floor(Math.random() * 40) + 40; // 40-80px high
+        
+        // Determine if terrain goes up or down (50/50 chance)
+        const goesUp = Math.random() < 0.5;
+        
+        let height;
+        let terrainY;
+        
+        if (goesUp) {
+            // Elevated terrain: minimum 50px above base ground
+            height = Math.floor(Math.random() * 40) + MIN_ELEVATION_CHANGE; // 50-90px high
+            terrainY = groundY - height; // Elevated above base ground
+        } else {
+            // Depressed terrain: minimum 50px below base ground
+            height = Math.floor(Math.random() * 40) + MIN_ELEVATION_CHANGE; // 50-90px deep
+            terrainY = groundY + MIN_ELEVATION_CHANGE; // Below base ground
+        }
         
         const obstacle = new Obstacle(
             spawnX,
-            groundY - height,
+            terrainY,
             width,
             height,
             1,
