@@ -157,6 +157,9 @@ function drawStartScreen() {
     
     const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
     drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
+    
+    // Draw fullscreen button
+    drawFullscreenButton();
 }
 
 // Draw Name Entry UI (Text mode vs Edit mode)
@@ -506,6 +509,9 @@ function drawGameOverScreen() {
     
     drawPlayAgainButton(finalButtonY);
     
+    // Draw fullscreen button
+    drawFullscreenButton();
+    
     ctx.textAlign = 'left';
 }
 
@@ -844,6 +850,19 @@ function handleUITouch(e) {
 
 // Process UI interaction (works for both click and touch)
 function processUIInteraction(x, y) {
+    // Check fullscreen button (available in all states)
+    if (window.fullscreenButton) {
+        const btn = window.fullscreenButton;
+        if (x >= btn.x && x <= btn.x + btn.width &&
+            y >= btn.y && y <= btn.y + btn.height) {
+            if (typeof toggleFullscreen === 'function') {
+                toggleFullscreen();
+                triggerHaptic(10);
+            }
+            return;
+        }
+    }
+    
     // Check pause button during gameplay
     if (gameState === GAME_STATES.PLAYING || (gameState === GAME_STATES.PAUSED && wasPausedByUser)) {
         if (window.pauseButton) {
@@ -1170,6 +1189,65 @@ function drawAudioControls(x, y) {
     };
     
     ctx.textAlign = 'left'; // Reset alignment
+}
+
+// Draw fullscreen button
+function drawFullscreenButton() {
+    const mobile = isMobile || canvas.width < 600;
+    const btnSize = mobile ? 45 : 50; // Larger on mobile for better touch target
+    const margin = mobile ? 12 : 15;
+    const x = canvas.width - btnSize - margin;
+    const y = canvas.height - btnSize - margin; // Lower right corner
+    
+    // Store button position for click detection
+    window.fullscreenButton = {
+        x: x,
+        y: y,
+        width: btnSize,
+        height: btnSize
+    };
+    
+    // Button background with better visibility
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(x, y, btnSize, btnSize);
+    
+    // Button border - thicker and more visible
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = mobile ? 3 : 3;
+    ctx.strokeRect(x, y, btnSize, btnSize);
+    
+    // Add subtle glow/shadow for better visibility
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+    ctx.shadowBlur = 5;
+    ctx.strokeRect(x, y, btnSize, btnSize);
+    ctx.shadowBlur = 0; // Reset shadow
+    
+    // Fullscreen icon (expand icon) - larger and more visible
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = mobile ? 3 : 3;
+    const iconSize = mobile ? 24 : 26;
+    const iconX = x + btnSize / 2 - iconSize / 2;
+    const iconY = y + btnSize / 2 - iconSize / 2;
+    
+    // Draw expand icon (corner brackets) - thicker lines
+    ctx.beginPath();
+    // Top-left corner
+    ctx.moveTo(iconX, iconY + 6);
+    ctx.lineTo(iconX, iconY);
+    ctx.lineTo(iconX + 6, iconY);
+    // Top-right corner
+    ctx.moveTo(iconX + iconSize - 6, iconY);
+    ctx.lineTo(iconX + iconSize, iconY);
+    ctx.lineTo(iconX + iconSize, iconY + 6);
+    // Bottom-left corner
+    ctx.moveTo(iconX, iconY + iconSize - 6);
+    ctx.lineTo(iconX, iconY + iconSize);
+    ctx.lineTo(iconX + 6, iconY + iconSize);
+    // Bottom-right corner
+    ctx.moveTo(iconX + iconSize - 6, iconY + iconSize);
+    ctx.lineTo(iconX + iconSize, iconY + iconSize);
+    ctx.lineTo(iconX + iconSize, iconY + iconSize - 6);
+    ctx.stroke();
 }
 
 // Draw Level Transition Screen (NES-inspired)

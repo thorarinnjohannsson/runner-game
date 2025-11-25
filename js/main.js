@@ -725,6 +725,11 @@ function drawGameplay() {
     if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) {
         drawHUD();
     }
+    
+    // Draw fullscreen button
+    if (typeof drawFullscreenButton === 'function') {
+        drawFullscreenButton();
+    }
 }
 
 // Draw collectables

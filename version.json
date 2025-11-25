@@ -1,7 +1,7 @@
 {
-  "version": "6",
-  "hash": "ec3640b",
-  "date": "2025-11-25 08:15:26 +0100",
-  "message": "Update index.html to enhance PWA support with additional meta tags, improve favicon handling for various devices, and increment version to 5 in version.json.",
-  "timestamp": 1764054926753
+  "version": "7",
+  "hash": "9c2f721",
+  "date": "2025-11-25 08:28:39 +0100",
+  "message": "Increment version to 6 in VERSION and version.json. Update game logic to skip level intro after cave exit, enhancing gameplay flow. Refactor obstacle rendering to improve terrain elevation visuals and add clearer transitions for elevated and depressed terrains.",
+  "timestamp": 1764055719307
 }

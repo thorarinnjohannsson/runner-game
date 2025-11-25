@@ -70,6 +70,14 @@ function handleKeyDown(e) {
         }
     }
     
+    // F key for fullscreen toggle
+    if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        if (typeof toggleFullscreen === 'function') {
+            toggleFullscreen();
+        }
+    }
+    
     // Enter key on start screen
     if (e.key === 'Enter' && gameState === GAME_STATES.START_SCREEN) {
         handleStartGame();
