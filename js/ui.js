@@ -157,9 +157,6 @@ function drawStartScreen() {
     
     const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
     drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
-    
-    // Draw fullscreen button
-    drawFullscreenButton();
 }
 
 // Draw Name Entry UI (Text mode vs Edit mode)
@@ -509,9 +506,6 @@ function drawGameOverScreen() {
     
     drawPlayAgainButton(finalButtonY);
     
-    // Draw fullscreen button
-    drawFullscreenButton();
-    
     ctx.textAlign = 'left';
 }
 
@@ -850,19 +844,6 @@ function handleUITouch(e) {
 
 // Process UI interaction (works for both click and touch)
 function processUIInteraction(x, y) {
-    // Check fullscreen button (available in all states)
-    if (window.fullscreenButton) {
-        const btn = window.fullscreenButton;
-        if (x >= btn.x && x <= btn.x + btn.width &&
-            y >= btn.y && y <= btn.y + btn.height) {
-            if (typeof toggleFullscreen === 'function') {
-                toggleFullscreen();
-                triggerHaptic(10);
-            }
-            return;
-        }
-    }
-    
     // Check pause button during gameplay
     if (gameState === GAME_STATES.PLAYING || (gameState === GAME_STATES.PAUSED && wasPausedByUser)) {
         if (window.pauseButton) {

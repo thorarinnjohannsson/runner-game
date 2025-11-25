@@ -1,7 +1,7 @@
 {
-  "version": "15",
-  "hash": "3333081",
-  "date": "2025-11-25 09:00:25 +0100",
-  "message": "Enhance mobile responsiveness by implementing safe area support in styles and JavaScript. Adjust positioning, font sizes, and padding for version info and player stats to improve visibility across devices. Increment version to 14 in VERSION and version.json.",
-  "timestamp": 1764057625344
+  "version": "16",
+  "hash": "d8b80ed",
+  "date": "2025-11-25 09:10:54 +0100",
+  "message": "Increment version to 15 in VERSION and version.json. Update hash and timestamp in version.json. Enhance fullscreen support detection and improve button positioning for better visibility across devices.",
+  "timestamp": 1764058254758
 }

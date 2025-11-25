@@ -743,11 +743,6 @@ function drawGameplay() {
     if (gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSED) {
         drawHUD();
     }
-    
-    // Draw fullscreen button
-    if (typeof drawFullscreenButton === 'function') {
-        drawFullscreenButton();
-    }
 }
 
 // Draw collectables
@@ -1577,9 +1572,9 @@ function updateMetadataPosition(versionDiv, statsDiv) {
         statsDiv.style.left = `${safeLeft}px`;
     }
     
-    // Ensure they don't overflow - leave space for fullscreen button
-    const fullscreenButtonWidth = mobile ? 70 : 80;
-    const maxWidth = canvas.width - safeLeft - fullscreenButtonWidth;
+    // Ensure they don't overflow - leave space on right side
+    const rightMargin = mobile ? 20 : 30;
+    const maxWidth = canvas.width - safeLeft - rightMargin;
     versionDiv.style.maxWidth = `${Math.max(150, maxWidth)}px`; // Minimum 150px width
     if (statsDiv) {
         statsDiv.style.maxWidth = `${Math.max(150, maxWidth)}px`; // Minimum 150px width
