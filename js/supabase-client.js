@@ -140,21 +140,91 @@ const SupabaseClient = {
         }
     },
     
-    // Get count of currently active players
+    // Get count of currently active players (with recent heartbeat)
     getActivePlayerCount: async function() {
         if (!this.initialized) return 0;
         
         try {
+            // Only count sessions that have been updated in the last 2 minutes (120 seconds)
+            // This filters out stale sessions that didn't properly clean up
+            const twoMinutesAgo = new Date(Date.now() - 120000).toISOString();
+            
             const { count, error } = await this.client
                 .from('player_stats')
                 .select('*', { count: 'exact', head: true })
-                .eq('is_active', true);
+                .eq('is_active', true)
+                .gte('updated_at', twoMinutesAgo);
                 
             if (error) throw error;
             return count || 0;
             
         } catch (e) {
             console.error('Error getting active player count:', e);
+            return 0;
+        }
+    },
+    
+    // Get detailed active player info for debugging
+    getActivePlayerDetails: async function() {
+        if (!this.initialized) return [];
+        
+        try {
+            const twoMinutesAgo = new Date(Date.now() - 120000).toISOString();
+            
+            const { data, error } = await this.client
+                .from('player_stats')
+                .select('session_id, player_name, device_type, started_at, updated_at, is_active')
+                .eq('is_active', true)
+                .order('updated_at', { ascending: false });
+                
+            if (error) throw error;
+            
+            // Filter to only recent sessions and add time since last update
+            return (data || []).map(session => {
+                const lastUpdate = new Date(session.updated_at);
+                const now = new Date();
+                const secondsAgo = Math.floor((now - lastUpdate) / 1000);
+                
+                return {
+                    ...session,
+                    secondsSinceUpdate: secondsAgo,
+                    isRecent: secondsAgo < 120
+                };
+            });
+            
+        } catch (e) {
+            console.error('Error getting active player details:', e);
+            return [];
+        }
+    },
+    
+    // Clean up stale sessions (mark as inactive if no heartbeat in 2 minutes)
+    cleanupStaleSessions: async function() {
+        if (!this.initialized) return 0;
+        
+        try {
+            const twoMinutesAgo = new Date(Date.now() - 120000).toISOString();
+            
+            const { data, error } = await this.client
+                .from('player_stats')
+                .update({ 
+                    is_active: false,
+                    ended_at: new Date().toISOString()
+                })
+                .eq('is_active', true)
+                .lt('updated_at', twoMinutesAgo);
+                
+            if (error) throw error;
+            
+            const cleanedCount = data ? (Array.isArray(data) ? data.length : 1) : 0;
+            if (cleanedCount > 0) {
+                console.log(`🧹 Cleaned up ${cleanedCount} stale session(s)`);
+            }
+            
+            return cleanedCount;
+            
+        } catch (e) {
+            console.error('Error cleaning up stale sessions:', e);
             return 0;
         }
     },
@@ -220,17 +290,19 @@ const SupabaseClient = {
         if (!this.initialized) return false;
         
         try {
+            // Update updated_at timestamp to show session is still active
+            // The updated_at column should auto-update via trigger, but we'll also update it explicitly
             const { error } = await this.client
                 .from('player_stats')
                 .update({
-                    started_at: new Date().toISOString() // Update timestamp to show still active
+                    updated_at: new Date().toISOString()
                 })
                 .eq('session_id', sessionId)
                 .eq('is_active', true);
                 
             if (error) throw error;
             return true;
-            
+                
         } catch (e) {
             console.error('Error updating heartbeat:', e);
             return false;

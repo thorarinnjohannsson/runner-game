@@ -1646,6 +1646,12 @@ async function updatePlayerStats() {
     }
     
     try {
+        // Clean up stale sessions first (every 30 seconds)
+        if (!window.lastCleanup || Date.now() - window.lastCleanup > 30000) {
+            await SupabaseClient.cleanupStaleSessions();
+            window.lastCleanup = Date.now();
+        }
+        
         // Update active player count
         const activeCount = await SupabaseClient.getActivePlayerCount();
         activePlayerCount = activeCount;
@@ -1665,7 +1671,7 @@ async function updatePlayerStats() {
 
 // Initialize player stats display
 function initPlayerStatsDisplay() {
-    // Initial update
+    // Initial cleanup and update
     updatePlayerStats();
     
     // Set up periodic updates (every 5 seconds)
@@ -1675,6 +1681,28 @@ function initPlayerStatsDisplay() {
     statsUpdateInterval = setInterval(() => {
         updatePlayerStats();
     }, 5000);
+    
+    // Add debug function to window for manual verification
+    if (typeof window !== 'undefined' && typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {
+        window.debugActivePlayers = async function() {
+            console.log('🔍 Checking active players...');
+            const details = await SupabaseClient.getActivePlayerDetails();
+            console.log(`Found ${details.length} total active sessions:`);
+            details.forEach((session, index) => {
+                console.log(`${index + 1}. ${session.player_name || 'Anonymous'} (${session.device_type})`);
+                console.log(`   Session: ${session.session_id.substring(0, 8)}...`);
+                console.log(`   Last update: ${session.secondsSinceUpdate}s ago`);
+                console.log(`   Recent: ${session.isRecent ? '✅' : '❌ STALE'}`);
+            });
+            
+            const recentCount = details.filter(s => s.isRecent).length;
+            console.log(`\n📊 Summary: ${recentCount} recent (< 2 min) | ${details.length - recentCount} stale`);
+            
+            return details;
+        };
+        
+        console.log('💡 Tip: Run window.debugActivePlayers() in console to see detailed active player info');
+    }
     
     // Set up Realtime subscription for active players (if available)
     if (typeof SupabaseClient !== 'undefined' && SupabaseClient.initialized) {

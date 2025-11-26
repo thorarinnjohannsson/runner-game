@@ -1,7 +1,7 @@
 {
-  "version": "19",
-  "hash": "8bf63e5",
-  "date": "2025-11-25 14:12:08 +0100",
-  "message": "Increment version to 18 in VERSION and version.json. Add custom event tracking for various game interactions, including pauses, resumes, high score achievements, and zoom changes, to enhance analytics capabilities.",
-  "timestamp": 1764076328364
+  "version": "20",
+  "hash": "ff7e717",
+  "date": "2025-11-25 20:21:42 +0100",
+  "message": "Increment version to 19 in VERSION and version.json. Enhance high score tracking by including character type in score submissions and display. Update UI to show character names alongside scores for improved clarity.",
+  "timestamp": 1764098502648
 }
