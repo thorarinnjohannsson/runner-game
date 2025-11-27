@@ -1,7 +1,7 @@
 {
-  "version": "21",
-  "hash": "45bc7f3",
-  "date": "2025-11-26 14:29:11 +0100",
-  "message": "Increment version to 20 in VERSION and version.json. Enhance active player tracking by implementing session cleanup for stale sessions and adding detailed player information retrieval for debugging. Update UI to include manual verification function for active player details.",
-  "timestamp": 1764163751694
+  "version": "22",
+  "hash": "368f375",
+  "date": "2025-11-27 19:34:50 +0100",
+  "message": "Increment version to 21 in VERSION and version.json. Introduce heart reward system for level completion, including visual effects and sound feedback. Enhance pause overlay with responsive layout adjustments for mobile landscape and desktop views. Update transition effects and UI elements for improved player experience.",
+  "timestamp": 1764268490731
 }

@@ -1178,23 +1178,27 @@ function drawHighScoreButton(x, y) {
 
 // Draw High Score Modal
 function drawHighScoreModal() {
+    // Detect mobile landscape
+    const isLandscape = typeof isPortrait !== 'undefined' ? !isPortrait : canvas.width > canvas.height;
+    const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
+    const mobile = isMobile || canvas.width < 600;
+    
     // Overlay
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    const mobile = isMobile || canvas.width < 600;
     // Ensure modal stays well within canvas bounds
-    // Use larger margins: at least 20px on mobile, 40px on desktop
-    const minMargin = mobile ? 20 : 40;
-    const maxHeightMargin = mobile ? 30 : 40;
+    const minMargin = isMobileLandscape ? 15 : (mobile ? 20 : 40);
+    const maxHeightMargin = isMobileLandscape ? 20 : (mobile ? 30 : 40);
     
     // Calculate max available width and height
     const maxAvailableWidth = canvas.width - (minMargin * 2);
     const maxAvailableHeight = canvas.height - (maxHeightMargin * 2);
     
     // Set modal dimensions - ensure they never exceed available space
-    const preferredWidth = mobile ? Math.min(350, maxAvailableWidth) : Math.min(400, maxAvailableWidth);
-    const preferredHeight = mobile ? Math.min(450, maxAvailableHeight) : Math.min(520, maxAvailableHeight);
+    // Wider for landscape
+    const preferredWidth = isMobileLandscape ? Math.min(canvas.width * 0.9, maxAvailableWidth) : (mobile ? Math.min(350, maxAvailableWidth) : Math.min(400, maxAvailableWidth));
+    const preferredHeight = isMobileLandscape ? Math.min(canvas.height * 0.85, maxAvailableHeight) : (mobile ? Math.min(450, maxAvailableHeight) : Math.min(520, maxAvailableHeight));
     
     const width = Math.min(preferredWidth, maxAvailableWidth);
     const height = Math.min(preferredHeight, maxAvailableHeight);
