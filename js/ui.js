@@ -73,26 +73,120 @@ function drawStartScreen() {
         });
     }
     
+    // Detect mobile landscape
+    const isLandscape = typeof isPortrait !== 'undefined' ? !isPortrait : canvas.width > canvas.height;
+    const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
     const mobile = isMobile || canvas.width < 600;
-    const center = canvas.width / 2;
-    const h = canvas.height;
     
-    // Layout Logic with better scaling for different heights
-    const tight = h < 380;
-    const compact = h <= 450;
-    const veryCompact = h <= 520; // New breakpoint for desktop landscape
+    if (typeof updateRipples === 'function') updateRipples();
+    if (typeof drawRipples === 'function') drawRipples();
     
-    const headerY = tight ? 25 : (compact ? 32 : (veryCompact ? 38 : 60));
+    // Title
+    const headerY = isMobileLandscape ? 25 : (mobile ? 30 : 60);
+    ctx.fillStyle = 'white';
+    ctx.font = `${isMobileLandscape ? 20 : (mobile ? 22 : 28)}px "Press Start 2P"`;
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = isMobileLandscape ? 2 : 4;
+    ctx.strokeText('ANIMAL JUMP', canvas.width / 2, headerY);
+    ctx.fillText('ANIMAL JUMP', canvas.width / 2, headerY);
     
-    const layoutWidth = Math.min(canvas.width - 40, mobile ? canvas.width - 20 : 540);
-    const layoutX = center - layoutWidth / 2;
-    const panelCenterX = layoutX + layoutWidth / 2; // Center of the panel
+    // Top controls
+    drawAudioControls(canvas.width - 80, 20);
+    drawHighScoreButton(20, 20);
     
-    // Scale everything based on available height
-    const topY = tight ? 45 : (compact ? 55 : (veryCompact ? 65 : 110));
+    if (isMobileLandscape) {
+        // LANDSCAPE LAYOUT: Split horizontal layout
+        const padding = 15;
+        const panelGap = 15;
+        const topY = headerY + 35;
+        const panelHeight = canvas.height - topY - padding;
+        
+        // Left panel: Name entry + Character selection
+        const leftPanelWidth = (canvas.width - padding * 2 - panelGap) * 0.55;
+        const leftPanelX = padding;
+        
+        // Name entry panel
+        const namePanelHeight = 65;
+        drawSoftPanel(leftPanelX, topY, leftPanelWidth, namePanelHeight, {
+            fill: 'rgba(255, 255, 255, 0.92)',
+            stroke: 'rgba(0, 0, 0, 0.12)',
+            radius: 12
+        });
+        drawNameEntryUI(leftPanelX + leftPanelWidth / 2, topY + 20, leftPanelWidth, {
+            compact: true
+        });
+        
+        // Character selection panel
+        const charPanelY = topY + namePanelHeight + 10;
+        const charPanelHeight = panelHeight - namePanelHeight - 10;
+        drawSoftPanel(leftPanelX, charPanelY, leftPanelWidth, charPanelHeight, {
+            fill: 'rgba(0, 0, 0, 0.35)',
+            stroke: 'rgba(255, 255, 255, 0.2)',
+            radius: 12
+        });
+        
+        // Character selection label
+        ctx.font = 'bold 12px "Press Start 2P"';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.textAlign = 'center';
+        ctx.strokeText('SELECT RUNNER', leftPanelX + leftPanelWidth / 2, charPanelY + 20);
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText('SELECT RUNNER', leftPanelX + leftPanelWidth / 2, charPanelY + 20);
+        
+        // Character selection
+        const charRowTop = charPanelY + 40;
+        drawCardCharacterSelection(leftPanelX + leftPanelWidth / 2, charRowTop, {
+            availableWidth: leftPanelWidth - 40,
+            baseSize: 40,
+            padding: 12
+        });
+        
+        // Character name
+        if (selectedCharacter) {
+            ctx.font = 'bold 16px Arial';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.textAlign = 'center';
+            ctx.strokeText(selectedCharacter.name.toUpperCase(), leftPanelX + leftPanelWidth / 2, charPanelY + charPanelHeight - 15);
+            ctx.fillStyle = 'white';
+            ctx.fillText(selectedCharacter.name.toUpperCase(), leftPanelX + leftPanelWidth / 2, charPanelY + charPanelHeight - 15);
+        }
+        
+        // Right panel: Start button + Stats
+        const rightPanelWidth = (canvas.width - padding * 2 - panelGap) * 0.45;
+        const rightPanelX = leftPanelX + leftPanelWidth + panelGap;
+        
+        // Start button (prominent, centered)
+        const startButtonY = topY + (panelHeight - 80) / 2;
+        const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
+        drawCardStartButton(rightPanelX + rightPanelWidth / 2, startButtonY, pulse, { compact: true });
+        
+        // Player stats below button
+        const statsY = startButtonY + 60;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`👥 ${activePlayerCount} now`, rightPanelX + rightPanelWidth / 2, statsY);
+        ctx.fillText(`📊 ${dailyPlayerCount} today`, rightPanelX + rightPanelWidth / 2, statsY + 20);
+    } else {
+        // PORTRAIT/DESKTOP LAYOUT: Original vertical layout
+        const center = canvas.width / 2;
+        const h = canvas.height;
+        
+        const tight = h < 380;
+        const compact = h <= 450;
+        const veryCompact = h <= 520;
+        
+        const topY = tight ? 45 : (compact ? 55 : (veryCompact ? 65 : 110));
     const namePanelHeight = tight ? 60 : (compact ? 65 : (veryCompact ? 68 : 72));
     const charPanelHeight = tight ? 130 : (compact ? 145 : (veryCompact ? 160 : 185));
     const panelGap = tight ? 10 : (compact ? 12 : (veryCompact ? 14 : 16));
+    
+    const layoutWidth = Math.min(canvas.width - 40, mobile ? canvas.width - 20 : 540);
+    const layoutX = center - layoutWidth / 2;
+    const panelCenterX = layoutX + layoutWidth / 2;
     
     const namePanelY = topY;
     const charPanelY = namePanelY + namePanelHeight + panelGap;
@@ -107,56 +201,43 @@ function drawStartScreen() {
         radius: veryCompact ? 14 : 18
     });
     
-    drawSoftPanel(layoutX, charPanelY, layoutWidth, charPanelHeight, {
-        fill: 'rgba(0, 0, 0, 0.35)',
-        stroke: 'rgba(255, 255, 255, 0.2)',
-        radius: veryCompact ? 16 : 20
-    });
-    
-    drawNameEntryUI(panelCenterX, namePanelY + (tight ? 18 : (compact ? 20 : (veryCompact ? 22 : 24))), layoutWidth, {
-        compact: tight || compact || veryCompact
-    });
-    
-    if (typeof updateRipples === 'function') updateRipples();
-    if (typeof drawRipples === 'function') drawRipples();
-    
-    ctx.fillStyle = 'white';
-    ctx.font = `${tight ? 18 : (compact ? 20 : (veryCompact ? 22 : 24))}px "Press Start 2P"`;
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = tight ? 3 : 4;
-    ctx.strokeText('ANIMAL JUMP', center, headerY);
-    ctx.fillText('ANIMAL JUMP', center, headerY);
-    
-    drawAudioControls(canvas.width - 80, 20);
-    drawHighScoreButton(20, 20);
-    
-    ctx.font = `bold ${tight ? 12 : (compact ? 13 : (veryCompact ? 14 : 16))}px "Press Start 2P"`;
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = tight ? 3 : 4;
-    ctx.textAlign = 'center';
-    ctx.strokeText('SELECT RUNNER', panelCenterX, selectionLabelY);
-    ctx.fillStyle = '#FFD700';
-    ctx.fillText('SELECT RUNNER', panelCenterX, selectionLabelY);
-    
-    drawCardCharacterSelection(panelCenterX, charRowTop, {
-        availableWidth: layoutWidth - 120,
-        baseSize: tight ? 36 : (compact ? 40 : (veryCompact ? 44 : 46)),
-        padding: tight ? 16 : (compact ? 18 : (veryCompact ? 20 : 24))
-    });
-    
-    if (selectedCharacter) {
-        ctx.font = `bold ${tight ? 14 : (compact ? 16 : (veryCompact ? 18 : 22))}px Arial`;
+        drawSoftPanel(layoutX, charPanelY, layoutWidth, charPanelHeight, {
+            fill: 'rgba(0, 0, 0, 0.35)',
+            stroke: 'rgba(255, 255, 255, 0.2)',
+            radius: veryCompact ? 16 : 20
+        });
+        
+        drawNameEntryUI(panelCenterX, namePanelY + (tight ? 18 : (compact ? 20 : (veryCompact ? 22 : 24))), layoutWidth, {
+            compact: tight || compact || veryCompact
+        });
+        
+        ctx.font = `bold ${tight ? 12 : (compact ? 13 : (veryCompact ? 14 : 16))}px "Press Start 2P"`;
         ctx.strokeStyle = 'black';
         ctx.lineWidth = tight ? 3 : 4;
         ctx.textAlign = 'center';
-        ctx.strokeText(selectedCharacter.name.toUpperCase(), panelCenterX, characterNameY);
-        ctx.fillStyle = 'white';
-        ctx.fillText(selectedCharacter.name.toUpperCase(), panelCenterX, characterNameY);
+        ctx.strokeText('SELECT RUNNER', panelCenterX, selectionLabelY);
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText('SELECT RUNNER', panelCenterX, selectionLabelY);
+        
+        drawCardCharacterSelection(panelCenterX, charRowTop, {
+            availableWidth: layoutWidth - 120,
+            baseSize: tight ? 36 : (compact ? 40 : (veryCompact ? 44 : 46)),
+            padding: tight ? 16 : (compact ? 18 : (veryCompact ? 20 : 24))
+        });
+        
+        if (selectedCharacter) {
+            ctx.font = `bold ${tight ? 14 : (compact ? 16 : (veryCompact ? 18 : 22))}px Arial`;
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = tight ? 3 : 4;
+            ctx.textAlign = 'center';
+            ctx.strokeText(selectedCharacter.name.toUpperCase(), panelCenterX, characterNameY);
+            ctx.fillStyle = 'white';
+            ctx.fillText(selectedCharacter.name.toUpperCase(), panelCenterX, characterNameY);
+        }
+        
+        const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
+        drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
     }
-    
-    const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
-    drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
     
     // Draw zoom controls
     if (typeof drawZoomControls === 'function') {
@@ -424,10 +505,12 @@ function drawInstructionIcons(centerX, y) {
 
 // Draw game over screen
 function drawGameOverScreen() {
-    // Mobile/Layout detection
+    // Detect mobile landscape
+    const isLandscape = typeof isPortrait !== 'undefined' ? !isPortrait : canvas.width > canvas.height;
+    const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
     const mobile = isMobile || canvas.width < 600;
-    // Use side-by-side if we have enough width (e.g., tablet/desktop)
-    const sideBySide = canvas.width >= 750; 
+    // Use side-by-side for landscape or wide screens
+    const sideBySide = isMobileLandscape || canvas.width >= 750; 
 
     // Dark overlay
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -1134,21 +1217,22 @@ function drawHighScoreModal() {
     ctx.stroke();
     
     // Title
+    const titleSize = isMobileLandscape ? 20 : (mobile ? 22 : 28);
     ctx.fillStyle = '#FFD700';
-    ctx.font = mobile ? 'bold 22px Arial' : 'bold 28px Arial';
+    ctx.font = `bold ${titleSize}px Arial`;
     ctx.textAlign = 'center';
-    ctx.fillText('LEADERBOARD', finalX + width/2, finalY + (mobile ? 40 : 50));
+    ctx.fillText('LEADERBOARD', finalX + width/2, finalY + (isMobileLandscape ? 30 : (mobile ? 40 : 50)));
     
     // Close Button (X) - ensure it's within bounds
-    const closeButtonPadding = mobile ? 15 : 20;
+    const closeButtonPadding = isMobileLandscape ? 12 : (mobile ? 15 : 20);
     ctx.fillStyle = '#FF4444';
-    ctx.font = mobile ? 'bold 20px Arial' : 'bold 24px Arial';
-    ctx.fillText('✕', finalX + width - closeButtonPadding, finalY + (mobile ? 30 : 40));
+    ctx.font = isMobileLandscape ? 'bold 18px Arial' : (mobile ? 'bold 20px Arial' : 'bold 24px Arial');
+    ctx.fillText('✕', finalX + width - closeButtonPadding, finalY + (isMobileLandscape ? 25 : (mobile ? 30 : 40)));
     window.closeModalButton = { 
-        x: finalX + width - (mobile ? 40 : 45), 
+        x: finalX + width - (isMobileLandscape ? 35 : (mobile ? 40 : 45)), 
         y: finalY + 10, 
-        width: mobile ? 30 : 35, 
-        height: mobile ? 30 : 35 
+        width: isMobileLandscape ? 25 : (mobile ? 30 : 35), 
+        height: isMobileLandscape ? 25 : (mobile ? 30 : 35) 
     };
     
     // List Content - use responsive drawHighScoresList function
@@ -1157,28 +1241,27 @@ function drawHighScoreModal() {
     // Loading State
     if (isLoadingScores) {
         ctx.fillStyle = '#FFD700';
-        ctx.font = mobile ? '14px Arial' : '16px Arial';
-        ctx.fillText('Loading global scores...', finalX + width/2, finalY + 150);
+        ctx.font = isMobileLandscape ? '12px Arial' : (mobile ? '14px Arial' : '16px Arial');
+        ctx.fillText('Loading global scores...', finalX + width/2, finalY + (isMobileLandscape ? height / 2 : 150));
     } else if (scores.length === 0) {
         ctx.fillStyle = 'white';
-        ctx.font = mobile ? '14px Arial' : '16px Arial';
-        ctx.fillText('No scores yet!', finalX + width/2, finalY + 150);
+        ctx.font = isMobileLandscape ? '12px Arial' : (mobile ? '14px Arial' : '16px Arial');
+        ctx.fillText('No scores yet!', finalX + width/2, finalY + (isMobileLandscape ? height / 2 : 150));
     } else {
-        const startY = finalY + (mobile ? 80 : 100);
-        const maxEntries = mobile ? 8 : 10;
+        const startY = finalY + (isMobileLandscape ? 60 : (mobile ? 80 : 100));
+        const maxEntries = isMobileLandscape ? 10 : (mobile ? 8 : 10);
         
         // Use the responsive drawHighScoresList function
         // Pass width minus extra padding to ensure content doesn't touch edges
-        // Use larger padding: 50px on desktop, 30px on mobile
-        const contentPadding = mobile ? 30 : 50;
+        const contentPadding = isMobileLandscape ? 20 : (mobile ? 30 : 50);
         const contentWidth = Math.max(200, width - contentPadding);
         drawHighScoresList(finalX + width/2, startY, maxEntries, contentWidth);
     }
     
     ctx.textAlign = 'center';
     ctx.fillStyle = '#AAA';
-    ctx.font = mobile ? '11px Arial' : '14px Arial';
-    ctx.fillText('Global scores sync automatically', finalX + width/2, finalY + height - (mobile ? 15 : 20));
+    ctx.font = isMobileLandscape ? '10px Arial' : (mobile ? '11px Arial' : '14px Arial');
+    ctx.fillText('Global scores sync automatically', finalX + width/2, finalY + height - (isMobileLandscape ? 10 : (mobile ? 15 : 20)));
     
     ctx.textAlign = 'left';
 }

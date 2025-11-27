@@ -90,6 +90,8 @@ let levelTransitionCountdown = 0;
 let levelTransitionStartTime = 0;
 let showLevelIntro = false;
 let levelIntroStartTime = 0;
+let heartRewardEarned = false; // Track if heart was awarded this transition
+let heartRewardAnimationTime = 0; // Track heart reward animation timing
 
 // Milestone tracking
 let milestones = {
@@ -244,6 +246,10 @@ function gameLoop() {
             // Draw transition managed by transitionManager
             if (typeof transitionManager !== 'undefined') {
                 transitionManager.draw(ctx);
+            }
+            // Draw particles on top
+            if (typeof drawParticles !== 'undefined') {
+                drawParticles();
             }
             // Draw effects on top
             if (typeof drawEffects !== 'undefined') {
@@ -914,83 +920,166 @@ function drawHUD() {
 
 // Draw pause overlay
 function drawPauseOverlay() {
+    // Detect mobile landscape
+    const isLandscape = typeof isPortrait !== 'undefined' ? !isPortrait : canvas.width > canvas.height;
+    const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
+    
     // Darken screen
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if (wasPausedByUser) {
         // User paused - show PAUSED text and score breakdown
+        const titleSize = isMobileLandscape ? 32 : 48;
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 48px Arial';
+        ctx.font = `bold ${titleSize}px Arial`;
         ctx.textAlign = 'center';
-        ctx.fillText('PAUSED', canvas.width / 2, 100);
+        const titleY = isMobileLandscape ? 40 : 100;
+        ctx.fillText('PAUSED', canvas.width / 2, titleY);
         
-        // Score breakdown box
-        const boxY = 140;
-        const boxHeight = 140;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(canvas.width / 2 - 150, boxY, 300, boxHeight);
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(canvas.width / 2 - 150, boxY, 300, boxHeight);
-        
-        // Score breakdown
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('SCORE BREAKDOWN', canvas.width / 2, boxY + 25);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'left';
-        
-        const leftX = canvas.width / 2 - 130;
-        const rightX = canvas.width / 2 + 130;
-        
-        // Stats
-        ctx.fillText('Time:', leftX, boxY + 50);
-        ctx.textAlign = 'right';
-        ctx.fillText(`${scoreStats.timePoints} pts`, rightX, boxY + 50);
-        
-        ctx.textAlign = 'left';
-        ctx.fillText(`Obstacles (x${scoreStats.obstaclesCleared}):`, leftX, boxY + 72);
-        ctx.textAlign = 'right';
-        ctx.fillText(`${scoreStats.obstaclePoints} pts`, rightX, boxY + 72);
-        
-        ctx.textAlign = 'left';
-        ctx.fillText('Bonuses:', leftX, boxY + 94);
-        ctx.textAlign = 'right';
-        ctx.fillText(`${scoreStats.bonusPoints} pts`, rightX, boxY + 94);
-        
-        // Separator
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(leftX, boxY + 102);
-        ctx.lineTo(rightX, boxY + 102);
-        ctx.stroke();
-        
-        // Total
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('TOTAL:', leftX, boxY + 125);
-        ctx.textAlign = 'right';
-        ctx.fillText(`${score} pts`, rightX, boxY + 125);
-        
-        // Resume instructions
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'white';
-        ctx.font = '18px Arial';
-        ctx.fillText('Press P to resume', canvas.width / 2, boxY + 170);
-        ctx.font = '14px Arial';
-        ctx.fillText(isMobile ? 'or tap PAUSE button' : '', canvas.width / 2, boxY + 195);
-        
-        // Audio Controls in Pause Menu
-        if (typeof drawAudioControls === 'function') {
-            drawAudioControls(canvas.width / 2 - 35, boxY + 210);
+        if (isMobileLandscape) {
+            // LANDSCAPE LAYOUT: Horizontal button layout
+            const boxY = titleY + 30;
+            const boxHeight = 100;
+            const boxWidth = canvas.width - 40;
+            const boxX = 20;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+            
+            // Score breakdown title
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCORE BREAKDOWN', canvas.width / 2, boxY + 20);
+            
+            // Stats in horizontal layout
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            const statY = boxY + 45;
+            const statSpacing = boxWidth / 4;
+            
+            // Time
+            ctx.textAlign = 'center';
+            ctx.fillText('Time', boxX + statSpacing * 0.5, statY);
+            ctx.fillText(`${scoreStats.timePoints}`, boxX + statSpacing * 0.5, statY + 18);
+            
+            // Obstacles
+            ctx.fillText(`Obstacles`, boxX + statSpacing * 1.5, statY);
+            ctx.fillText(`${scoreStats.obstaclePoints}`, boxX + statSpacing * 1.5, statY + 18);
+            
+            // Bonuses
+            ctx.fillText('Bonuses', boxX + statSpacing * 2.5, statY);
+            ctx.fillText(`${scoreStats.bonusPoints}`, boxX + statSpacing * 2.5, statY + 18);
+            
+            // Total
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('TOTAL', boxX + statSpacing * 3.5, statY);
+            ctx.fillText(`${score}`, boxX + statSpacing * 3.5, statY + 18);
+            
+            // Buttons horizontal
+            const buttonY = boxY + boxHeight + 20;
+            const buttonWidth = 120;
+            const buttonHeight = 40;
+            const buttonGap = 20;
+            const totalButtonWidth = buttonWidth * 2 + buttonGap;
+            const buttonStartX = (canvas.width - totalButtonWidth) / 2;
+            
+            // Resume button
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(buttonStartX, buttonY, buttonWidth, buttonHeight);
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(buttonStartX, buttonY, buttonWidth, buttonHeight);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RESUME', buttonStartX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5);
+            
+            // Quit button
+            ctx.fillStyle = '#F44336';
+            ctx.fillRect(buttonStartX + buttonWidth + buttonGap, buttonY, buttonWidth, buttonHeight);
+            ctx.strokeStyle = '#C62828';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(buttonStartX + buttonWidth + buttonGap, buttonY, buttonWidth, buttonHeight);
+            ctx.fillStyle = 'white';
+            ctx.fillText('QUIT', buttonStartX + buttonWidth + buttonGap + buttonWidth / 2, buttonY + buttonHeight / 2 + 5);
+            
+            window.pauseResumeButton = { x: buttonStartX, y: buttonY, width: buttonWidth, height: buttonHeight };
+            window.pauseQuitButton = { x: buttonStartX + buttonWidth + buttonGap, y: buttonY, width: buttonWidth, height: buttonHeight };
+        } else {
+            // PORTRAIT/DESKTOP LAYOUT: Original vertical layout
+            // Score breakdown box
+            const boxY = 140;
+            const boxHeight = 140;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(canvas.width / 2 - 150, boxY, 300, boxHeight);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(canvas.width / 2 - 150, boxY, 300, boxHeight);
+            
+            // Score breakdown
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('SCORE BREAKDOWN', canvas.width / 2, boxY + 25);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            
+            const leftX = canvas.width / 2 - 130;
+            const rightX = canvas.width / 2 + 130;
+            
+            // Stats
+            ctx.fillText('Time:', leftX, boxY + 50);
+            ctx.textAlign = 'right';
+            ctx.fillText(`${scoreStats.timePoints} pts`, rightX, boxY + 50);
+            
+            ctx.textAlign = 'left';
+            ctx.fillText(`Obstacles (x${scoreStats.obstaclesCleared}):`, leftX, boxY + 72);
+            ctx.textAlign = 'right';
+            ctx.fillText(`${scoreStats.obstaclePoints} pts`, rightX, boxY + 72);
+            
+            ctx.textAlign = 'left';
+            ctx.fillText('Bonuses:', leftX, boxY + 94);
+            ctx.textAlign = 'right';
+            ctx.fillText(`${scoreStats.bonusPoints} pts`, rightX, boxY + 94);
+            
+            // Separator
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(leftX, boxY + 102);
+            ctx.lineTo(rightX, boxY + 102);
+            ctx.stroke();
+            
+            // Total
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('TOTAL:', leftX, boxY + 125);
+            ctx.textAlign = 'right';
+            ctx.fillText(`${score} pts`, rightX, boxY + 125);
+            
+            // Resume instructions
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.font = '18px Arial';
+            ctx.fillText('Press P to resume', canvas.width / 2, boxY + 170);
+            ctx.font = '14px Arial';
+            ctx.fillText(isMobile ? 'or tap PAUSE button' : '', canvas.width / 2, boxY + 195);
+            
+            // Audio Controls in Pause Menu
+            if (typeof drawAudioControls === 'function') {
+                drawAudioControls(canvas.width / 2 - 35, boxY + 210);
+            }
+            
+            ctx.textAlign = 'left';
         }
-        
-        ctx.textAlign = 'left';
     } else {
         // Life lost countdown
         ctx.fillStyle = 'white';
@@ -1467,6 +1556,41 @@ function triggerLevelTransition() {
         lastLevelStats.endTime = elapsedTime;
     }
     
+    // Award +1 heart for completing level (max 5)
+    heartRewardEarned = false;
+    if (lives < 5) {
+        lives++;
+        heartRewardEarned = true;
+        heartRewardAnimationTime = Date.now();
+        
+        // Create celebration particles for heart reward
+        if (typeof createParticleExplosion !== 'undefined') {
+            createParticleExplosion(canvas.width / 2, canvas.height / 2, '#FF0000');
+            // Add more particles for celebration
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.PI * 2 * i) / 20;
+                const speed = 3 + Math.random() * 4;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed - 2;
+                const size = 4 + Math.random() * 4;
+                const colors = ['#FF0000', '#FF6B6B', '#FFD700', '#FFA500'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const types = ['star', 'circle'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                particles.push(new Particle(canvas.width / 2, canvas.height / 2, vx, vy, color, size, type));
+            }
+        }
+        
+        // Play sound
+        if (typeof audioManager !== 'undefined') {
+            audioManager.playSound('powerup');
+        }
+    } else {
+        // Already at max hearts - bonus points instead
+        scoreStats.bonusPoints += 500;
+        score += 500;
+    }
+    
     // Track level completion
     if (typeof Analytics !== 'undefined' && typeof levelManager !== 'undefined') {
         Analytics.trackLevelComplete(levelManager.currentLevel, score, elapsedTime);
@@ -1477,7 +1601,8 @@ function triggerLevelTransition() {
             'score': score,
             'time': Math.floor(elapsedTime),
             'obstacles_cleared': scoreStats.obstaclesCleared,
-            'character_type': player.type
+            'character_type': player.type,
+            'heart_earned': heartRewardEarned
         });
     }
     
@@ -1499,6 +1624,11 @@ function updateLevelTransition() {
         if (!transitionManager.active) {
             // Transition handles calling startNextLevel
         }
+    }
+    
+    // Update particles for transition effects
+    if (typeof updateParticles !== 'undefined') {
+        updateParticles();
     }
     
     // Update effects

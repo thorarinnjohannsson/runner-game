@@ -75,6 +75,7 @@ class TransitionManager {
             { label: 'Time', value: this.formatTime(lastLevelStats.duration) },
             { label: 'Obstacles', value: lastLevelStats.obstaclesCleared },
             { label: 'Level Score', value: levelManager.getPointsRequired() },
+            { label: 'Heart Reward', value: typeof heartRewardEarned !== 'undefined' && heartRewardEarned ? '+1 ❤️' : (typeof lives !== 'undefined' && lives >= 5 ? 'MAX ❤️' : ''), isHeart: true },
             { label: 'TOTAL', value: score, isTotal: true }
         ];
     }
@@ -153,29 +154,64 @@ class TransitionManager {
     }
     
     updateCaveInterior(elapsed) {
-        const duration = 5000; // 5 seconds
-        const statDelay = 800; // Delay between stats
+        const duration = 3500; // Reduced from 5 to 3.5 seconds
+        const statDelay = 400; // Reduced from 800ms to 400ms - faster reveal
         
         // Update torches
         this.torches.forEach(torch => torch.update());
         
-        // Reveal stats one by one
+        // Create continuous particle effects
+        if (elapsed < duration && elapsed % 200 < 50) { // Every 200ms, create particles for 50ms
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            if (typeof createParticleExplosion !== 'undefined' && typeof Particle !== 'undefined') {
+                // Create sparkle particles
+                for (let i = 0; i < 3; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 100 + Math.random() * 150;
+                    const x = centerX + Math.cos(angle) * distance;
+                    const y = centerY + Math.sin(angle) * distance;
+                    const vx = (Math.random() - 0.5) * 2;
+                    const vy = (Math.random() - 0.5) * 2 - 1;
+                    const size = 2 + Math.random() * 3;
+                    const colors = ['#FFD700', '#FFA500', '#FF6B6B', '#FFFFFF'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    if (typeof particles !== 'undefined') {
+                        particles.push(new Particle(x, y, vx, vy, color, size, 'star'));
+                    }
+                }
+            }
+        }
+        
+        // Reveal stats one by one (faster)
         const statsShouldShow = Math.floor(elapsed / statDelay);
         if (statsShouldShow > this.currentStatIndex && this.currentStatIndex < this.statsToShow.length) {
             this.currentStatIndex = statsShouldShow;
             
             // Create stone carve effect
             const y = 200 + this.currentStatIndex * 60;
-            addEffect(createStoneCarveEffect(canvas.width / 2 - 100, y, 200));
+            if (typeof addEffect !== 'undefined' && typeof createStoneCarveEffect !== 'undefined') {
+                addEffect(createStoneCarveEffect(canvas.width / 2 - 100, y, 200));
+            }
             
             // Play carve sound
             if (typeof audioManager !== 'undefined') {
                 audioManager.playSound('jump');
             }
             
+            // Special effect for heart reward
+            if (this.statsToShow[this.currentStatIndex] && this.statsToShow[this.currentStatIndex].isHeart && typeof heartRewardEarned !== 'undefined' && heartRewardEarned) {
+                // Create heart celebration particles
+                if (typeof createParticleExplosion !== 'undefined') {
+                    createParticleExplosion(canvas.width / 2, y, '#FF0000');
+                }
+            }
+            
             // If last stat (total), create celebration
-            if (this.currentStatIndex === this.statsToShow.length) {
-                addEffect(createCelebrationBurst(canvas.width / 2, y, 40));
+            if (this.currentStatIndex === this.statsToShow.length - 1) {
+                if (typeof addEffect !== 'undefined' && typeof createCelebrationBurst !== 'undefined') {
+                    addEffect(createCelebrationBurst(canvas.width / 2, y, 40));
+                }
             }
         }
         
@@ -185,13 +221,13 @@ class TransitionManager {
     }
     
     updateAnticipation(elapsed) {
-        const duration = 3000; // 3 seconds
+        const duration = 2000; // Reduced from 3 to 2 seconds
         
         // Update torches
         this.torches.forEach(torch => torch.update());
         
-        // Update countdown
-        const newCountdown = 3 - Math.floor(elapsed / 1000);
+        // Update countdown (starts immediately, faster)
+        const newCountdown = 2 - Math.floor(elapsed / 1000);
         if (newCountdown !== this.countdown && newCountdown >= 0) {
             this.countdown = newCountdown;
             if (typeof audioManager !== 'undefined') {
@@ -388,57 +424,203 @@ class TransitionManager {
     }
     
     drawCaveInterior(ctx) {
-        // Cave background
-        ctx.fillStyle = '#1A0F08';
+        const elapsed = Date.now() - this.phaseStartTime;
+        
+        // Detect mobile landscape
+        const isLandscape = typeof isPortrait !== 'undefined' ? !isPortrait : canvas.width > canvas.height;
+        const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
+        
+        // Animated gradient background with theme colors
+        const nextTheme = typeof levelManager !== 'undefined' ? levelManager.getNextTheme() : null;
+        if (nextTheme) {
+            // Use horizontal gradient for landscape
+            const gradient = ctx.createLinearGradient(0, 0, isLandscape ? canvas.width : 0, isLandscape ? 0 : canvas.height);
+            const time = Date.now() * 0.001;
+            const pulse = 0.5 + Math.sin(time) * 0.3;
+            
+            // Blend between dark cave and theme colors
+            gradient.addColorStop(0, this.interpolateColor('#1A0F08', nextTheme.skyTop || '#2C3E50', pulse * 0.3));
+            gradient.addColorStop(0.5, this.interpolateColor('#1A0F08', nextTheme.groundTop || '#34495E', pulse * 0.2));
+            gradient.addColorStop(1, '#1A0F08');
+            ctx.fillStyle = gradient;
+        } else {
+            ctx.fillStyle = '#1A0F08';
+        }
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Draw torches
         this.torches.forEach(torch => torch.draw(ctx));
         
-        // Title
+        // Title with pulsing glow - smaller and positioned for landscape
+        const titlePulse = 0.8 + Math.sin(Date.now() * 0.005) * 0.2;
         ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 48px Arial';
+        const titleSize = isMobileLandscape ? 32 : 48;
+        ctx.font = `bold ${titleSize * titlePulse}px Arial`;
         ctx.textAlign = 'center';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 10;
-        ctx.fillText(`LEVEL ${levelManager.currentLevel} COMPLETE!`, canvas.width / 2, 100);
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 15 * titlePulse;
+        const titleY = isMobileLandscape ? 30 : 100;
+        ctx.fillText(`LEVEL ${levelManager.currentLevel} COMPLETE!`, canvas.width / 2, titleY);
         ctx.shadowBlur = 0;
         
-        // Stone tablet background
-        const tabletX = canvas.width / 2 - 200;
-        const tabletY = 150;
-        ctx.fillStyle = '#5D4E37';
-        ctx.fillRect(tabletX, tabletY, 400, 280);
-        ctx.strokeStyle = '#3E2F1F';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(tabletX, tabletY, 400, 280);
-        
-        // Stats carved in stone
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'left';
-        
-        for (let i = 0; i < Math.min(this.currentStatIndex, this.statsToShow.length); i++) {
-            const stat = this.statsToShow[i];
-            const y = tabletY + 60 + i * 60;
+        if (isMobileLandscape) {
+            // LANDSCAPE LAYOUT: Side-by-side stats with better space usage
+            const slideProgress = Math.min(1, elapsed / 300);
+            const panelPadding = 20;
+            const panelSpacing = 15;
+            const leftPanelX = panelPadding;
+            const rightPanelX = canvas.width / 2 + panelSpacing / 2;
+            const panelY = titleY + 40;
+            const panelWidth = (canvas.width - panelPadding * 2 - panelSpacing) / 2;
+            const panelHeight = canvas.height - panelY - panelPadding;
             
-            if (stat.isTotal) {
-                ctx.fillStyle = '#FFD700';
-                ctx.font = 'bold 32px Arial';
-            } else {
-                ctx.fillStyle = '#D4A574';
-                ctx.font = 'bold 24px Arial';
-            }
+            // Left panel: Time and Obstacles
+            const leftPanelOffsetX = (1 - slideProgress) * -panelWidth;
+            this.drawStatPanel(ctx, leftPanelX + leftPanelOffsetX, panelY, panelWidth, panelHeight, 
+                this.statsToShow.filter((_, i) => i < 2), elapsed, 0);
             
-            ctx.fillText(stat.label + ':', tabletX + 40, y);
-            ctx.textAlign = 'right';
-            ctx.fillText(stat.value.toString(), tabletX + 360, y);
+            // Right panel: Score, Heart, Total
+            const rightPanelOffsetX = (1 - slideProgress) * panelWidth;
+            this.drawStatPanel(ctx, rightPanelX + rightPanelOffsetX, panelY, panelWidth, panelHeight, 
+                this.statsToShow.filter((_, i) => i >= 2), elapsed, 2);
+        } else {
+            // PORTRAIT/DESKTOP LAYOUT: Centered vertical panel
+            const tabletX = canvas.width / 2 - 200;
+            const tabletY = titleY + 50;
+            const slideProgress = Math.min(1, elapsed / 300);
+            const tabletOffsetX = (1 - slideProgress) * -400;
+            
+            // Panel glow effect
+            const glowPulse = 0.5 + Math.sin(Date.now() * 0.008) * 0.5;
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 20 * glowPulse;
+            ctx.fillStyle = '#5D4E37';
+            ctx.fillRect(tabletX + tabletOffsetX, tabletY, 400, 320);
+            ctx.shadowBlur = 0;
+            
+            ctx.strokeStyle = '#3E2F1F';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(tabletX + tabletOffsetX, tabletY, 400, 320);
+            
+            // Inner glow border
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.3 * glowPulse;
+            ctx.strokeRect(tabletX + tabletOffsetX + 4, tabletY + 4, 392, 312);
+            ctx.globalAlpha = 1.0;
+            
+            // Stats carved in stone with fade-in animation
+            ctx.font = 'bold 24px Arial';
             ctx.textAlign = 'left';
+            
+            for (let i = 0; i < Math.min(this.currentStatIndex + 1, this.statsToShow.length); i++) {
+                const stat = this.statsToShow[i];
+                const y = tabletY + 50 + i * 55;
+                const fadeProgress = Math.min(1, (elapsed - i * 400) / 200);
+                
+                if (fadeProgress > 0) {
+                    ctx.globalAlpha = fadeProgress;
+                    this.drawStatLine(ctx, stat, tabletX + tabletOffsetX + 40, y, tabletX + tabletOffsetX + 360);
+                    ctx.globalAlpha = 1.0;
+                }
+            }
         }
         
         ctx.textAlign = 'left';
     }
     
+    // Helper method to draw a stat panel (for landscape layout)
+    drawStatPanel(ctx, x, y, width, height, stats, elapsed, startIndex) {
+        const glowPulse = 0.5 + Math.sin(Date.now() * 0.008) * 0.5;
+        
+        // Panel background
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 20 * glowPulse;
+        ctx.fillStyle = '#5D4E37';
+        ctx.fillRect(x, y, width, height);
+        ctx.shadowBlur = 0;
+        
+        // Panel border
+        ctx.strokeStyle = '#3E2F1F';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Inner glow border
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.3 * glowPulse;
+        ctx.strokeRect(x + 4, y + 4, width - 8, height - 8);
+        ctx.globalAlpha = 1.0;
+        
+        // Calculate spacing for stats
+        const padding = 20;
+        const statHeight = (height - padding * 2) / Math.max(stats.length, 1);
+        const fontSize = Math.min(20, statHeight * 0.4);
+        
+        // Draw stats
+        for (let i = 0; i < Math.min(this.currentStatIndex + 1 - startIndex, stats.length); i++) {
+            const stat = stats[i];
+            const statY = y + padding + i * statHeight + statHeight / 2;
+            const fadeProgress = Math.min(1, (elapsed - (startIndex + i) * 400) / 200);
+            
+            if (fadeProgress > 0 && stat) {
+                ctx.globalAlpha = fadeProgress;
+                this.drawStatLine(ctx, stat, x + padding, statY, x + width - padding, fontSize);
+                ctx.globalAlpha = 1.0;
+            }
+        }
+    }
+    
+    // Helper method to draw a single stat line
+    drawStatLine(ctx, stat, leftX, y, rightX, fontSize = 24) {
+        // Special styling for heart reward
+        if (stat.isHeart) {
+            const heartPulse = 1 + Math.sin(Date.now() * 0.01) * 0.2;
+            ctx.fillStyle = '#FF0000';
+            ctx.font = `bold ${(fontSize + 4) * heartPulse}px Arial`;
+            ctx.shadowColor = '#FF0000';
+            ctx.shadowBlur = 15 * heartPulse;
+        } else if (stat.isTotal) {
+            ctx.fillStyle = '#FFD700';
+            ctx.font = `bold ${fontSize + 8}px Arial`;
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 10;
+        } else {
+            ctx.fillStyle = '#D4A574';
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.shadowBlur = 0;
+        }
+        
+        ctx.textAlign = 'left';
+        ctx.fillText(stat.label + ':', leftX, y);
+        ctx.textAlign = 'right';
+        ctx.fillText(stat.value.toString(), rightX, y);
+        ctx.shadowBlur = 0;
+    }
+    
+    // Helper function to interpolate colors
+    interpolateColor(color1, color2, factor) {
+        const hex1 = color1.replace('#', '');
+        const hex2 = color2.replace('#', '');
+        const r1 = parseInt(hex1.substr(0, 2), 16);
+        const g1 = parseInt(hex1.substr(2, 2), 16);
+        const b1 = parseInt(hex1.substr(4, 2), 16);
+        const r2 = parseInt(hex2.substr(0, 2), 16);
+        const g2 = parseInt(hex2.substr(2, 2), 16);
+        const b2 = parseInt(hex2.substr(4, 2), 16);
+        
+        const r = Math.round(r1 + (r2 - r1) * factor);
+        const g = Math.round(g1 + (g2 - g1) * factor);
+        const b = Math.round(b1 + (b2 - b1) * factor);
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    
     drawAnticipation(ctx) {
+        // Detect mobile landscape
+        const isLandscape = typeof isPortrait !== 'undefined' ? !isPortrait : canvas.width > canvas.height;
+        const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
+        
         // Dark cave
         ctx.fillStyle = '#1A0F08';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -456,29 +638,77 @@ class TransitionManager {
         ctx.fillStyle = exitGlow;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Messages
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 32px Arial';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 10;
-        ctx.fillText('PREPARE FOR', canvas.width / 2, canvas.height / 2 - 80);
-        
         const nextTheme = levelManager.getNextTheme();
-        ctx.font = 'bold 36px Arial';
-        ctx.fillText(nextTheme.name, canvas.width / 2, canvas.height / 2 - 30);
         
-        // Countdown
-        if (this.countdown > 0) {
-            ctx.font = 'bold 96px Arial';
-            ctx.fillStyle = '#FF4444';
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 4;
-            ctx.strokeText(this.countdown.toString(), canvas.width / 2, canvas.height / 2 + 80);
-            ctx.fillText(this.countdown.toString(), canvas.width / 2, canvas.height / 2 + 80);
+        if (isMobileLandscape) {
+            // LANDSCAPE LAYOUT: Horizontal layout with countdown on right
+            // Left side: Theme info
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'left';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 10;
+            const leftX = 30;
+            const leftY = canvas.height / 2;
+            ctx.fillText('PREPARE FOR', leftX, leftY - 30);
+            ctx.font = 'bold 32px Arial';
+            ctx.fillStyle = typeof getThemeColor !== 'undefined' ? getThemeColor(nextTheme) : '#FFFFFF';
+            ctx.fillText(nextTheme.name, leftX, leftY + 20);
+            
+            // Right side: Countdown (larger, prominent)
+            if (this.countdown > 0) {
+                const countdownPulse = 1 + Math.sin(Date.now() * 0.02) * 0.15;
+                const countdownSize = Math.min(80, canvas.height * 0.4);
+                ctx.font = `bold ${countdownSize * countdownPulse}px Arial`;
+                ctx.fillStyle = '#FF4444';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 6;
+                ctx.textAlign = 'right';
+                ctx.shadowColor = '#FF4444';
+                ctx.shadowBlur = 20 * countdownPulse;
+                const rightX = canvas.width - 30;
+                const rightY = canvas.height / 2;
+                ctx.strokeText(this.countdown.toString(), rightX, rightY);
+                ctx.fillText(this.countdown.toString(), rightX, rightY);
+            }
+        } else {
+            // PORTRAIT/DESKTOP LAYOUT: Centered vertical
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 10;
+            ctx.fillText('PREPARE FOR', canvas.width / 2, canvas.height / 2 - 80);
+            
+            ctx.font = 'bold 36px Arial';
+            ctx.fillText(nextTheme.name, canvas.width / 2, canvas.height / 2 - 30);
+            
+            // Countdown with dynamic scale animation
+            if (this.countdown > 0) {
+                const countdownPulse = 1 + Math.sin(Date.now() * 0.02) * 0.15;
+                ctx.font = `bold ${96 * countdownPulse}px Arial`;
+                ctx.fillStyle = '#FF4444';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 6;
+                ctx.shadowColor = '#FF4444';
+                ctx.shadowBlur = 20 * countdownPulse;
+                ctx.strokeText(this.countdown.toString(), canvas.width / 2, canvas.height / 2 + 80);
+                ctx.fillText(this.countdown.toString(), canvas.width / 2, canvas.height / 2 + 80);
+            }
         }
         
         ctx.shadowBlur = 0;
+        ctx.textAlign = 'left';
+    }
+    
+    // Helper method to get theme color (matches ui.js function)
+    getThemeColor(theme) {
+        if (theme.id === 'desert') return '#FFA726';
+        if (theme.id === 'forest') return '#66BB6A';
+        if (theme.id === 'snow') return '#90CAF9';
+        if (theme.id === 'volcano') return '#EF5350';
+        if (theme.id === 'ocean') return '#42A5F5';
+        return '#FFFFFF';
     }
     
     drawCaveExit(ctx) {
