@@ -111,7 +111,10 @@ function drawStartScreen() {
     
     // Top controls with safe area margins
     const safeMargins = getSafeAreaMargins();
-    drawAudioControls(canvas.width - safeMargins.right - 80, safeMargins.top + 10);
+    const audioControlSize = mobile ? 48 : 44;
+    const audioControlGap = 12;
+    const totalAudioControlWidth = (audioControlSize * 2) + audioControlGap; // Two buttons + gap
+    drawAudioControls(canvas.width - safeMargins.right - totalAudioControlWidth - 10, safeMargins.top + 10);
     drawHighScoreButton(safeMargins.left + 10, safeMargins.top + 10);
     
     if (isMobileLandscape) {
@@ -1350,9 +1353,9 @@ function drawAudioControls(x, y) {
     ctx.stroke();
     
     ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
+    ctx.font = `${mobile ? 24 : 20}px Arial`;
     ctx.textAlign = 'center';
-    ctx.fillText('🎵', x + size/2, y + 22);
+    ctx.fillText('🎵', x + size/2, y + (mobile ? 30 : 26));
     
     // Sound Toggle
     ctx.fillStyle = audioManager.soundEnabled ? '#4CAF50' : '#F44336';
@@ -1362,7 +1365,7 @@ function drawAudioControls(x, y) {
     ctx.stroke();
     
     ctx.fillStyle = 'white';
-    ctx.fillText('🔊', x + size + gap + size/2, y + 22);
+    ctx.fillText('🔊', x + size + gap + size/2, y + (mobile ? 30 : 26));
     
     // Store hit areas
     window.audioControls = {
@@ -1693,19 +1696,28 @@ function drawPlayerStats() {
     if (typeof canvas === 'undefined' || !canvas) return;
     
     const statsDiv = document.getElementById('player-stats');
+    const versionDiv = document.getElementById('version-info');
     if (!statsDiv) return;
     
     // Check if mobile for shorter text
     const mobile = isMobile || (typeof window !== 'undefined' && window.innerWidth < 768);
     
-    // Update stats text - shorter on mobile
+    // Get version text from version div (or fallback)
+    const versionText = versionDiv ? versionDiv.textContent : '';
+    
+    // Update stats text - combine version and player stats
     let statsText;
     if (mobile) {
-        statsText = `👥 ${activePlayerCount} now • 📊 ${dailyPlayerCount} today`;
+        statsText = versionText ? `${versionText} • 👥 ${activePlayerCount} • 📊 ${dailyPlayerCount}` : `👥 ${activePlayerCount} now • 📊 ${dailyPlayerCount} today`;
     } else {
-        statsText = `👥 ${activePlayerCount} playing now • 📊 ${dailyPlayerCount} played today`;
+        statsText = versionText ? `${versionText} • 👥 ${activePlayerCount} playing now • 📊 ${dailyPlayerCount} played today` : `👥 ${activePlayerCount} playing now • 📊 ${dailyPlayerCount} played today`;
     }
     statsDiv.textContent = statsText;
+    
+    // Hide version div since it's now in stats
+    if (versionDiv) {
+        versionDiv.style.display = 'none';
+    }
 }
 
 // Update player stats periodically

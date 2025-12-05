@@ -151,38 +151,17 @@ body {
     overscroll-behavior: none;
 }
 
-/* Version info - Lower left corner, similar to fullscreen button */
+/* Version info - Hidden immediately, now combined with player stats */
 #version-info {
-    position: absolute;
-    bottom: env(safe-area-inset-bottom, 10px);
-    left: max(15px, env(safe-area-inset-left, 15px));
-    font-size: 8px; /* Increased minimum for readability */
-    color: #FFFFFF;
-    font-family: 'Press Start 2P', cursive;
-    white-space: nowrap;
-    pointer-events: none;
-    user-select: none;
-    z-index: 1000;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.5);
-    background: rgba(0, 0, 0, 0.7);
-    padding: 4px 8px;
-    border-radius: 6px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    max-width: calc(100% - 80px); /* Leave space for fullscreen button */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-    transform: translateZ(0); /* Force GPU acceleration */
+    display: none !important;
 }
 
-/* Player stats display - Above version info, lower left corner */
+/* Player stats display - Lower left corner with version */
 #player-stats {
     position: absolute;
-    bottom: calc(env(safe-area-inset-bottom, 10px) + 18px); /* Reduced vertical space */
+    bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
     left: max(15px, env(safe-area-inset-left, 15px));
-    font-size: 8px; /* Increased minimum for readability */
+    font-size: 11px; /* Slightly bigger for better readability */
     color: #FFFFFF;
     font-family: 'Press Start 2P', cursive;
     white-space: nowrap;
@@ -191,7 +170,7 @@ body {
     z-index: 1000;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.5);
     background: rgba(0, 0, 0, 0.7);
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 6px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(4px);
@@ -205,62 +184,36 @@ body {
 
 /* Mobile adjustments - Minimum readable size */
 @media (max-width: 768px) {
-    #version-info {
-        font-size: 8px; /* Minimum readable size for portrait mobile */
-        bottom: max(8px, env(safe-area-inset-bottom, 8px));
-        left: max(12px, env(safe-area-inset-left, 12px));
-        padding: 4px 6px; /* Slightly more padding for readability */
-        max-width: calc(100% - 70px);
-        min-height: 18px; /* Ensure minimum height for readability */
-        line-height: 1.2;
-    }
-    
     #player-stats {
-        font-size: 8px; /* Minimum readable size for portrait mobile */
-        bottom: calc(max(8px, env(safe-area-inset-bottom, 8px)) + 20px); /* Adjusted spacing */
+        font-size: 10px; /* Slightly bigger for better readability */
+        bottom: max(10px, env(safe-area-inset-bottom, 10px));
         left: max(12px, env(safe-area-inset-left, 12px));
-        padding: 4px 6px; /* Slightly more padding for readability */
+        padding: 5px 8px;
         max-width: calc(100% - 70px);
-        min-height: 18px; /* Ensure minimum height for readability */
+        min-height: 20px; /* Ensure minimum height for readability */
         line-height: 1.2;
     }
 }
 
 /* Very small mobile screens - still maintain readability */
 @media (max-width: 480px) {
-    #version-info {
-        font-size: 7px; /* Still readable minimum */
-        bottom: max(6px, env(safe-area-inset-bottom, 6px));
-        left: max(10px, env(safe-area-inset-left, 10px));
-        padding: 3px 5px;
-        max-width: calc(100% - 65px);
-        min-height: 16px;
-    }
-    
     #player-stats {
-        font-size: 7px; /* Still readable minimum */
-        bottom: calc(max(6px, env(safe-area-inset-bottom, 6px)) + 18px);
+        font-size: 9px; /* Still readable minimum */
+        bottom: max(8px, env(safe-area-inset-bottom, 8px));
         left: max(10px, env(safe-area-inset-left, 10px));
-        padding: 3px 5px;
+        padding: 4px 7px;
         max-width: calc(100% - 65px);
-        min-height: 16px;
+        min-height: 18px;
     }
 }
 
 /* Landscape mobile - can be slightly smaller but still readable */
 @media (max-width: 768px) and (orientation: landscape) {
-    #version-info {
-        font-size: 7px; /* Slightly smaller in landscape but still readable */
-        bottom: max(6px, env(safe-area-inset-bottom, 6px));
-        padding: 3px 5px;
-        min-height: 16px;
-    }
-    
     #player-stats {
-        font-size: 7px; /* Slightly smaller in landscape but still readable */
-        bottom: calc(max(6px, env(safe-area-inset-bottom, 6px)) + 16px);
-        padding: 3px 5px;
-        min-height: 16px;
+        font-size: 9px; /* Slightly smaller in landscape but still readable */
+        bottom: max(8px, env(safe-area-inset-bottom, 8px));
+        padding: 4px 7px;
+        min-height: 18px;
     }
 }
 
@@ -270,13 +223,8 @@ body {
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
     
-    #version-info {
-        bottom: max(15px, calc(env(safe-area-inset-bottom) + 10px));
-        left: max(20px, calc(env(safe-area-inset-left) + 10px));
-    }
-    
     #player-stats {
-        bottom: max(35px, calc(env(safe-area-inset-bottom) + 30px));
+        bottom: max(15px, calc(env(safe-area-inset-bottom) + 10px));
         left: max(20px, calc(env(safe-area-inset-left) + 10px));
     }
 }
@@ -287,16 +235,10 @@ body {
         padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     }
     
-    #version-info {
-        left: max(40px, calc(env(safe-area-inset-left) + 20px));
-        bottom: max(20px, calc(env(safe-area-inset-bottom) + 15px));
-        font-size: 7px;
-    }
-    
     #player-stats {
         left: max(40px, calc(env(safe-area-inset-left) + 20px));
-        bottom: max(45px, calc(env(safe-area-inset-bottom) + 40px));
-        font-size: 7px;
+        bottom: max(20px, calc(env(safe-area-inset-bottom) + 15px));
+        font-size: 9px;
     }
 }
 
