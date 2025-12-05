@@ -1,7 +1,7 @@
 {
-  "version": "23",
-  "hash": "4aa90b3",
-  "date": "2025-11-27 19:46:21 +0100",
-  "message": "Increment version to 22 in VERSION and version.json. Update hash and timestamp in version.json. Enhance high score modal with improved mobile landscape detection and responsive layout adjustments for better user experience across devices.",
-  "timestamp": 1764269182005
+  "version": "24",
+  "hash": "b8a5bc8",
+  "date": "2025-12-05 11:46:26 +0100",
+  "message": "Implement PWA support by adding service worker registration and install prompt functionality. Update app version to 23 and adjust orientation setting in manifest. Enhance UI with PWA install button for improved user experience.",
+  "timestamp": 1764931586611
 }
