@@ -1,7 +1,7 @@
 {
-  "version": "26",
-  "hash": "1e6ccfc",
-  "date": "2025-12-05 11:55:10 +0100",
-  "message": "Update service worker cache version to v1.0.1, modify cached file paths, and increment app version to 25 in VERSION and version.json. Add new JavaScript files for improved functionality and organization.",
-  "timestamp": 1764932110155
+  "version": "27",
+  "hash": "37de362",
+  "date": "2025-12-05 13:05:45 +0100",
+  "message": "Increment version to 26 in VERSION and version.json. Update hash and timestamp in version.json. Enhance local storage management by adding validation and cleanup functions for high scores, ensuring data integrity and default values for missing fields.",
+  "timestamp": 1764936345316
 }

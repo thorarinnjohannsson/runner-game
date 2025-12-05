@@ -7,6 +7,7 @@
 - [x] Manifest updated for proper orientation
 - [x] Install prompt UI added to game
 - [x] Click handlers implemented
+- [x] **Paths configured for GitHub Pages** (`/runner-game/` prefix)
 - [ ] **PNG icons created** (optional but recommended)
 - [ ] Manifest updated with PNG icons (if created)
 - [ ] Tested on localhost

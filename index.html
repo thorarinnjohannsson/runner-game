@@ -233,7 +233,7 @@
         // Register service worker for PWA support (offline capability and "Add to Home Screen")
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
+                navigator.serviceWorker.register('/runner-game/service-worker.js')
                     .then(registration => {
                         console.log('[PWA] Service Worker registered successfully:', registration.scope);
                         
