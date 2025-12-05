@@ -125,7 +125,16 @@ function getLocalHighScores() {
         try {
             const scoresJson = localStorage.getItem('runnerHighScores');
             if (scoresJson) {
-                return JSON.parse(scoresJson);
+                const scores = JSON.parse(scoresJson);
+                // Validate and fix any invalid dates
+                return scores.map(score => {
+                    // Check if date is valid
+                    const dateValid = score.date && new Date(score.date).toString() !== 'Invalid Date';
+                    return {
+                        ...score,
+                        date: dateValid ? score.date : new Date().toISOString()
+                    };
+                });
             }
         } catch (e) {
             console.warn('Failed to read high scores:', e);
@@ -145,4 +154,59 @@ function isNewHighScore(score) {
     const scores = getLocalHighScores();
     if (scores.length < 10) return true;
     return score > scores[scores.length - 1].score;
+}
+
+// Utility: Clean up and validate existing localStorage data
+// Call this once on page load to fix any corrupted data
+function validateAndCleanStorage() {
+    if (!isStorageAvailable()) return;
+    
+    try {
+        const scoresJson = localStorage.getItem('runnerHighScores');
+        if (scoresJson) {
+            const scores = JSON.parse(scoresJson);
+            let needsUpdate = false;
+            
+            // Validate each score entry
+            const cleanedScores = scores.map(score => {
+                const cleaned = { ...score };
+                
+                // Validate date
+                if (!score.date || new Date(score.date).toString() === 'Invalid Date') {
+                    cleaned.date = new Date().toISOString();
+                    needsUpdate = true;
+                }
+                
+                // Ensure required fields have defaults
+                if (typeof cleaned.level !== 'number') cleaned.level = 1;
+                if (typeof cleaned.time !== 'number') cleaned.time = 0;
+                if (typeof cleaned.obstaclesCleared !== 'number') cleaned.obstaclesCleared = 0;
+                if (!cleaned.name) cleaned.name = 'Anonymous';
+                
+                return cleaned;
+            });
+            
+            // Save cleaned data if changes were made
+            if (needsUpdate) {
+                localStorage.setItem('runnerHighScores', JSON.stringify(cleanedScores));
+                console.log('High scores data validated and cleaned');
+            }
+        }
+    } catch (e) {
+        console.warn('Error validating storage:', e);
+        // If completely corrupted, clear it
+        try {
+            localStorage.removeItem('runnerHighScores');
+            console.log('Corrupted high scores data cleared');
+        } catch (clearError) {
+            console.error('Could not clear corrupted data:', clearError);
+        }
+    }
+}
+
+// Auto-run validation on script load
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        setTimeout(validateAndCleanStorage, 100);
+    });
 }

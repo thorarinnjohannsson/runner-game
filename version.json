@@ -1,7 +1,7 @@
 {
-  "version": "25",
-  "hash": "d46e712",
-  "date": "2025-12-05 11:49:26 +0100",
-  "message": "Increment version to 24 in VERSION and version.json. Update hash and timestamp in version.json. Remove unnecessary whitespace in service-worker.js for cleaner code.",
-  "timestamp": 1764931766918
+  "version": "26",
+  "hash": "1e6ccfc",
+  "date": "2025-12-05 11:55:10 +0100",
+  "message": "Update service worker cache version to v1.0.1, modify cached file paths, and increment app version to 25 in VERSION and version.json. Add new JavaScript files for improved functionality and organization.",
+  "timestamp": 1764932110155
 }

@@ -51,7 +51,8 @@ const SupabaseClient = {
                 level: entry.level || 1,
                 time: entry.time || 0,
                 obstaclesCleared: entry.obstacles_cleared || 0,
-                date: entry.created_at
+                characterType: entry.character_type || null,
+                date: entry.created_at || new Date().toISOString()
             }));
             
         } catch (e) {
