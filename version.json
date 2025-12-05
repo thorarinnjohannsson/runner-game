@@ -1,7 +1,7 @@
 {
-  "version": "29",
-  "hash": "bbfe50a",
-  "date": "2025-12-05 13:53:45 +0100",
-  "message": "Update manifest for fullscreen display and landscape orientation. Increment cache version to v1.0.3 and adjust styles for fullscreen PWA support. Enhance canvas responsiveness and safe area handling for improved user experience.",
-  "timestamp": 1764939225419
+  "version": "30",
+  "hash": "b46ca6e",
+  "date": "2025-12-05 16:25:43 +0100",
+  "message": "Mobile UX improvements: larger touch targets, combined version/stats display",
+  "timestamp": 1764948343000
 }
