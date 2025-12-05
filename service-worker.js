@@ -1,4 +1,4 @@
-const CACHE_NAME = 'animal-jump-v1.0.3';
+const CACHE_NAME = 'animal-jump-v1.0.6';
 const urlsToCache = [
   '/runner-game/',
   '/runner-game/index.html',
@@ -21,7 +21,6 @@ const urlsToCache = [
   '/runner-game/js/difficulty.js',
   '/runner-game/js/storage.js',
   '/runner-game/js/audio.js',
-  '/runner-game/js/zoom.js',
   '/runner-game/js/ui.js',
   '/runner-game/js/main.js',
   '/runner-game/favicon-wolfie.svg',

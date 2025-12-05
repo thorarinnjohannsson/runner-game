@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Press Start 2P', cursive; /* Pixel Art Font */
-    background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+    background: #000000; /* Black background for browser version */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -25,12 +25,17 @@ body {
 }
 
 #game-container {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    padding: 20px;
+    background: transparent; /* No background for browser version */
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
     position: relative; /* For absolute positioning of input and version/stats */
     transition: width 0.2s ease, height 0.2s ease; /* Smooth zoom transitions */
+    width: 100vw; /* Full width in browser */
+    height: auto; /* Height based on aspect ratio */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #playerNameInput {
@@ -71,11 +76,13 @@ body {
 
 #gameCanvas {
     display: block;
-    border: 3px solid #333;
-    border-radius: 5px;
+    border: none; /* No border for fullscreen look */
+    border-radius: 0;
     background: linear-gradient(to bottom, #87CEEB 0%, #E8F4F8 70%, #DEB887 70%, #D2B48C 100%);
     cursor: pointer;
     touch-action: manipulation;
+    width: 100%; /* Full width */
+    height: auto; /* Maintain aspect ratio */
 }
 
 /* Hide default button focus outline on canvas */
@@ -107,6 +114,30 @@ body {
         width: 100vw !important;
         height: auto !important;
         max-height: 100vh;
+    }
+}
+
+/* Fullscreen PWA - always remove padding/borders */
+@media (display-mode: fullscreen) {
+    body {
+        background: white;
+    }
+    
+    #game-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #gameCanvas {
+        border: none !important;
+        border-radius: 0 !important;
     }
 }
 

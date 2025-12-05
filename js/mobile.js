@@ -18,8 +18,21 @@ function updateMobileDetection() {
 // Get optimal canvas size for current device
 function getOptimalCanvasSize() {
     if (!isMobile) {
-        // Desktop: keep standard size
-        return { width: 800, height: 400 };
+        // Desktop: use full viewport width with 2:1 aspect ratio
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Calculate size maintaining 2:1 aspect ratio (like original 800x400)
+        let canvasWidth = viewportWidth;
+        let canvasHeight = canvasWidth / 2; // 2:1 ratio
+        
+        // If height is too tall for viewport, constrain by height instead
+        if (canvasHeight > viewportHeight) {
+            canvasHeight = viewportHeight;
+            canvasWidth = canvasHeight * 2;
+        }
+        
+        return { width: canvasWidth, height: canvasHeight };
     }
     
     // Mobile: Use viewport dimensions but ensure UI elements fit

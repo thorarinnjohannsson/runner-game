@@ -73,13 +73,6 @@ function setupResponsiveCanvas() {
     
     // Update game constants based on canvas size
     updateGameDimensions();
-    
-    // Apply saved zoom level
-    if (typeof applyCanvasZoom === 'function') {
-        setTimeout(() => {
-            applyCanvasZoom();
-        }, 50);
-    }
 }
 
 // Update game dimensions when canvas size changes
