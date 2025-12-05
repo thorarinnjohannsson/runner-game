@@ -163,8 +163,12 @@ function drawStartScreen() {
         const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
         drawCardStartButton(rightPanelX + rightPanelWidth / 2, startButtonY, pulse, { compact: true });
         
+        // PWA Install button (if available)
+        const installButtonY = startButtonY + 50;
+        window.installButton = drawPWAInstallButton(rightPanelX + rightPanelWidth / 2, installButtonY, 1);
+        
         // Player stats below button
-        const statsY = startButtonY + 60;
+        const statsY = (window.installButton ? installButtonY + 45 : startButtonY + 60);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
@@ -237,6 +241,10 @@ function drawStartScreen() {
         
         const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
         drawCardStartButton(center, buttonY, pulse, { compact: tight || compact || veryCompact });
+        
+        // PWA Install button (if available) - positioned below start button
+        const installButtonY = buttonY + (tight ? 50 : (compact ? 55 : 60));
+        window.installButton = drawPWAInstallButton(center, installButtonY, 1);
     }
     
     // Draw zoom controls
@@ -493,6 +501,56 @@ function drawCardStartButton(centerX, y, scale = 1, options = {}) {
         height: height
     };
 }
+
+// Draw PWA install button (when available)
+function drawPWAInstallButton(centerX, y, scale = 1) {
+    // Only show if install prompt is available
+    if (typeof showInstallPrompt === 'undefined' || !showInstallPrompt) {
+        return null;
+    }
+    
+    const width = 160 * scale;
+    const height = 36 * scale;
+    const x = centerX - width/2;
+    
+    // Button background (slightly transparent green)
+    ctx.fillStyle = 'rgba(33, 150, 243, 0.9)'; // Blue color for install
+    ctx.fillRect(x, y, width, height);
+    
+    // Highlights/Shadows (3D effect)
+    const border = 3;
+    
+    // Light Top/Left
+    ctx.fillStyle = 'rgba(100, 181, 246, 0.9)';
+    ctx.fillRect(x, y, width, border);
+    ctx.fillRect(x, y, border, height);
+    
+    // Dark Bottom/Right
+    ctx.fillStyle = 'rgba(13, 71, 161, 0.9)';
+    ctx.fillRect(x, y + height - border, width, border);
+    ctx.fillRect(x + width - border, y, border, height);
+    
+    // Text with icon
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    ctx.fillText('📱 INSTALL APP', centerX, y + 23);
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    
+    // Return hit area
+    return {
+        x: x,
+        y: y,
+        width: width,
+        height: height
+    };
+}
+
 
 // Draw simple instructions
 function drawInstructionIcons(centerX, y) {
@@ -1116,6 +1174,19 @@ function processUIInteraction(x, y) {
                 }
             }
         });
+        
+        // Check install button first (if available)
+        if (window.installButton) {
+            const btn = window.installButton;
+            if (x >= btn.x && x <= btn.x + btn.width &&
+                y >= btn.y && y <= btn.y + btn.height) {
+                triggerHaptic(20);
+                if (typeof triggerPWAInstall === 'function') {
+                    triggerPWAInstall();
+                }
+                return; // Don't check other buttons
+            }
+        }
         
         // Check start button
         if (window.startButton && selectedCharacter) {

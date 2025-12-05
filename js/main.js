@@ -1,5 +1,49 @@
 // MAIN GAME LOGIC AND LOOP
 
+// PWA Install Prompt
+let deferredPrompt = null;
+let showInstallPrompt = false;
+
+// Listen for the beforeinstallprompt event
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    // Show install button/prompt in game UI
+    showInstallPrompt = true;
+    console.log('[PWA] Install prompt available');
+});
+
+// Listen for successful install
+window.addEventListener('appinstalled', () => {
+    console.log('[PWA] App installed successfully');
+    showInstallPrompt = false;
+    deferredPrompt = null;
+    // Track installation in analytics
+    if (typeof Analytics !== 'undefined' && Analytics.trackCustomEvent) {
+        Analytics.trackCustomEvent('pwa_installed', {
+            source: 'user_action'
+        });
+    }
+});
+
+// Function to trigger install prompt
+function triggerPWAInstall() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('[PWA] User accepted the install prompt');
+            } else {
+                console.log('[PWA] User dismissed the install prompt');
+            }
+            deferredPrompt = null;
+            showInstallPrompt = false;
+        });
+    }
+}
+
 // Canvas setup
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
