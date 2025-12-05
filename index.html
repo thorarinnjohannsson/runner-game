@@ -140,7 +140,7 @@
             // Load and display version info
             var versionDiv = document.getElementById('version-info');
             if (versionDiv) {
-                // Try to load version.json, fallback to timestamp
+                // Try to load version.json, fallback to simple version
                 fetch('version.json?v=' + v)
                     .then(function(response) {
                         if (response.ok) {
@@ -149,36 +149,12 @@
                         throw new Error('Version file not found');
                     })
                     .then(function(versionInfo) {
-                        // Format commit date
-                        var commitDate = new Date(versionInfo.date);
-                        var dateStr = commitDate.toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                        });
-                        var timeStr = commitDate.toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true
-                        });
-                        
-                        // Display: version number | date time
-                        versionDiv.textContent = 'v' + versionInfo.version + ' • ' + dateStr + ' ' + timeStr;
+                        // Display: just version number
+                        versionDiv.textContent = 'v' + versionInfo.version;
                     })
                     .catch(function(error) {
-                        // Fallback to timestamp if version.json not available
-                        var buildDate = new Date(v);
-                        var dateStr = buildDate.toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                        });
-                        var timeStr = buildDate.toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true
-                        });
-                        versionDiv.textContent = 'dev • ' + dateStr + ' ' + timeStr;
+                        // Fallback to dev version
+                        versionDiv.textContent = 'dev';
                     });
             } 
 
