@@ -158,8 +158,8 @@ function drawStartScreen() {
         const charRowTop = charPanelY + 40;
         drawCardCharacterSelection(leftPanelX + leftPanelWidth / 2, charRowTop, {
             availableWidth: leftPanelWidth - 40,
-            baseSize: 40,
-            padding: 12
+            baseSize: 52, // Mobile UX: larger touch targets
+            padding: 14
         });
         
         // Character name
@@ -244,8 +244,8 @@ function drawStartScreen() {
         
         drawCardCharacterSelection(panelCenterX, charRowTop, {
             availableWidth: layoutWidth - 120,
-            baseSize: tight ? 36 : (compact ? 40 : (veryCompact ? 44 : 46)),
-            padding: tight ? 16 : (compact ? 18 : (veryCompact ? 20 : 24))
+            baseSize: tight ? 48 : (compact ? 52 : (veryCompact ? 54 : 56)), // Mobile UX: minimum 48px
+            padding: tight ? 18 : (compact ? 20 : (veryCompact ? 22 : 24))
         });
         
         if (selectedCharacter) {
@@ -364,8 +364,8 @@ function drawCardCharacterSelection(centerX, y, options = {}) {
 
     if (totalWidth > availableWidth) {
         const scale = availableWidth / totalWidth;
-        charSize = Math.max(42, charSize * scale);
-        padding = Math.max(10, padding * scale);
+        charSize = Math.max(48, charSize * scale); // Mobile UX: minimum 48px even when scaled
+        padding = Math.max(12, padding * scale); // Minimum 12px spacing
         totalWidth = (charSize * charList.length) + (padding * (charList.length - 1));
     }
 
@@ -1212,27 +1212,28 @@ function processUIInteraction(x, y) {
 
 // Draw High Score Button
 function drawHighScoreButton(x, y) {
-    const width = 40;
-    const height = 40;
+    // Mobile UX: Minimum 48px touch target
+    const mobile = isMobile || canvas.width < 600;
+    const size = mobile ? 48 : 44;
     
     ctx.fillStyle = '#FFD700';
     ctx.beginPath();
-    ctx.roundRect(x, y, width, height, 8);
+    ctx.roundRect(x, y, size, size, 8);
     ctx.fill();
     ctx.strokeStyle = '#DAA520';
     ctx.lineWidth = 2;
     ctx.stroke();
     
     ctx.fillStyle = 'white';
-    ctx.font = '24px Arial';
+    ctx.font = `${mobile ? 28 : 24}px Arial`;
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
     ctx.shadowBlur = 2;
-    ctx.fillText('🏆', x + width/2, y + 28);
+    ctx.fillText('🏆', x + size/2, y + (mobile ? 32 : 28));
     ctx.shadowBlur = 0;
     
     // Hit area
-    window.highScoreButton = { x, y, width, height };
+    window.highScoreButton = { x, y, width: size, height: size };
     ctx.textAlign = 'left';
 }
 
@@ -1334,8 +1335,10 @@ function drawHighScoreModal() {
 function drawAudioControls(x, y) {
     if (typeof audioManager === 'undefined') return;
     
-    const size = 30;
-    const gap = 10;
+    // Mobile UX: Minimum 48px touch target
+    const mobile = isMobile || canvas.width < 600;
+    const size = mobile ? 48 : 44;
+    const gap = 12; // Minimum 8px spacing between buttons
     
     // Music Toggle
     ctx.fillStyle = audioManager.musicEnabled ? '#4CAF50' : '#F44336';
