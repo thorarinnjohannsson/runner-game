@@ -1,7 +1,7 @@
 {
-  "version": "27",
-  "hash": "37de362",
-  "date": "2025-12-05 13:05:45 +0100",
-  "message": "Increment version to 26 in VERSION and version.json. Update hash and timestamp in version.json. Enhance local storage management by adding validation and cleanup functions for high scores, ensuring data integrity and default values for missing fields.",
-  "timestamp": 1764936345316
+  "version": "28",
+  "hash": "cd1e899",
+  "date": "2025-12-05 13:12:58 +0100",
+  "message": "Update service worker paths and manifest for GitHub Pages deployment. Increment cache version to v1.0.2 and adjust start URL and scope in manifest to reflect new directory structure.",
+  "timestamp": 1764936778642
 }

@@ -233,3 +233,39 @@ body {
     }
 }
 
+/* Fullscreen PWA adjustments */
+@media (display-mode: fullscreen) {
+    body {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    
+    #version-info {
+        bottom: max(15px, calc(env(safe-area-inset-bottom) + 10px));
+        left: max(20px, calc(env(safe-area-inset-left) + 10px));
+    }
+    
+    #player-stats {
+        bottom: max(35px, calc(env(safe-area-inset-bottom) + 30px));
+        left: max(20px, calc(env(safe-area-inset-left) + 10px));
+    }
+}
+
+/* Landscape fullscreen - extra spacing for notches and rounded corners */
+@media (display-mode: fullscreen) and (orientation: landscape) {
+    body {
+        padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    }
+    
+    #version-info {
+        left: max(40px, calc(env(safe-area-inset-left) + 20px));
+        bottom: max(20px, calc(env(safe-area-inset-bottom) + 15px));
+        font-size: 7px;
+    }
+    
+    #player-stats {
+        left: max(40px, calc(env(safe-area-inset-left) + 20px));
+        bottom: max(45px, calc(env(safe-area-inset-bottom) + 40px));
+        font-size: 7px;
+    }
+}
+

@@ -126,10 +126,19 @@ function getLocalHighScores() {
             const scoresJson = localStorage.getItem('runnerHighScores');
             if (scoresJson) {
                 const scores = JSON.parse(scoresJson);
-                // Validate and fix any invalid dates
+                // Validate and fix any invalid dates - Safari compatible
                 return scores.map(score => {
-                    // Check if date is valid
-                    const dateValid = score.date && new Date(score.date).toString() !== 'Invalid Date';
+                    // Safari-compatible date validation
+                    let dateValid = false;
+                    if (score.date) {
+                        try {
+                            const dateObj = new Date(score.date);
+                            // Check if date is valid using isNaN on the timestamp
+                            dateValid = !isNaN(dateObj.getTime());
+                        } catch (e) {
+                            dateValid = false;
+                        }
+                    }
                     return {
                         ...score,
                         date: dateValid ? score.date : new Date().toISOString()
@@ -171,8 +180,18 @@ function validateAndCleanStorage() {
             const cleanedScores = scores.map(score => {
                 const cleaned = { ...score };
                 
-                // Validate date
-                if (!score.date || new Date(score.date).toString() === 'Invalid Date') {
+                // Safari-compatible date validation
+                let dateValid = false;
+                if (score.date) {
+                    try {
+                        const dateObj = new Date(score.date);
+                        dateValid = !isNaN(dateObj.getTime());
+                    } catch (e) {
+                        dateValid = false;
+                    }
+                }
+                
+                if (!dateValid) {
                     cleaned.date = new Date().toISOString();
                     needsUpdate = true;
                 }

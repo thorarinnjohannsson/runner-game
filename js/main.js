@@ -177,6 +177,25 @@ function init() {
     if (typeof initPlayerStatsDisplay === 'function') {
         initPlayerStatsDisplay();
     }
+    
+    // Listen for fullscreen display mode changes
+    if (window.matchMedia) {
+        try {
+            const fullscreenMediaQuery = window.matchMedia('(display-mode: fullscreen)');
+            fullscreenMediaQuery.addEventListener('change', (e) => {
+                if (e.matches) {
+                    console.log('[PWA] Entered fullscreen mode');
+                } else {
+                    console.log('[PWA] Exited fullscreen mode');
+                }
+                // Recalculate canvas with fullscreen-aware margins
+                setupResponsiveCanvas();
+            });
+        } catch (e) {
+            console.log('[PWA] Display mode detection not supported');
+        }
+    }
+    
     // Setup responsive canvas first
     setupResponsiveCanvas();
     
@@ -811,11 +830,12 @@ function drawCollectables() {
 // Draw HUD (timer, score, lives)
 function drawHUD() {
     const sizes = getMobileSizes();
+    const safeMargins = typeof getSafeAreaMargins === 'function' ? getSafeAreaMargins() : { top: 10, bottom: 10, left: 10, right: 10 };
     
     ctx.fillStyle = '#333';
     ctx.font = `bold ${sizes.hudSize}px Arial`;
     
-    // Level indicator (top left)
+    // Level indicator (top left) with safe area margin
     if (typeof levelManager !== 'undefined') {
         // Use cumulative scores for progress
         const currentTotal = score;
@@ -824,12 +844,12 @@ function drawHUD() {
         
         ctx.fillStyle = '#FFD700';
         ctx.font = `bold ${isMobile ? 14 : 16}px Arial`;
-        ctx.fillText(`LEVEL ${levelManager.currentLevel}`, 10, isMobile ? 20 : 25);
+        ctx.fillText(`LEVEL ${levelManager.currentLevel}`, safeMargins.left, isMobile ? 20 : 25);
         
         // Progress bar
         const barWidth = isMobile ? 80 : 100;
         const barHeight = 8;
-        const barX = 10;
+        const barX = safeMargins.left;
         const barY = isMobile ? 25 : 30;
         
         // Background

@@ -1,5 +1,23 @@
 // UI SCREENS - Start screen and Game Over screen
 
+// Safe area helper function for fullscreen PWA
+function getSafeAreaMargins() {
+    const safeInsets = window.safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
+    const isLandscape = canvas.width > canvas.height;
+    const isFullscreenPWA = window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches;
+    const isLandscapeFullscreen = isLandscape && isFullscreenPWA;
+    
+    // Extra padding in fullscreen landscape to ensure nothing is clipped
+    const extraPadding = isLandscapeFullscreen ? 15 : 5;
+    
+    return {
+        top: Math.max(safeInsets.top + extraPadding, 15),
+        bottom: Math.max(safeInsets.bottom + extraPadding, 15),
+        left: Math.max(safeInsets.left + extraPadding, 15),
+        right: Math.max(safeInsets.right + extraPadding, 15)
+    };
+}
+
 // Global state for async scores
 let globalScoresCache = [];
 let isLoadingScores = false;
@@ -91,9 +109,10 @@ function drawStartScreen() {
     ctx.strokeText('ANIMAL JUMP', canvas.width / 2, headerY);
     ctx.fillText('ANIMAL JUMP', canvas.width / 2, headerY);
     
-    // Top controls
-    drawAudioControls(canvas.width - 80, 20);
-    drawHighScoreButton(20, 20);
+    // Top controls with safe area margins
+    const safeMargins = getSafeAreaMargins();
+    drawAudioControls(canvas.width - safeMargins.right - 80, safeMargins.top + 10);
+    drawHighScoreButton(safeMargins.left + 10, safeMargins.top + 10);
     
     if (isMobileLandscape) {
         // LANDSCAPE LAYOUT: Split horizontal layout
@@ -1385,13 +1404,12 @@ function drawAudioControls(x, y) {
 function drawZoomControls() {
     const mobile = isMobile || canvas.width < 600;
     const btnSize = mobile ? 35 : 40;
-    const margin = mobile ? 10 : 12;
     const gap = 6; // Gap between buttons
     
-    // Position in lower right corner to avoid blocking start button and other UI
-    const safeInsets = window.safeAreaInsets || { top: 0, bottom: 0, left: 0, right: 0 };
-    const rightMargin = Math.max(margin, safeInsets.right + 10);
-    const bottomMargin = Math.max(margin + 60, safeInsets.bottom + 60); // Leave space for start button
+    // Use safe area margins
+    const safeMargins = getSafeAreaMargins();
+    const rightMargin = safeMargins.right;
+    const bottomMargin = Math.max(safeMargins.bottom + 60, 70); // Leave space for start button
     
     const zoomOutX = canvas.width - rightMargin - btnSize * 2 - gap;
     const zoomInX = canvas.width - rightMargin - btnSize;

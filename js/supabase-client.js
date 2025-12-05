@@ -45,15 +45,30 @@ const SupabaseClient = {
             if (error) throw error;
             
             // Format for game compatibility
-            return data.map(entry => ({
-                name: entry.player_name,
-                score: entry.score,
-                level: entry.level || 1,
-                time: entry.time || 0,
-                obstaclesCleared: entry.obstacles_cleared || 0,
-                characterType: entry.character_type || null,
-                date: entry.created_at || new Date().toISOString()
-            }));
+            return data.map(entry => {
+                // Safari-compatible date handling
+                let dateValue = new Date().toISOString(); // Default
+                if (entry.created_at) {
+                    try {
+                        const dateObj = new Date(entry.created_at);
+                        if (!isNaN(dateObj.getTime())) {
+                            dateValue = entry.created_at;
+                        }
+                    } catch (e) {
+                        // Use default
+                    }
+                }
+                
+                return {
+                    name: entry.player_name,
+                    score: entry.score,
+                    level: entry.level || 1,
+                    time: entry.time || 0,
+                    obstaclesCleared: entry.obstacles_cleared || 0,
+                    characterType: entry.character_type || null,
+                    date: dateValue
+                };
+            });
             
         } catch (e) {
             console.error('Error fetching high scores:', e);

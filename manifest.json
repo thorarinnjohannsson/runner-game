@@ -3,10 +3,10 @@
   "short_name": "Animal Jump",
   "description": "Jump, run, and dodge obstacles in this fun pixel-art endless runner game!",
   "start_url": "/runner-game/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#6ABE30",
   "theme_color": "#6ABE30",
-  "orientation": "any",
+  "orientation": "landscape",
   "scope": "/runner-game/",
   "icons": [
     {

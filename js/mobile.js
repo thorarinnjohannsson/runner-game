@@ -48,6 +48,14 @@ function getOptimalCanvasSize() {
     let effectiveWidth = viewportWidth;
     let effectiveHeight = viewportHeight;
     
+    // Detect if in fullscreen PWA mode
+    const isLandscape = viewportWidth > viewportHeight;
+    const isFullscreenPWA = window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches;
+    const isLandscapeFullscreen = isLandscape && isFullscreenPWA;
+    
+    // Extra margin for fullscreen landscape to prevent UI clipping on notches
+    const safeMargin = isLandscapeFullscreen ? 20 : 10;
+    
     if (visualViewport) {
         // Visual viewport accounts for browser UI automatically
         effectiveWidth = visualViewport.width;
@@ -64,14 +72,15 @@ function getOptimalCanvasSize() {
         effectiveHeight = Math.max(effectiveHeight, viewportHeight * 0.8); // Don't reduce too much
     }
     
-    // Use effective dimensions but account for safe areas
+    // Use effective dimensions but account for safe areas and fullscreen margins
     return { 
-        width: Math.max(effectiveWidth - safeAreaLeft - safeAreaRight, viewportWidth * 0.95), 
-        height: Math.max(effectiveHeight - safeAreaTop - safeAreaBottom, viewportHeight * 0.8),
-        safeAreaTop,
-        safeAreaBottom,
-        safeAreaLeft,
-        safeAreaRight
+        width: Math.max(effectiveWidth - safeAreaLeft - safeAreaRight - (safeMargin * 2), viewportWidth * 0.95), 
+        height: Math.max(effectiveHeight - safeAreaTop - safeAreaBottom - (safeMargin * 2), viewportHeight * 0.8),
+        safeAreaTop: safeAreaTop + safeMargin,
+        safeAreaBottom: safeAreaBottom + safeMargin,
+        safeAreaLeft: safeAreaLeft + safeMargin,
+        safeAreaRight: safeAreaRight + safeMargin,
+        isLandscapeFullscreen
     };
 }
 
