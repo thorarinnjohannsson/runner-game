@@ -1,7 +1,7 @@
 {
-  "version": "24",
-  "hash": "b8a5bc8",
-  "date": "2025-12-05 11:46:26 +0100",
-  "message": "Implement PWA support by adding service worker registration and install prompt functionality. Update app version to 23 and adjust orientation setting in manifest. Enhance UI with PWA install button for improved user experience.",
-  "timestamp": 1764931586611
+  "version": "25",
+  "hash": "d46e712",
+  "date": "2025-12-05 11:49:26 +0100",
+  "message": "Increment version to 24 in VERSION and version.json. Update hash and timestamp in version.json. Remove unnecessary whitespace in service-worker.js for cleaner code.",
+  "timestamp": 1764931766918
 }
