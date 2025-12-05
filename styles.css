@@ -207,13 +207,13 @@ body {
     }
 }
 
-/* Landscape mobile - can be slightly smaller but still readable */
+/* Landscape mobile - slightly larger for better readability */
 @media (max-width: 768px) and (orientation: landscape) {
     #player-stats {
-        font-size: 9px; /* Slightly smaller in landscape but still readable */
-        bottom: max(8px, env(safe-area-inset-bottom, 8px));
-        padding: 4px 7px;
-        min-height: 18px;
+        font-size: 11px; /* Increased from 9px to 11px for better readability */
+        bottom: max(10px, env(safe-area-inset-bottom, 10px)); /* Increased from 8px to 10px */
+        padding: 5px 9px; /* Increased from 4px 7px */
+        min-height: 20px; /* Increased from 18px */
     }
 }
 
@@ -238,7 +238,7 @@ body {
     #player-stats {
         left: max(40px, calc(env(safe-area-inset-left) + 20px));
         bottom: max(20px, calc(env(safe-area-inset-bottom) + 15px));
-        font-size: 9px;
+        font-size: 11px; /* Increased from 9px to 11px */
     }
 }
 

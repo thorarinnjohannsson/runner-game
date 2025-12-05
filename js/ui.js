@@ -6,15 +6,19 @@ function getSafeAreaMargins() {
     const isLandscape = canvas.width > canvas.height;
     const isFullscreenPWA = window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches;
     const isLandscapeFullscreen = isLandscape && isFullscreenPWA;
+    const isMobileLandscape = typeof isMobile !== 'undefined' && isMobile && isLandscape;
     
     // Extra padding in fullscreen landscape to ensure nothing is clipped
+    // Increase top/side margins for landscape mobile (more breathing room)
     const extraPadding = isLandscapeFullscreen ? 15 : 5;
+    const topMargin = (isMobileLandscape && !isFullscreenPWA) ? 20 : (isLandscapeFullscreen ? 20 : 15);
+    const sideMargin = isMobileLandscape ? 20 : 15;
     
     return {
-        top: Math.max(safeInsets.top + extraPadding, 15),
+        top: Math.max(safeInsets.top + extraPadding, topMargin),
         bottom: Math.max(safeInsets.bottom + extraPadding, 15),
-        left: Math.max(safeInsets.left + extraPadding, 15),
-        right: Math.max(safeInsets.right + extraPadding, 15)
+        left: Math.max(safeInsets.left + extraPadding, sideMargin),
+        right: Math.max(safeInsets.right + extraPadding, sideMargin)
     };
 }
 
@@ -117,31 +121,41 @@ function drawStartScreen() {
     drawAudioControls(canvas.width - safeMargins.right - totalAudioControlWidth - 10, safeMargins.top + 10);
     drawHighScoreButton(safeMargins.left + 10, safeMargins.top + 10);
     
+    // Refresh button (PWA mode only, bottom right)
+    const isPWA = window.matchMedia && (
+        window.matchMedia('(display-mode: standalone)').matches || 
+        window.matchMedia('(display-mode: fullscreen)').matches
+    );
+    if (isPWA) {
+        drawRefreshButton();
+    }
+    
     if (isMobileLandscape) {
         // LANDSCAPE LAYOUT: Split horizontal layout
         const padding = 15;
         const panelGap = 15;
-        const topY = headerY + 35;
+        const topY = headerY + 30; // Reduced from 35 to save vertical space
         const panelHeight = canvas.height - topY - padding;
         
         // Left panel: Name entry + Character selection
         const leftPanelWidth = (canvas.width - padding * 2 - panelGap) * 0.55;
         const leftPanelX = padding;
         
-        // Name entry panel
-        const namePanelHeight = 65;
+        // Name entry panel (reduced height)
+        const namePanelHeight = 55; // Reduced from 65 to 55
         drawSoftPanel(leftPanelX, topY, leftPanelWidth, namePanelHeight, {
             fill: 'rgba(255, 255, 255, 0.92)',
             stroke: 'rgba(0, 0, 0, 0.12)',
             radius: 12
         });
-        drawNameEntryUI(leftPanelX + leftPanelWidth / 2, topY + 20, leftPanelWidth, {
-            compact: true
+        drawNameEntryUI(leftPanelX + leftPanelWidth / 2, topY + 15, leftPanelWidth, { // Reduced from 20 to 15
+            compact: true,
+            landscape: true // New flag for landscape-specific adjustments
         });
         
-        // Character selection panel
-        const charPanelY = topY + namePanelHeight + 10;
-        const charPanelHeight = panelHeight - namePanelHeight - 10;
+        // Character selection panel (tighter spacing)
+        const charPanelY = topY + namePanelHeight + 8; // Reduced gap from 10 to 8
+        const charPanelHeight = panelHeight - namePanelHeight - 8;
         drawSoftPanel(leftPanelX, charPanelY, leftPanelWidth, charPanelHeight, {
             fill: 'rgba(0, 0, 0, 0.35)',
             stroke: 'rgba(255, 255, 255, 0.2)',
@@ -157,12 +171,12 @@ function drawStartScreen() {
         ctx.fillStyle = '#FFD700';
         ctx.fillText('SELECT RUNNER', leftPanelX + leftPanelWidth / 2, charPanelY + 20);
         
-        // Character selection
-        const charRowTop = charPanelY + 40;
+        // Character selection (larger boxes, more spacing)
+        const charRowTop = charPanelY + 30; // Reduced from 40 to 30
         drawCardCharacterSelection(leftPanelX + leftPanelWidth / 2, charRowTop, {
             availableWidth: leftPanelWidth - 40,
-            baseSize: 52, // Mobile UX: larger touch targets
-            padding: 14
+            baseSize: 68, // Increased from 52 to 68 (30% larger)
+            padding: 26 // Increased from 14 to 26
         });
         
         // Character name
@@ -180,10 +194,13 @@ function drawStartScreen() {
         const rightPanelWidth = (canvas.width - padding * 2 - panelGap) * 0.45;
         const rightPanelX = leftPanelX + leftPanelWidth + panelGap;
         
-        // Start button (prominent, centered)
+        // Start button (larger and more prominent in landscape)
         const startButtonY = topY + (panelHeight - 80) / 2;
-        const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.03;
-        drawCardStartButton(rightPanelX + rightPanelWidth / 2, startButtonY, pulse, { compact: true });
+        const pulse = 1 + Math.sin(Date.now() * 0.005) * 0.05; // Increased pulse from 0.03 to 0.05
+        drawCardStartButton(rightPanelX + rightPanelWidth / 2, startButtonY, pulse, { 
+            compact: false, // Changed from true to false for larger button
+            landscape: true // New flag for landscape-specific sizing
+        });
         
         // PWA Install button (if available)
         const installButtonY = startButtonY + 50;
@@ -275,11 +292,12 @@ function drawNameEntryUI(centerX, y, panelWidth = 320, options = {}) {
     const nameInput = document.getElementById('playerNameInput');
     const currentName = nameInput ? nameInput.value : (localStorage.getItem('lastPlayerName') || 'Player');
     const isCompact = options.compact || false;
+    const isLandscape = options.landscape || false;
     
     const boxWidth = Math.max(180, Math.min(panelWidth - 80, 280));
-    const boxHeight = isCompact ? 32 : 40;
+    const boxHeight = isLandscape ? 28 : (isCompact ? 32 : 40); // Smaller in landscape
     const boxX = centerX - boxWidth / 2;
-    const diceSize = isCompact ? 30 : 36;
+    const diceSize = isLandscape ? 26 : (isCompact ? 30 : 36); // Smaller dice in landscape
     const diceGap = 12;
     const panelRight = centerX + panelWidth / 2;
     const boxTop = y;
@@ -294,9 +312,9 @@ function drawNameEntryUI(centerX, y, panelWidth = 320, options = {}) {
     }
     
     ctx.fillStyle = '#5C6672';
-    ctx.font = `${isCompact ? 8 : 10}px "Press Start 2P"`;
+    ctx.font = `${isLandscape ? 7 : (isCompact ? 8 : 10)}px "Press Start 2P"`; // Smaller label in landscape
     ctx.textAlign = 'center';
-    ctx.fillText('PLAYER NAME', centerX, boxTop - (isCompact ? 6 : 8));
+    ctx.fillText('PLAYER NAME', centerX, boxTop - (isLandscape ? 5 : (isCompact ? 6 : 8)));
     
     if (isEditingName) {
         // Show Input
@@ -473,8 +491,11 @@ function adjustColor(color, amount) {
 // Draw pulsing start button
 function drawCardStartButton(centerX, y, scale = 1, options = {}) {
     const isCompact = options.compact || false;
-    const baseWidth = isCompact ? 160 : 200;
-    const baseHeight = isCompact ? 42 : 50;
+    const isLandscape = options.landscape || false;
+    
+    // Landscape mode gets larger button (25% wider, 20% taller)
+    const baseWidth = isLandscape ? 200 : (isCompact ? 160 : 200);
+    const baseHeight = isLandscape ? 50 : (isCompact ? 42 : 50);
     
     const width = baseWidth * scale;
     const height = baseHeight * scale;
@@ -500,13 +521,13 @@ function drawCardStartButton(centerX, y, scale = 1, options = {}) {
     
     // Text
     ctx.fillStyle = 'white';
-    ctx.font = `bold ${isCompact ? 16 : 20}px Arial`;
+    ctx.font = `bold ${isLandscape ? 20 : (isCompact ? 16 : 20)}px Arial`;
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
-    ctx.fillText('START RUN', centerX, y + (isCompact ? 28 : 33));
+    ctx.fillText('START RUN', centerX, y + (isLandscape ? 33 : (isCompact ? 28 : 33)));
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     
@@ -1020,6 +1041,18 @@ function handleUITouch(e) {
 
 // Process UI interaction (works for both click and touch)
 function processUIInteraction(x, y) {
+    // Check refresh button (PWA only, available on start screen)
+    if (gameState === GAME_STATES.START_SCREEN && window.refreshButton) {
+        const btn = window.refreshButton;
+        if (x >= btn.x && x <= btn.x + btn.width &&
+            y >= btn.y && y <= btn.y + btn.height) {
+            // Reload the app
+            window.location.reload();
+            triggerHaptic(10);
+            return;
+        }
+    }
+    
     // Check pause button during gameplay
     if (gameState === GAME_STATES.PLAYING || (gameState === GAME_STATES.PAUSED && wasPausedByUser)) {
         if (window.pauseButton) {
@@ -1371,6 +1404,62 @@ function drawAudioControls(x, y) {
     window.audioControls = {
         music: { x: x, y: y, width: size, height: size },
         sound: { x: x + size + gap, y: y, width: size, height: size }
+    };
+    
+    ctx.textAlign = 'left'; // Reset alignment
+}
+
+// Draw refresh button (PWA only, bottom right corner)
+function drawRefreshButton() {
+    const mobile = isMobile || canvas.width < 600;
+    const size = mobile ? 44 : 40;
+    
+    // Get safe margins
+    const safeMargins = getSafeAreaMargins();
+    
+    // Position in bottom right corner
+    const x = canvas.width - safeMargins.right - size - 10;
+    const y = canvas.height - safeMargins.bottom - size - 10;
+    
+    // Button background
+    ctx.fillStyle = 'rgba(33, 150, 243, 0.9)'; // Blue color
+    ctx.beginPath();
+    ctx.roundRect(x, y, size, size, 8);
+    ctx.fill();
+    
+    // Button border
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Refresh icon (circular arrow)
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+    const radius = size * 0.3;
+    
+    // Draw circular arrow
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -0.2 * Math.PI, 1.5 * Math.PI);
+    ctx.stroke();
+    
+    // Arrow head
+    ctx.beginPath();
+    ctx.moveTo(centerX + radius * 0.7, centerY - radius);
+    ctx.lineTo(centerX + radius * 0.7, centerY - radius * 0.4);
+    ctx.lineTo(centerX + radius * 0.3, centerY - radius * 0.7);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Store hit area
+    window.refreshButton = {
+        x: x,
+        y: y,
+        width: size,
+        height: size
     };
     
     ctx.textAlign = 'left'; // Reset alignment

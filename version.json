@@ -1,7 +1,7 @@
 {
-  "version": "30",
-  "hash": "b46ca6e",
-  "date": "2025-12-05 16:25:43 +0100",
-  "message": "Mobile UX improvements: larger touch targets, combined version/stats display",
-  "timestamp": 1764948343000
+  "version": "31",
+  "hash": "ccf276b",
+  "date": "2025-12-05 16:38:44 +0100",
+  "message": "Increment version to 30 in VERSION and version.json. Update hash and timestamp in version.json. Enhance mobile UX with larger touch targets and a combined version/stats display for improved accessibility.",
+  "timestamp": 1764949124000
 }
