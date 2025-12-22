@@ -116,6 +116,10 @@ let elapsedTime = 0;
 let pauseCountdown = 0;
 let countdownInterval = null;
 
+// Frame rate independence
+let lastFrameTime = 0;
+let frameDelta = 1; // Multiplier for frame-rate independence (normalized to 60fps)
+
 // Screen shake effect
 let screenShake = 0;
 let shakeOffsetX = 0;
@@ -232,7 +236,19 @@ function init() {
 }
 
 // Main game loop
-function gameLoop() {
+function gameLoop(timestamp = 0) {
+    // Calculate frame delta for frame-rate independence
+    if (lastFrameTime === 0) lastFrameTime = timestamp;
+    const frameTime = timestamp - lastFrameTime;
+    lastFrameTime = timestamp;
+    
+    // Normalize to 60fps (16.67ms per frame)
+    // This makes the game run at same speed on 30Hz, 60Hz, 120Hz displays
+    frameDelta = frameTime / (1000 / 60);
+    
+    // Clamp delta to prevent huge jumps (e.g., tab switching, pausing)
+    frameDelta = Math.min(frameDelta, 3); // Max 3x speed to prevent physics breaking
+    
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -240,7 +256,7 @@ function gameLoop() {
     if (screenShake > 0 && shouldUseScreenShake()) {
         shakeOffsetX = (Math.random() - 0.5) * screenShake;
         shakeOffsetY = (Math.random() - 0.5) * screenShake;
-        screenShake *= 0.9; // Decay
+        screenShake *= Math.pow(0.9, frameDelta); // Frame-rate independent decay
         if (screenShake < 0.1) screenShake = 0;
         ctx.save();
         ctx.translate(shakeOffsetX, shakeOffsetY);
@@ -248,7 +264,7 @@ function gameLoop() {
     
     // Update background if playing
     if (gameState === GAME_STATES.PLAYING) {
-        updateBackground();
+        updateBackground(frameDelta);
     }
     
     // Draw background
@@ -333,16 +349,16 @@ function gameLoop() {
 }
 
 // Update background position
-function updateBackground() {
+function updateBackground(delta = 1) {
     if (!parallaxBg) {
         initParallax();
     }
     
     // Update parallax
-    parallaxBg.update(gameSpeed);
+    parallaxBg.update(gameSpeed * delta);
     
     // Move ground texture
-    groundScroll += gameSpeed;
+    groundScroll += gameSpeed * delta;
 }
 
 // Draw background
@@ -682,9 +698,9 @@ function updateGameplay() {
     // Update difficulty
     updateDifficulty(elapsedTime);
     
-    // Update player
+    // Update player (with frame delta for physics)
     if (player) {
-        player.update(GROUND_Y);
+        player.update(GROUND_Y, frameDelta);
         
         // Track if player lands on ground (reset combo)
         if (player.isOnGround && comboTracker.count > 0) {
@@ -693,23 +709,23 @@ function updateGameplay() {
         
     }
     
-    // Update obstacles
-    updateObstacles();
+    // Update obstacles (with frame delta)
+    updateObstacles(frameDelta);
     
-    // Update collectables (Hearts)
-    updateCollectables();
+    // Update collectables (Hearts) (with frame delta)
+    updateCollectables(frameDelta);
     
-    // Update particles
-    updateParticles();
+    // Update particles (with frame delta)
+    updateParticles(frameDelta);
     
-    // Update trail particles
-    updateTrailParticles();
+    // Update trail particles (with frame delta)
+    updateTrailParticles(frameDelta);
     
-    // Update ripples
-    updateRipples();
+    // Update ripples (with frame delta)
+    updateRipples(frameDelta);
     
-    // Update score popups
-    updateScorePopups();
+    // Update score popups (with frame delta)
+    updateScorePopups(frameDelta);
     
     // Check collisions
     checkCollisions();
@@ -730,12 +746,12 @@ function updateGameplay() {
 }
 
 // Update collectables
-function updateCollectables() {
+function updateCollectables(delta = 1) {
     if (!collectables) return;
     
     for (let i = collectables.length - 1; i >= 0; i--) {
         const item = collectables[i];
-        item.update(gameSpeed);
+        item.update(gameSpeed * delta);
         
         // Collision detection with player
         if (!item.collected && !item.isOffScreen()) {
@@ -796,7 +812,7 @@ function drawGameplay() {
     if (player) {
         // Force running animation in pause mode
         const forceRunning = (gameState === GAME_STATES.PAUSED);
-        player.draw(ctx, forceRunning);
+        player.draw(ctx, forceRunning, frameDelta);
     }
     
     // Draw obstacles
@@ -1317,12 +1333,12 @@ class Particle {
         this.rotationSpeed = (Math.random() - 0.5) * 0.2;
     }
     
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vy += 0.3; // Gravity
-        this.life -= this.decay;
-        this.rotation += this.rotationSpeed;
+    update(delta = 1) {
+        this.x += this.vx * delta;
+        this.y += this.vy * delta;
+        this.vy += 0.3 * delta; // Gravity
+        this.life -= this.decay * delta;
+        this.rotation += this.rotationSpeed * delta;
     }
     
     draw(ctx) {
@@ -1390,8 +1406,8 @@ class TrailParticle {
         this.size = 8 + Math.random() * 4;
     }
     
-    update() {
-        this.life -= this.decay;
+    update(delta = 1) {
+        this.life -= this.decay * delta;
     }
     
     draw(ctx) {
@@ -1459,9 +1475,9 @@ function createTrailParticle(x, y, color) {
 }
 
 // Update particles
-function updateParticles() {
+function updateParticles(delta = 1) {
     for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
+        particles[i].update(delta);
         if (particles[i].isDead()) {
             particles.splice(i, 1);
         }
@@ -1469,9 +1485,9 @@ function updateParticles() {
 }
 
 // Update trail particles
-function updateTrailParticles() {
+function updateTrailParticles(delta = 1) {
     for (let i = trailParticles.length - 1; i >= 0; i--) {
-        trailParticles[i].update();
+        trailParticles[i].update(delta);
         if (trailParticles[i].isDead()) {
             trailParticles.splice(i, 1);
         }
@@ -1499,8 +1515,8 @@ class Ripple {
         this.speed = isMobile ? 3 : 2.5;
     }
     
-    update() {
-        this.radius += this.speed;
+    update(delta = 1) {
+        this.radius += this.speed * delta;
         this.life = 1 - (this.radius / this.maxRadius);
     }
     
@@ -1527,9 +1543,9 @@ function createRipple(x, y) {
 }
 
 // Update ripples
-function updateRipples() {
+function updateRipples(delta = 1) {
     for (let i = ripples.length - 1; i >= 0; i--) {
-        ripples[i].update();
+        ripples[i].update(delta);
         if (ripples[i].isDead()) {
             ripples.splice(i, 1);
         }

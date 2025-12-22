@@ -43,10 +43,10 @@ class ScorePopup {
         this.age = 0;
     }
     
-    update() {
-        this.y += this.velocityY;
-        this.life -= 0.015;
-        this.age++;
+    update(delta = 1) {
+        this.y += this.velocityY * delta;
+        this.life -= 0.015 * delta;
+        this.age += delta;
     }
     
     draw(ctx) {
@@ -290,9 +290,9 @@ function createScorePopup(x, y, points, bonusText) {
 }
 
 // Update score popups
-function updateScorePopups() {
+function updateScorePopups(delta = 1) {
     for (let i = scorePopups.length - 1; i >= 0; i--) {
-        scorePopups[i].update();
+        scorePopups[i].update(delta);
         if (scorePopups[i].isDead()) {
             scorePopups.splice(i, 1);
         }

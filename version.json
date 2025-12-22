@@ -1,7 +1,7 @@
 {
-  "version": "31",
-  "hash": "ccf276b",
-  "date": "2025-12-05 16:38:44 +0100",
-  "message": "Increment version to 30 in VERSION and version.json. Update hash and timestamp in version.json. Enhance mobile UX with larger touch targets and a combined version/stats display for improved accessibility.",
-  "timestamp": 1764949124000
+  "version": "32",
+  "hash": "5e0a8b0",
+  "date": "2025-12-22 18:56:43 +0000",
+  "message": "Increment cache version to v1.0.12 in service-worker.js. Enhance mobile UX by increasing font sizes and padding in styles.css for better readability. Introduce a refresh button in ui.js for PWA mode, improving user interaction on the start screen.",
+  "timestamp": 1766429803000
 }

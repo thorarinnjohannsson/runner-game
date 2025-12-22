@@ -107,12 +107,12 @@ class Player {
     }
     
     // Update player physics
-    update(groundY) {
+    update(groundY, delta = 1) {
         // Apply gravity with easing for smoother feel
-        this.velocityY += this.gravity;
+        this.velocityY += this.gravity * delta;
         
         // Update position
-        this.y += this.velocityY;
+        this.y += this.velocityY * delta;
         
         // Somersault animation removed
         
@@ -161,14 +161,14 @@ class Player {
     }
     
     // Draw player on canvas (Pixel Art)
-    draw(ctx, forceRunning = false) {
+    draw(ctx, forceRunning = false, delta = 1) {
         // Update animation frame
         const shouldAnimate = this.isOnGround || forceRunning;
         if (shouldAnimate) {
-            this.animationFrame += this.animationSpeed;
+            this.animationFrame += this.animationSpeed * delta;
             
             // Update running frame cycle (4 frames for four-legged gait)
-            this.runningFrameTimer += this.runningFrameSpeed;
+            this.runningFrameTimer += this.runningFrameSpeed * delta;
             if (this.runningFrameTimer >= 1) {
                 this.runningFrame = (this.runningFrame + 1) % 4;
                 this.runningFrameTimer = 0;

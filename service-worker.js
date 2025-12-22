@@ -1,4 +1,4 @@
-const CACHE_NAME = 'animal-jump-v1.0.12';
+const CACHE_NAME = 'animal-jump-v1.0.13';
 const urlsToCache = [
   '/runner-game/',
   '/runner-game/index.html',

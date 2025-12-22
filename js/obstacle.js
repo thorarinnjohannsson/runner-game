@@ -462,7 +462,7 @@ let lastSpawnTime = 0;
 let spawnInterval = 2000; // milliseconds
 
 // Update all obstacles
-function updateObstacles() {
+function updateObstacles(delta = 1) {
     // Spawn new obstacles
     const now = Date.now();
     if (now - lastSpawnTime > spawnInterval) {
@@ -472,7 +472,7 @@ function updateObstacles() {
     
     // Update existing obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
-        obstacles[i].update(gameSpeed);
+        obstacles[i].update(gameSpeed * delta);
         
         // Check if player passed obstacle (for scoring)
         if (!obstacles[i].scored && obstacles[i].x + obstacles[i].width < player.x) {
